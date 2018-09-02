@@ -1,0 +1,43 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'distribution'
+}
+
+mainClassName = 'org.citygml4j.tools.CityGMLTools'
+
+allprojects {
+    group 'org.citygml4j'
+    version '1.0-SNAPSHOT'
+
+    sourceCompatibility = 1.8
+
+    repositories {
+        jcenter()
+    }
+}
+
+subprojects {
+    apply plugin: 'java-library'
+
+    dependencies {
+        implementation 'org.citygml4j:citygml4j:2.7.0'
+    }
+}
+
+dependencies {
+    implementation project(':citygml-tools-common')
+    implementation project(':global-app-mover')
+    implementation 'org.citygml4j:citygml4j:2.7.0'
+    implementation 'info.picocli:picocli:3.5.2'
+}
+
+startScripts {
+    defaultJvmOpts = ['-Xms1G']
+    doLast {
+        def windowsScript = getWindowsScript()
+        def unixScript = getUnixScript()
+        windowsScript.text = windowsScript.text.replaceFirst('set APP_HOME=.*', '$0\r\nset WORKING_DIR=%CD%')
+        unixScript.text = unixScript.text.replaceFirst('APP_HOME=.*', '$0\nexport APP_HOME\nexport WORKING_DIR=\\$SAVED')
+    }
+}
