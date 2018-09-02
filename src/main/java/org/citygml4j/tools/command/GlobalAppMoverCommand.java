@@ -79,7 +79,6 @@ public class GlobalAppMoverCommand implements CityGMLTool {
             }
         }
 
-        ResultStatistic resultStatistic = new ResultStatistic();
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file '" + inputFile.toAbsolutePath() + "'.");
