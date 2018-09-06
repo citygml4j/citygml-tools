@@ -36,7 +36,7 @@ public class ToCityJSONCommand implements CityGMLTool {
     @CommandLine.Option(names = "--texture-vertices-digits", paramLabel = "<digits>", description = "Number of digits to keep for texture vertices (default: ${DEFAULT-VALUE}).")
     private int textureVerticesDigites = 7;
 
-    @CommandLine.Option(names = "--compress", description = "Compress file by storing vertices with integers.")
+    @CommandLine.Option(names = {"-c", "--compress"}, description = "Compress file by storing vertices with integers.")
     private boolean compress;
 
     @CommandLine.Option(names = "--compress-digits", paramLabel = "<digits>", description = "Number of digits to keep in compression (default: ${DEFAULT-VALUE}).")
