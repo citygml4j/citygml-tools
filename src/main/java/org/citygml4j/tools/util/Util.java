@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Util {
 
-    public static List<Path> listFiles(String file, boolean includeDirs) throws IOException {
+    public static List<Path> listFiles(String file, String defaultGlob) throws IOException {
         LinkedList<String> elements = new LinkedList<>();
         Path path = null;
 
@@ -41,12 +41,14 @@ public class Util {
         if (!elements.isEmpty())
             glob.append(File.separator).append(String.join(File.separator, elements));
 
+        if (Files.isDirectory(path) && defaultGlob != null && !defaultGlob.isEmpty())
+            glob.append(File.separator).append(defaultGlob);
+
         // find files matching the glob pattern
         List<Path> files = new ArrayList<>();
         PathMatcher matcher = FileSystems.getDefault().getPathMatcher(glob.toString().replace("\\", "\\\\"));
         Files.walk(path).forEach((p) -> {
-            if ((includeDirs || !Files.isDirectory(p))
-                    && matcher.matches(p.toAbsolutePath().normalize()))
+            if (matcher.matches(p.toAbsolutePath().normalize()))
                 files.add(p);
         });
 

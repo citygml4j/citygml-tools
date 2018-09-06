@@ -9,7 +9,6 @@ import org.citygml4j.model.module.citygml.CityGMLModuleType;
 import org.citygml4j.model.module.citygml.CityGMLVersion;
 import org.citygml4j.tools.appmover.GlobalAppMover;
 import org.citygml4j.tools.appmover.LocalAppTarget;
-import org.citygml4j.tools.appmover.ResultStatistic;
 import org.citygml4j.tools.appmover.helper.GlobalAppReader;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Util;
@@ -72,8 +71,8 @@ public class GlobalAppMoverCommand implements CityGMLTool {
         List<Path> inputFiles = new ArrayList<>();
         for (String file : files) {
             try {
-                inputFiles.addAll(Util.listFiles(file, false));
-                log.debug("Found " + inputFiles.size() + " file(s) at '" + file + "'.");
+                inputFiles.addAll(Util.listFiles(file, "*.{gml,xml}"));
+                log.info("Found " + inputFiles.size() + " file(s) at '" + file + "'.");
             } catch (IOException e) {
                 log.warn("Failed to find file(s) at '" + file + "'.");
             }
