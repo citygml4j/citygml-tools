@@ -41,3 +41,9 @@ startScripts {
         unixScript.text = unixScript.text.replaceFirst('APP_HOME=.*', '$0\nexport APP_HOME\nexport WORKING_DIR=\\$SAVED')
     }
 }
+
+installDist {
+    doLast {
+        mkdir "$destinationDir/ade-extensions"
+    }
+}

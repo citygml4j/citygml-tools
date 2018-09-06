@@ -7,6 +7,8 @@ public class Constants {
     public static final Path APP_HOME;
     public static final Path WORKING_DIR;
 
+    public static final String ADE_EXTENSIONS_DIR = "ade-extensions";
+
     static {
         String appHomeEnv = System.getenv("APP_HOME");
         if (appHomeEnv == null)
