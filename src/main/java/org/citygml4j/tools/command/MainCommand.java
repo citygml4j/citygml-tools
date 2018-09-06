@@ -21,7 +21,9 @@ import java.util.stream.Stream;
         mixinStandardHelpOptions = true,
         subcommands = {
                 CommandLine.HelpCommand.class,
-                GlobalAppMoverCommand.class
+                GlobalAppMoverCommand.class,
+                FromCityJSONCommand.class,
+                ToCityJSONCommand.class
         })
 public class MainCommand implements CityGMLTool {
 

@@ -40,8 +40,7 @@ public class Util {
         StringBuilder glob = new StringBuilder("glob:").append(path.toAbsolutePath().normalize());
         if (!elements.isEmpty())
             glob.append(File.separator).append(String.join(File.separator, elements));
-
-        if (Files.isDirectory(path) && defaultGlob != null && !defaultGlob.isEmpty())
+        else if (Files.isDirectory(path) && defaultGlob != null && !defaultGlob.isEmpty())
             glob.append(File.separator).append(defaultGlob);
 
         // find files matching the glob pattern
@@ -53,6 +52,23 @@ public class Util {
         });
 
         return files;
+    }
+
+    public static Path replaceFileExtension(Path file, String extension) {
+        if (!Files.isRegularFile(file ))
+            throw new IllegalArgumentException(file.toAbsolutePath() + " is not a file.");
+
+        if (!extension.startsWith("."))
+            extension = "." + extension;
+
+        String fileName = file.getFileName().toString();
+        int index = fileName.lastIndexOf(".");
+        if (index >= 0)
+            fileName = fileName.substring(0, index) + extension;
+        else
+            fileName += extension;
+
+        return file.resolveSibling(fileName);
     }
 
     public static Path addFileNameSuffix(Path file, String suffix) {
