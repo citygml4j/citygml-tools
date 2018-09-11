@@ -24,14 +24,14 @@ import java.util.List;
         mixinStandardHelpOptions = true)
 public class FromCityJSONCommand implements CityGMLTool {
 
-    @CommandLine.Option(names = "--citygml", description = "CityGML version used for output file: 2.0, 1.0 (default: ${DEFAULT-VALUE}).")
-    private String version = "2.0";
-
     @CommandLine.Option(names = "--overwrite-files", description = "Overwrite output file(s).")
     private boolean overwriteOutputFiles;
 
-    @CommandLine.Parameters(paramLabel = "<file>", description = "File(s) or directory to process (glob patterns allowed).")
-    private String file;
+    @CommandLine.Mixin
+    private StandardCityGMLOutputOptions cityGMLOutput;
+
+    @CommandLine.Mixin
+    private StandardInputOptions input;
 
     @CommandLine.ParentCommand
     private MainCommand main;
@@ -44,16 +44,16 @@ public class FromCityJSONCommand implements CityGMLTool {
         CityJSONBuilder builder = CityGMLContext.getInstance().createCityJSONBuilder();
         CityJSONInputFactory in = builder.createCityJSONInputFactory();
 
-        CityGMLVersion targetVersion = version.equals("1.0") ? CityGMLVersion.v1_0_0 : CityGMLVersion.v2_0_0;
+        CityGMLVersion targetVersion = cityGMLOutput.getVersion();
         CityGMLOutputFactory out = main.getCityGMLBuilder().createCityGMLOutputFactory(targetVersion);
 
         log.debug("Searching for CityJSON input files.");
         List<Path> inputFiles = new ArrayList<>();
         try {
-            inputFiles.addAll(Util.listFiles(file, "**.{json,cityjson}"));
-            log.info("Found " + inputFiles.size() + " file(s) at '" + file + "'.");
+            inputFiles.addAll(Util.listFiles(input.getFile(), "**.{json,cityjson}"));
+            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
         } catch (IOException e) {
-            log.warn("Failed to find file(s) at '" + file + "'.");
+            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
         }
 
         for (int i = 0; i < inputFiles.size(); i++) {
