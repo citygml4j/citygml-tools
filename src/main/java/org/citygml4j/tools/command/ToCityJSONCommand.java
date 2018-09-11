@@ -45,8 +45,8 @@ public class ToCityJSONCommand implements CityGMLTool {
     @CommandLine.Option(names = "--overwrite-files", description = "Overwrite output file(s).")
     private boolean overwriteOutputFiles;
 
-    @CommandLine.Parameters(arity = "1..*", paramLabel = "<files>", description = "File(s) to process (glob patterns allowed).")
-    private List<String> files;
+    @CommandLine.Parameters(paramLabel = "<file>", description = "File(s) or directory to process (glob patterns allowed).")
+    private String file;
 
     @CommandLine.ParentCommand
     private MainCommand main;
@@ -78,13 +78,11 @@ public class ToCityJSONCommand implements CityGMLTool {
 
         log.debug("Searching for CityGML input files.");
         List<Path> inputFiles = new ArrayList<>();
-        for (String file : files) {
-            try {
-                inputFiles.addAll(Util.listFiles(file, "*.{gml,xml}"));
-                log.info("Found " + inputFiles.size() + " file(s) at '" + file + "'.");
-            } catch (IOException e) {
-                log.warn("Failed to find file(s) at '" + file + "'.");
-            }
+        try {
+            inputFiles.addAll(Util.listFiles(file, "**.{gml,xml}"));
+            log.info("Found " + inputFiles.size() + " file(s) at '" + file + "'.");
+        } catch (IOException e) {
+            log.warn("Failed to find file(s) at '" + file + "'.");
         }
 
         for (int i = 0; i < inputFiles.size(); i++) {
