@@ -62,13 +62,20 @@ public class CityGMLTools implements CommandLine.IParseResultHandler2<List<Objec
             System.exit(1);
         }
 
-        List<Object> executionResult = new ArrayList<>();
+        // validate commands before executing them
         for (CommandLine commandLine : commandLines) {
             Object command = commandLine.getCommand();
             if (!(command instanceof CityGMLTool))
                 throw new CommandLine.ExecutionException(commandLine,
                         "Parsed command (" + command + ") is not a valid CityGML tool.");
 
+            ((CityGMLTool) command).validate();
+        }
+
+        // execute commands
+        List<Object> executionResult = new ArrayList<>();
+        for (CommandLine commandLine : commandLines) {
+            Object command = commandLine.getCommand();
             try {
                 CityGMLTool cityGMLTool = (CityGMLTool) command;
                 executionResult.add(cityGMLTool.execute());

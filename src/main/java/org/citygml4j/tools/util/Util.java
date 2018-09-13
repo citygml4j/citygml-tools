@@ -14,27 +14,18 @@ import java.util.concurrent.TimeUnit;
 
 public class Util {
 
+    public static Path getRootDirectory(String file) {
+        LinkedList<String> elements = parseInputFile(file);
+        Path path = Paths.get(elements.pop());
+        if (!Files.isDirectory(path))
+            path = path.getParent();
+
+        return path;
+    }
+
     public static List<Path> listFiles(String file, String defaultGlob) throws IOException {
-        LinkedList<String> elements = new LinkedList<>();
-        Path path = null;
-
-        do {
-            try {
-                path = Paths.get(file);
-            } catch (Exception e) {
-                // the file is not a valid path, possibly because of glob patterns.
-                // so, let's iteratively truncate the last path element and try again.
-                int index = file.lastIndexOf(File.separator);
-                String pathElement = file.substring(index + 1);
-                file = file.substring(0, index != -1 ? index : 0);
-
-                // remember the truncated element
-                elements.addFirst(pathElement);
-            }
-        } while (path == null && file.length() > 0);
-
-        // resolve path against the working directory
-        path = path == null ? Constants.WORKING_DIR : Constants.WORKING_DIR.resolve(path);
+        LinkedList<String> elements = parseInputFile(file);
+        Path path = Paths.get(elements.pop());
 
         // construct a glob pattern from the path and the truncated elements
         StringBuilder glob = new StringBuilder("glob:").append(path.toAbsolutePath().normalize());
@@ -101,6 +92,32 @@ public class Util {
             return String.format("%02d m, %02d s", m, s);
 
         return String.format("%02d s", s);
+    }
+
+    private static LinkedList<String> parseInputFile(String file) {
+        LinkedList<String> elements = new LinkedList<>();
+        Path path = null;
+
+        do {
+            try {
+                path = Paths.get(file);
+            } catch (Exception e) {
+                // the file is not a valid path, possibly because of glob patterns.
+                // so, let's iteratively truncate the last path element and try again.
+                int index = file.lastIndexOf(File.separator);
+                String pathElement = file.substring(index + 1);
+                file = file.substring(0, index != -1 ? index : 0);
+
+                // remember the truncated element
+                elements.addFirst(pathElement);
+            }
+        } while (path == null && file.length() > 0);
+
+        // resolve path against the working directory
+        path = path == null ? Constants.WORKING_DIR : Constants.WORKING_DIR.resolve(path);
+        elements.addFirst(path.toAbsolutePath().toString());
+
+        return elements;
     }
 
 }

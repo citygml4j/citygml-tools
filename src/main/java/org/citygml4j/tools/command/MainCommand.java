@@ -75,4 +75,8 @@ public class MainCommand implements CityGMLTool {
         return cityGMLBuilder;
     }
 
+    @Override
+    public void validate() throws CommandLine.ParameterException {
+        // nothing to do
+    }
 }
