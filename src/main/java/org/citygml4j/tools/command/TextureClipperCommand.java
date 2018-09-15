@@ -1,0 +1,146 @@
+package org.citygml4j.tools.command;
+
+import org.citygml4j.model.module.citygml.CityGMLVersion;
+import org.citygml4j.tools.common.log.Logger;
+import org.citygml4j.tools.textureclipper.TextureClipper;
+import org.citygml4j.tools.textureclipper.TextureClippingException;
+import org.citygml4j.tools.util.Constants;
+import org.citygml4j.tools.util.Util;
+import picocli.CommandLine;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+@CommandLine.Command(name = "clip-textures",
+        description = "Clips texture images to the extent of the target surface.",
+        mixinStandardHelpOptions = true)
+public class TextureClipperCommand implements CityGMLTool {
+
+    @CommandLine.Option(names = {"-o", "--output"}, required = true, paramLabel = "<dir>", description = "Output directory in which to write the result files.")
+    private String output;
+
+    @CommandLine.Option(names = "--jpeg-compression", paramLabel = "<float>", description = "Compression quality for JPEG files: value between 0.0 and 1.0 (default: ${DEFAULT-VALUE}).")
+    private float jpegCompression = 1.0f;
+
+    @CommandLine.Option(names = "--force-jpeg", description = "Force JPEG as output format for clipped texture files.")
+    private boolean forceJPEG;
+
+    @CommandLine.Option(names = "--adapt-texture-coords", description = "Adapt texture coordinates to lie within [0, 1].")
+    private boolean adaptTexCoords;
+
+    @CommandLine.Option(names = "--texture-coords-digits", paramLabel = "<digits>", description = "Number of digits to keep for texture coordinates (default: ${DEFAULT-VALUE}).")
+    private int texCoordsDigits = 7;
+
+    @CommandLine.Option(names = "--appearance-dir", paramLabel = "<path>", description = "Relative path to be used as appearance directory (default: ${DEFAULT-VALUE}).")
+    private String appearanceDir = "appearance";
+
+    @CommandLine.Option(names = "--appearance-subdirs", paramLabel = "<int>", description = "Number of appearance subdirs to create (default: ${DEFAULT-VALUE}).")
+    private int noOfBuckets = 10;
+
+    @CommandLine.Option(names = "--texture-prefix", paramLabel = "<prefix>", description = "Prefix to be used for texture file names (default: ${DEFAULT-VALUE}).")
+    private String texturePrefix = "tex";
+
+    @CommandLine.Option(names = "--overwrite-files", description = "Overwrite output file(s).")
+    private boolean overwriteOutputFiles;
+
+    @CommandLine.Mixin
+    private StandardCityGMLOutputOptions cityGMLOutput;
+
+    @CommandLine.Mixin
+    private StandardInputOptions input;
+
+    @CommandLine.ParentCommand
+    private MainCommand main;
+
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec;
+
+    @Override
+    public boolean execute() throws Exception {
+        Logger log = Logger.getInstance();
+        log.info("Executing command 'clip-textures'.");
+
+        CityGMLVersion targetVersion = cityGMLOutput.getVersion();
+
+        // check output directory
+        Path outputDir = Constants.WORKING_DIR.resolve(Paths.get(output));
+        if (Files.isRegularFile(outputDir)) {
+            log.error("The output '" + output + "' is a file but must be a directory.");
+            return false;
+        }
+
+        // check that output and input directories are different
+        Path rootDir = Util.getRootDirectory(input.getFile());
+        if (outputDir.startsWith(rootDir)) {
+            log.error("The output directory must not be a subfolder of or equal to the input directory.");
+            return false;
+        }
+
+        TextureClipper clipper = TextureClipper.defaults(main.getCityGMLBuilder())
+                .withJPEGCompression(jpegCompression)
+                .forceJPEG(forceJPEG)
+                .adaptTextureCoordinates(adaptTexCoords)
+                .withSignificantDigits(texCoordsDigits)
+                .withAppearanceDirectory(appearanceDir)
+                .withNumberOfBuckets(noOfBuckets)
+                .withTextureFileNamePrefix(texturePrefix)
+                .withTargetVersion(targetVersion);
+
+        log.debug("Searching for CityGML input files.");
+        List<Path> inputFiles = new ArrayList<>();
+        try {
+            inputFiles.addAll(Util.listFiles(input.getFile(), "**.{gml,xml}"));
+            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
+        } catch (IOException e) {
+            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
+        }
+
+        for (int i = 0; i < inputFiles.size(); i++) {
+            Path inputFile = inputFiles.get(i);
+            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file '" + inputFile.toAbsolutePath() + "'.");
+
+            Path outputFile = outputDir.resolve(rootDir.relativize(inputFile));
+            log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
+
+            if (!overwriteOutputFiles && Files.exists(outputFile)) {
+                log.error("The output file '" + outputFile.toAbsolutePath() + "' already exists. Remove it first.");
+                continue;
+            }
+
+            try {
+                clipper.clipTextures(inputFile, outputFile);
+            } catch (TextureClippingException e) {
+                log.error("Failed to clip textures.", e);
+                continue;
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public void validate() throws CommandLine.ParameterException {
+        try {
+            Paths.get(output);
+        } catch (InvalidPathException e) {
+            throw new CommandLine.ParameterException(spec.commandLine(), "The output directory '" + output + "' is not a valid path.", e);
+        }
+
+        try {
+            Path path = Paths.get(appearanceDir);
+            if (path.isAbsolute())
+                throw new CommandLine.ParameterException(spec.commandLine(), "The appearance directory must be given by a local path.");
+
+        } catch (InvalidPathException e) {
+            throw new CommandLine.ParameterException(spec.commandLine(), "The appearance directory '" + appearanceDir + "' is not a valid path.", e);
+        }
+
+        if (jpegCompression < 0 || jpegCompression > 1)
+            throw new CommandLine.ParameterException(spec.commandLine(), "The JPEG compression must be a value between 0.0 and 1.0.");
+    }
+}

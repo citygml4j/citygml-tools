@@ -1,3 +1,4 @@
 rootProject.name = 'citygml-tools'
 include 'citygml-tools-common'
 include 'global-app-mover'
+include 'texture-clipper'

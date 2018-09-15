@@ -22,6 +22,7 @@ import java.util.stream.Stream;
         subcommands = {
                 CommandLine.HelpCommand.class,
                 GlobalAppMoverCommand.class,
+                TextureClipperCommand.class,
                 FromCityJSONCommand.class,
                 ToCityJSONCommand.class
         })

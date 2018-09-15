@@ -13,6 +13,9 @@ allprojects {
     sourceCompatibility = 1.8
 
     repositories {
+        maven {
+            url 'https://repository.apache.org/content/repositories/snapshots'
+        }
         jcenter()
     }
 }
@@ -28,6 +31,7 @@ subprojects {
 dependencies {
     implementation project(':citygml-tools-common')
     implementation project(':global-app-mover')
+    implementation project(':texture-clipper')
     implementation 'org.citygml4j:citygml4j:2.7.0'
     implementation 'info.picocli:picocli:3.5.2'
 }
