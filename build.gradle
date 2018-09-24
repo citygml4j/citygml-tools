@@ -33,7 +33,7 @@ dependencies {
     implementation project(':global-app-mover')
     implementation project(':texture-clipper')
     implementation 'org.citygml4j:citygml4j:2.7.0'
-    implementation 'info.picocli:picocli:3.5.2'
+    implementation 'info.picocli:picocli:3.6.0'
 }
 
 startScripts {
