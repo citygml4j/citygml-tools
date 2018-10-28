@@ -4,11 +4,11 @@ plugins {
     id 'distribution'
 }
 
+version '1.0-SNAPSHOT'
 mainClassName = 'org.citygml4j.tools.CityGMLTools'
 
 allprojects {
     group 'org.citygml4j.tools'
-    version '1.0-SNAPSHOT'
 
     sourceCompatibility = 1.8
 

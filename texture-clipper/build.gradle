@@ -1,3 +1,5 @@
+version '1.0-SNAPSHOT'
+
 dependencies {
     implementation project(':citygml-tools-common')
     implementation 'org.apache.commons:commons-imaging:1.0-SNAPSHOT'
