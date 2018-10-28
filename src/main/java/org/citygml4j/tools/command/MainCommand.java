@@ -57,7 +57,7 @@ public class MainCommand implements CityGMLTool {
                 ServiceLoader<ADEContext> adeLoader = ServiceLoader.load(ADEContext.class, classLoader);
 
                 for (ADEContext adeContext : adeLoader) {
-                    log.debug("Registering ADE extension '" + adeContext.getClass() + "'.");
+                    log.debug("Registering ADE extension '" + adeContext.getClass().getTypeName() + "'.");
                     context.registerADEContext(adeContext);
                 }
             }
