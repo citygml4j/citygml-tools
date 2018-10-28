@@ -14,7 +14,7 @@ ext {
 
 allprojects {
     group 'org.citygml4j.tools'
-    version '1.0-SNAPSHOT'
+    version '1.0.0'
 
     sourceCompatibility = 1.8
 
