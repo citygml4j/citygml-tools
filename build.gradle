@@ -1,14 +1,20 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
 plugins {
     id 'java'
     id 'application'
     id 'distribution'
 }
 
-version '1.0-SNAPSHOT'
 mainClassName = 'org.citygml4j.tools.CityGMLTools'
+
+ext {
+    date = new Date()
+}
 
 allprojects {
     group 'org.citygml4j.tools'
+    version '1.0-SNAPSHOT'
 
     sourceCompatibility = 1.8
 
@@ -25,6 +31,82 @@ subprojects {
 
     dependencies {
         implementation 'org.citygml4j:citygml4j:2.8.0'
+    }
+
+    plugins.withType(MavenPublishPlugin) {
+        jar {
+            manifest {
+                attributes('Implementation-Title': project.name,
+                        'Implementation-Version': project.version
+                )
+            }
+            into('META-INF') {
+                from "$rootDir/LICENSE"
+            }
+        }
+
+        javadoc {
+            options.overview "$buildDir/tmp/javadoc/overview.html"
+            options.addStringOption('doctitle', project.name + ' - ' + project.version)
+            options.addStringOption('Xdoclint:none', '-quiet')
+
+            doFirst {
+                copy {
+                    from "$rootDir/resources/javadoc/overview.html"
+                    into "$buildDir/tmp/javadoc"
+                    filter(ReplaceTokens, tokens: [
+                            name: project.name,
+                            version: project.version,
+                            citygmlTools: rootProject.name,
+                            copyright: date.format('yyyy')
+                    ])
+                }
+            }
+        }
+
+        task sourcesJar(type: Jar, dependsOn: classes) {
+            classifier = 'sources'
+            from sourceSets.main.allSource
+        }
+
+        task javadocJar(type: Jar, dependsOn: javadoc) {
+            classifier = 'javadoc'
+            from javadoc.destinationDir
+        }
+
+        publishing {
+            publications {
+                mavenJava(MavenPublication) {
+                    from components.java
+                    artifact sourcesJar
+                    artifact javadocJar
+                    pom {
+                        name = project.name
+                        url = 'https://github.com/citygml4j/citygml-tools'
+                        licenses {
+                            license {
+                                name = 'The Apache License, Version 2.0'
+                                url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                                distribution = 'repo'
+                            }
+                        }
+                        developers {
+                            developer {
+                                id = 'clausnagel'
+                                name = 'Claus Nagel'
+                                email = 'claus.nagel@gmail.com'
+                                roles = ['architect', 'developer']
+                                timezone = '+1'
+                            }
+                        }
+                        scm {
+                            url = 'https://github.com/citygml4j/citygml-tools'
+                            connection = 'scm:git:https://github.com/citygml4j/citygml-tools.git'
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

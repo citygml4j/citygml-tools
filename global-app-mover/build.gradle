@@ -1,4 +1,7 @@
-version '1.0-SNAPSHOT'
+plugins {
+    id 'maven-publish'
+    id 'com.jfrog.bintray' version '1.8.4'
+}
 
 dependencies {
     implementation project(':citygml-tools-common')
