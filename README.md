@@ -40,12 +40,12 @@ following:
     > citygml-tools help [COMMAND]
 
 ## Using citygml-tools as library
-citygml-tools is not just a CLI program. The following operations are also available as separate JAR libraries.
+citygml-tools is not just a CLI program. The following operations are also available as separate JAR libraries:
 
 * move-global-apps
 * texture-clipper
 
-Simply put the library file from the `lib` folder on your classpath to use the operation in your own citygml4j project. The `citygml-tools-common-<version>.jar` library renders a mandatory dependency for all operations.
+Simply put the library file from the `lib` folder on your classpath to use the operation in your citygml4j project. The `citygml-tools-common-<version>.jar` library renders a mandatory dependency for all operations.
 
 The libraries are also available as [Maven](http://maven.apache.org/) artifacts from the [Maven Central Repository](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22citygml4j%22) and from [JCenter](https://bintray.com/bintray/jcenter). For example, to add `move-global-apps` to your project with Maven, add the following code to your `pom.xml`. You may need to adapt the `move-global-apps` version number.
 
