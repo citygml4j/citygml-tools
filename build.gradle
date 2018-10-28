@@ -128,6 +128,21 @@ startScripts {
     }
 }
 
+distributions.main.contents {
+    from('resources/doc/README') {
+        filter(ReplaceTokens, tokens: [
+                name: project.name,
+                version: project.version,
+                date: date.format('yyyy-MM-dd'),
+                copyright: date.format('yyyy'),
+                javaCompatibility: sourceCompatibility.toString()
+        ])
+    }
+    into('license') {
+        from 'LICENSE'
+    }
+}
+
 installDist {
     doLast {
         mkdir "$destinationDir/ade-extensions"
