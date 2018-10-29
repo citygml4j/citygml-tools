@@ -1,5 +1,5 @@
 .gradle/
-gradle.properties
+/gradle.properties
 build/
 
 # Eclipse

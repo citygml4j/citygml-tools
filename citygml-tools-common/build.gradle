@@ -3,8 +3,6 @@ plugins {
     id 'com.jfrog.bintray' version '1.8.4'
 }
 
-description 'Common utilities for the citygml4j based CityGML tools'
-
 bintray {
     user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
     key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
