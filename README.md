@@ -47,7 +47,7 @@ citygml-tools is not just a CLI program. The following operations are also avail
 
 Simply put the library file from the `lib` folder on your classpath to use the operation in your citygml4j project. The `citygml-tools-common-<version>.jar` library renders a mandatory dependency for all operations.
 
-The libraries are also available as [Maven](http://maven.apache.org/) artifacts from the [Maven Central Repository](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22citygml4j%22) and from [JCenter](https://bintray.com/bintray/jcenter). For example, to add `move-global-apps` to your project with Maven, add the following code to your `pom.xml`. You may need to adapt the `move-global-apps` version number.
+The libraries are also available as [Maven](http://maven.apache.org/) artifacts from the [Maven Central Repository](https://search.maven.org/search?q=org.citygml4j.tools) and from [JCenter](https://bintray.com/bintray/jcenter). For example, to add `move-global-apps` to your project with Maven, add the following code to your `pom.xml`. You may need to adapt the `move-global-apps` version number.
 
 ```xml
 <dependency>
