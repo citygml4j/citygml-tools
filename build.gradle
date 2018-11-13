@@ -6,7 +6,7 @@ plugins {
     id 'distribution'
 }
 
-version '1.0.0'
+version '1.0.1'
 mainClassName = 'org.citygml4j.tools.CityGMLTools'
 
 ext {
@@ -142,10 +142,7 @@ distributions.main.contents {
     into('license') {
         from 'LICENSE'
     }
-}
-
-installDist {
-    doLast {
-        mkdir "$destinationDir/ade-extensions"
+    from(file("$buildDir/tmp/dir")) {
+        mkdir "$buildDir/tmp/dir/ade-extensions"
     }
 }
