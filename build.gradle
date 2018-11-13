@@ -30,7 +30,7 @@ subprojects {
     apply plugin: 'java-library'
 
     dependencies {
-        implementation 'org.citygml4j:citygml4j:2.8.0'
+        implementation 'org.citygml4j:citygml4j:2.8.1'
     }
 
     plugins.withType(MavenPublishPlugin) {
@@ -115,8 +115,8 @@ dependencies {
     implementation project(':citygml-tools-common')
     implementation project(':global-app-mover')
     implementation project(':texture-clipper')
-    implementation 'org.citygml4j:citygml4j:2.8.0'
-    implementation 'info.picocli:picocli:3.7.0'
+    implementation 'org.citygml4j:citygml4j:2.8.1'
+    implementation 'info.picocli:picocli:3.8.0'
 }
 
 startScripts {
