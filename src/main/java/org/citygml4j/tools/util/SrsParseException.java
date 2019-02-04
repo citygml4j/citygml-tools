@@ -1,17 +1,10 @@
 /*
- * 3D City Database - The Open Source CityGML Database
- * http://www.3dcitydb.org/
+ * citygml-tools - Collection of tools for processing CityGML files
+ * https://github.com/citygml4j/citygml-tools
  *
- * Copyright 2013 - 2019
- * Chair of Geoinformatics
- * Technical University of Munich, Germany
- * https://www.gis.bgu.tum.de/
+ * citygml-tools is part of the citygml4j project
  *
- * The 3D City Database is jointly developed with the following
- * cooperation partners:
- *
- * virtualcitySYSTEMS GmbH, Berlin <http://www.virtualcitysystems.de/>
- * M.O.S.S. Computer Grafik Systeme GmbH, Taufkirchen <http://www.moss.de/>
+ * Copyright 2013-2019 Claus Nagel <claus.nagel@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +18,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.citygml4j.tools.util;
 
 public class SrsParseException extends Exception {
