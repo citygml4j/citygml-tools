@@ -126,13 +126,14 @@ public class ToCityJSONCommand implements CityGMLTool {
                 continue;
             }
 
-            try (CityGMLReader reader = in.createCityGMLReader(inputFile.toFile());
-                 CityJSONWriter writer = out.createCityJSONWriter(outputFile.toFile())) {
-
+            CityGML cityGML = null;
+            try (CityGMLReader reader = in.createCityGMLReader(inputFile.toFile())) {
                 log.debug("Reading CityJSON input file into main memory.");
-                CityGML cityGML = reader.nextFeature();
+                cityGML = reader.nextFeature();
+            }
 
-                if (cityGML instanceof CityModel) {
+            if (cityGML instanceof CityModel) {
+                try (CityJSONWriter writer = out.createCityJSONWriter(outputFile.toFile())) {
                     CityModel cityModel = (CityModel) cityGML;
 
                     // retrieve metadata
@@ -141,9 +142,9 @@ public class ToCityJSONCommand implements CityGMLTool {
                     // convert and write city model
                     writer.write(cityModel);
                     log.debug("Successfully converted CityGML file into CityJSON.");
-                } else
-                    log.error("Failed to find a root CityModel element. Skipping CityGML file.");
-            }
+                }
+            } else
+                log.error("Failed to find a root CityModel element. Skipping CityGML file.");
         }
 
         return true;
