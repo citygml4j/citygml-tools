@@ -60,6 +60,17 @@ public class Logger {
 			System.out.println(getPrefix(type) + msg);
 	}
 
+	private void log(LogLevel type, String msg, Throwable e) {
+		if (consoleLogLevel.ordinal() >= type.ordinal()) {
+			System.out.println(getPrefix(type) + msg);
+
+			do {
+				if (e.getMessage() != null)
+					log(LogLevel.ERROR, "Cause: " + e.getClass().getName() + ": " + e.getMessage());
+			} while ((e = e.getCause()) != null);
+		}
+	}
+
 	public void debug(String msg) {		
 		log(LogLevel.DEBUG, msg);
 	}
@@ -73,19 +84,19 @@ public class Logger {
 		warnings.incrementAndGet();
 	}
 
+	public void warn(String msg, Throwable e) {
+		log(LogLevel.WARN, msg, e);
+		warnings.incrementAndGet();
+	}
+
 	public void error(String msg) {
 		log(LogLevel.ERROR, msg);
 		errors.incrementAndGet();
 	}
 
 	public void error(String msg, Throwable e) {
-		log(LogLevel.ERROR, msg);
+		log(LogLevel.ERROR, msg, e);
 		errors.incrementAndGet();
-
-		do {
-			if (e.getMessage() != null)
-				log(LogLevel.ERROR, "Cause: " + e.getClass().getName() + ": " + e.getMessage());
-		} while ((e = e.getCause()) != null);
 	}
 
 	public void logStackTrace(Throwable e) {

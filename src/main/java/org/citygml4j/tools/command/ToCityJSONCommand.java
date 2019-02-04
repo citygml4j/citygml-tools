@@ -22,6 +22,7 @@
 package org.citygml4j.tools.command;
 
 import org.citygml4j.CityGMLContext;
+import org.citygml4j.binding.cityjson.metadata.MetadataType;
 import org.citygml4j.builder.cityjson.CityJSONBuilder;
 import org.citygml4j.builder.cityjson.json.io.writer.CityJSONOutputFactory;
 import org.citygml4j.builder.cityjson.json.io.writer.CityJSONWriter;
@@ -30,8 +31,12 @@ import org.citygml4j.builder.cityjson.marshal.util.DefaultVerticesBuilder;
 import org.citygml4j.builder.cityjson.marshal.util.DefaultVerticesTransformer;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.model.citygml.CityGML;
+import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.CityModel;
+import org.citygml4j.model.citygml.core.CityObjectMember;
 import org.citygml4j.tools.common.log.Logger;
+import org.citygml4j.tools.util.SrsNameParser;
+import org.citygml4j.tools.util.SrsParseException;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.xml.io.CityGMLInputFactory;
 import org.citygml4j.xml.io.reader.CityGMLReader;
@@ -47,6 +52,9 @@ import java.util.List;
         description = "Converts CityGML files into CityJSON.",
         mixinStandardHelpOptions = true)
 public class ToCityJSONCommand implements CityGMLTool {
+
+    @CommandLine.Option(names = "--epsg", paramLabel = "<code>", description = "EPSG code to be used as CRS metadata.")
+    private int epsg = 0;
 
     @CommandLine.Option(names = "--vertices-digits", paramLabel = "<digits>", description = "Number of digits to keep for geometry vertices (default: ${DEFAULT-VALUE}).")
     private int verticesDigites = 3;
@@ -124,14 +132,66 @@ public class ToCityJSONCommand implements CityGMLTool {
                 log.debug("Reading CityJSON input file into main memory.");
                 CityGML cityGML = reader.nextFeature();
 
-                if (cityGML instanceof CityModel)
-                    writer.write((CityModel) cityGML);
+                if (cityGML instanceof CityModel) {
+                    CityModel cityModel = (CityModel) cityGML;
 
-                log.debug("Successfully converted CityGML file into CityJSON.");
+                    // retrieve metadata
+                    writer.setMetadata(getMetadata(cityModel, log));
+
+                    // convert and write city model
+                    writer.write(cityModel);
+                    log.debug("Successfully converted CityGML file into CityJSON.");
+                } else
+                    log.error("Failed to find a root CityModel element. Skipping CityGML file.");
             }
         }
 
         return true;
+    }
+
+    private MetadataType getMetadata(CityModel cityModel, Logger log) {
+        MetadataType metadata = new MetadataType();
+
+        if (epsg > 0)
+            metadata.setReferenceSystem(epsg);
+        else {
+            String srsName = null;
+
+            if (cityModel.isSetBoundedBy()
+                    && cityModel.getBoundedBy().isSetEnvelope()
+                    && cityModel.getBoundedBy().getEnvelope().isSetSrsName()) {
+                srsName = cityModel.getBoundedBy().getEnvelope().getSrsName();
+            } else {
+                for (CityObjectMember member : cityModel.getCityObjectMember()) {
+                    if (member.isSetCityObject()) {
+                        AbstractCityObject cityObject = member.getCityObject();
+                        if (cityObject.isSetBoundedBy()
+                                && cityObject.getBoundedBy().isSetEnvelope()
+                                && cityObject.getBoundedBy().getEnvelope().isSetSrsName()) {
+                            String tmp = cityObject.getBoundedBy().getEnvelope().getSrsName();
+                            if (srsName == null)
+                                srsName = tmp;
+                            else if (!srsName.equals(tmp)) {
+                                log.debug("Failed to retrieve EPSG code due to multiple CRSs used in the input file.");
+                                srsName = null;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (srsName != null) {
+                try {
+                    log.debug("Found CRS name '" + srsName + "'.");
+                    metadata.setReferenceSystem(new SrsNameParser().getEPSGCode(srsName));
+                } catch (SrsParseException e) {
+                    log.warn("Failed to retrieve EPSG code from the CRS name '" + srsName + "'.", e);
+                }
+            }
+        }
+
+        return metadata;
     }
 
     @Override
