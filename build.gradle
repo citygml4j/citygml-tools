@@ -9,14 +9,14 @@ plugins {
 version '1.0.1'
 mainClassName = 'org.citygml4j.tools.CityGMLTools'
 
+sourceCompatibility = 1.8
+
 ext {
     date = new Date()
 }
 
 allprojects {
     group 'org.citygml4j.tools'
-
-    sourceCompatibility = 1.8
 
     repositories {
         maven {
@@ -28,6 +28,8 @@ allprojects {
 
 subprojects {
     apply plugin: 'java-library'
+
+    sourceCompatibility = 1.8
 
     dependencies {
         implementation 'org.citygml4j:citygml4j:2.9.0'
