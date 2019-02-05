@@ -49,6 +49,9 @@ public class FromCityJSONCommand implements CityGMLTool {
     @CommandLine.Option(names = "--overwrite-files", description = "Overwrite output file(s).")
     private boolean overwriteOutputFiles;
 
+    @CommandLine.Option(names = "--map-unknown-extensions", description = "Map unknown extensions to generic city objects and attributes.")
+    private boolean mapUnknwonExtensions;
+
     @CommandLine.Mixin
     private StandardCityGMLOutputOptions cityGMLOutput;
 
@@ -65,6 +68,11 @@ public class FromCityJSONCommand implements CityGMLTool {
 
         CityJSONBuilder builder = CityGMLContext.getInstance().createCityJSONBuilder();
         CityJSONInputFactory in = builder.createCityJSONInputFactory();
+
+        if (mapUnknwonExtensions) {
+            log.debug("Mapping unknown extensions to generic city objects and attributes.");
+            in.setProcessUnknownExtensions(mapUnknwonExtensions);
+        }
 
         CityGMLVersion targetVersion = cityGMLOutput.getVersion();
         CityGMLOutputFactory out = main.getCityGMLBuilder().createCityGMLOutputFactory(targetVersion);
@@ -90,12 +98,13 @@ public class FromCityJSONCommand implements CityGMLTool {
                 continue;
             }
 
-            try (CityJSONReader reader = in.createCityJSONReader(inputFile.toFile());
-                 CityGMLWriter writer = out.createCityGMLWriter(outputFile.toFile())) {
-
+            CityModel cityModel;
+            try (CityJSONReader reader = in.createCityJSONReader(inputFile.toFile())) {
                 log.debug("Reading CityJSON input file into main memory.");
-                CityModel cityModel = reader.read();
+                cityModel = reader.read();
+            }
 
+            try (CityGMLWriter writer = out.createCityGMLWriter(outputFile.toFile())) {
                 writer.setPrefixes(targetVersion);
                 writer.setSchemaLocations(targetVersion);
                 writer.setDefaultNamespace(targetVersion.getCityGMLModule(CityGMLModuleType.CORE));

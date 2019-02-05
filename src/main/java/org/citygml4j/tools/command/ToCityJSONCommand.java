@@ -127,7 +127,7 @@ public class ToCityJSONCommand implements CityGMLTool {
                 continue;
             }
 
-            CityGML cityGML = null;
+            CityGML cityGML;
             try (CityGMLReader reader = in.createCityGMLReader(inputFile.toFile())) {
                 log.debug("Reading CityJSON input file into main memory.");
                 cityGML = reader.nextFeature();
