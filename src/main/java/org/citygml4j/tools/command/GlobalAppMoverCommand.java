@@ -4,7 +4,7 @@
  *
  * citygml-tools is part of the citygml4j project
  *
- * Copyright 2013-2019 Claus Nagel <claus.nagel@gmail.com>
+ * Copyright 2018-2019 Claus Nagel <claus.nagel@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ import java.util.UUID;
 
 @CommandLine.Command(name = "move-global-apps",
         description = "Converts global appearances to local ones.",
+        versionProvider = MainCommand.class,
         mixinStandardHelpOptions = true)
 public class GlobalAppMoverCommand implements CityGMLTool {
 

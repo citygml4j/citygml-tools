@@ -121,6 +121,14 @@ dependencies {
     implementation 'info.picocli:picocli:3.9.3'
 }
 
+jar {
+    manifest {
+        attributes('Implementation-Title': project.name,
+                'Implementation-Version': project.version
+        )
+    }
+}
+
 startScripts {
     defaultJvmOpts = ['-Xms1G']
     doLast {

@@ -4,7 +4,7 @@
  *
  * citygml-tools is part of the citygml4j project
  *
- * Copyright 2013-2019 Claus Nagel <claus.nagel@gmail.com>
+ * Copyright 2018-2019 Claus Nagel <claus.nagel@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,13 @@ import picocli.CommandLine;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.ServiceLoader;
 import java.util.stream.Stream;
 
 @CommandLine.Command(name = "citygml-tools",
         description = "Collection of tools for processing CityGML files.",
-        version = {"hallo", "1.0", "bla"},
+        versionProvider = MainCommand.class,
         mixinStandardHelpOptions = true,
         subcommands = {
                 CommandLine.HelpCommand.class,
@@ -47,7 +48,7 @@ import java.util.stream.Stream;
                 FromCityJSONCommand.class,
                 ToCityJSONCommand.class
         })
-public class MainCommand implements CityGMLTool {
+public class MainCommand implements CityGMLTool, CommandLine.IVersionProvider {
 
     @CommandLine.Option(names = "--log", description = "Log level: debug, info, warn, error (default: ${DEFAULT-VALUE}).")
     private String logLevel = "info";
@@ -100,5 +101,14 @@ public class MainCommand implements CityGMLTool {
     @Override
     public void validate() throws CommandLine.ParameterException {
         // nothing to do
+    }
+
+    @Override
+    public String[] getVersion() throws Exception {
+        return new String[] {
+                getClass().getPackage().getImplementationTitle() + ", version " +
+                        getClass().getPackage().getImplementationVersion() + "\n" +
+                        "(c) 2018-" + LocalDate.now().getYear() + " Claus Nagel <claus.nagel@gmail.com>\n"
+        };
     }
 }
