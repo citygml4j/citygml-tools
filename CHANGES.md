@@ -1,7 +1,7 @@
 Change Log
 ==========
 
-### 1.1.0 - tbd
+### 1.1.0 - 2019-02-06
 
 ##### Additions
 * The `from-cityjson` and `to-cityjson` commands now support CityJSON version 0.9.
