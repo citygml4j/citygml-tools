@@ -6,9 +6,9 @@ CityGML files.
 citygml-tools is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0). See the `LICENSE` file for more details.
 
 ## Latest release
-The latest stable release of citygml-tools is 1.0.
+The latest stable release of citygml-tools is 1.1.0.
 
-Download the citygml-tools 1.0 release binaries [here](https://github.com/citygml4j/citygml-tools/releases/download/v1.0.0/citygml-tools-1.0.0.zip). Previous releases are available from the [releases section](https://github.com/citygml4j/citygml-tools/releases).
+Download the citygml-tools 1.1.0 release binaries [here](https://github.com/citygml4j/citygml-tools/releases/download/v1.1.0/citygml-tools-1.1.0.zip). Previous releases are available from the [releases section](https://github.com/citygml4j/citygml-tools/releases).
 
 ## Contributing
 * To file bugs found in the software create a GitHub issue.
