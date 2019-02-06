@@ -48,9 +48,19 @@ subprojects {
         }
 
         javadoc {
-            options.overview "$buildDir/tmp/javadoc/overview.html"
-            options.addStringOption('doctitle', project.name + ' - ' + project.version)
-            options.addStringOption('Xdoclint:none', '-quiet')
+            options {
+                overview "$buildDir/tmp/javadoc/overview.html"
+                header "$project.name $project.version"
+                bottom """
+                    <a href="https://github.com/citygml4j/citygml-tools/issues">Report a bug or suggest an enhancement</a><br>
+                    ${project.name} is open source and licensed under the <a target="_blank" href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a><br>
+                    Official website and more information at: <a target="_blank" href="https://github.com/citygml4j/citygml-tools">https://github.com/citygml4j/citygml-tools</a><br>
+                    Copyright &copy; 2018-${date.format('yyyy')}<br>
+                    Claus Nagel &lt;claus.nagel@gmail.com&gt;
+                    """.replaceAll("[\r|\n]+", "")
+                addStringOption('doctitle', project.name + ' - ' + project.version)
+                addStringOption('Xdoclint:none', '-quiet')
+            }
 
             doFirst {
                 copy {
