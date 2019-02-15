@@ -21,9 +21,11 @@
 
 package org.citygml4j.tools.command;
 
+import com.google.gson.JsonSyntaxException;
 import org.citygml4j.CityGMLContext;
 import org.citygml4j.builder.cityjson.CityJSONBuilder;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONInputFactory;
+import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReadException;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReader;
 import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.module.citygml.CityGMLModuleType;
@@ -102,6 +104,12 @@ public class FromCityJSONCommand implements CityGMLTool {
             try (CityJSONReader reader = in.createCityJSONReader(inputFile.toFile())) {
                 log.debug("Reading CityJSON input file into main memory.");
                 cityModel = reader.read();
+            } catch (CityJSONReadException e) {
+                log.error("Failed to read CityJSON file.", e);
+                if (e.getCause() instanceof JsonSyntaxException)
+                    log.error("Maybe an unsupported CityJSON version?");
+
+                return false;
             }
 
             try (CityGMLWriter writer = out.createCityGMLWriter(outputFile.toFile())) {
