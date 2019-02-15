@@ -63,7 +63,7 @@ import java.util.UUID;
         mixinStandardHelpOptions = true)
 public class RemoveAppsCommand implements CityGMLTool {
 
-    @CommandLine.Option(names = "--theme", paramLabel = "<name>", description = "Only remove appearances of the given theme(s). Use 'null' for the null theme.")
+    @CommandLine.Option(names = "--theme", paramLabel = "<name>", description = "Only remove appearances of the given theme(s). Use 'null' as name for the null theme.")
     private List<String> theme;
 
     @CommandLine.Option(names = "--only-textures", description = "Only remove textures.")
@@ -159,7 +159,7 @@ public class RemoveAppsCommand implements CityGMLTool {
 
                     if (cityGML instanceof AbstractCityObject && !onlyGlobal) {
                         AbstractCityObject cityObject = (AbstractCityObject) cityGML;
-                        cityObject.accept(new FeatureWalker(){
+                        cityObject.accept(new FeatureWalker() {
                             public void visit(AbstractCityObject cityObject) {
                                 cityObject.getAppearance().removeIf(p -> process(p.getAppearance(), counter));
                                 super.visit(cityObject);
@@ -167,9 +167,7 @@ public class RemoveAppsCommand implements CityGMLTool {
                         });
 
                         writer.writeFeatureMember(cityObject);
-                    }
-
-                    else if (cityGML instanceof Appearance) {
+                    } else if (cityGML instanceof Appearance) {
                         Appearance appearance = (Appearance) cityGML;
                         if (!process(appearance, counter))
                             writer.writeFeatureMember(appearance);
@@ -210,7 +208,7 @@ public class RemoveAppsCommand implements CityGMLTool {
     }
 
     private boolean process(Appearance appearance, Map<Class<?>, Integer> counter) {
-        if (appearance != null && (theme == null || theme.contains(appearance.getTheme()))) {
+        if (appearance != null && satisfiesTheme(appearance)) {
             if (onlyMaterials == onlyTextures) {
                 counter.merge(Appearance.class, 1, Integer::sum);
                 return true;
@@ -234,6 +232,12 @@ public class RemoveAppsCommand implements CityGMLTool {
         }
 
         return false;
+    }
+
+    private boolean satisfiesTheme(Appearance appearance) {
+        return theme == null
+                || (!appearance.isSetTheme() && theme.contains("null"))
+                || theme.contains(appearance.getTheme());
     }
 
     @Override
