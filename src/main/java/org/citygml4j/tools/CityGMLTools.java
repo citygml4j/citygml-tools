@@ -48,7 +48,7 @@ public class CityGMLTools implements CommandLine.IParseResultHandler2<List<Objec
         } catch (CommandLine.ExecutionException e) {
             log.error("The following unexpected error occurred during execution.");
             log.logStackTrace(e);
-            log.info("Aborting citygml-tools.");
+            log.warn("citygml-tools execution failed.");
             System.exit(1);
         }
 
