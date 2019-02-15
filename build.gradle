@@ -12,6 +12,7 @@ mainClassName = 'org.citygml4j.tools.CityGMLTools'
 sourceCompatibility = 1.8
 
 ext {
+    citygml4jVersion = '2.9.1'
     date = new Date()
 }
 
@@ -32,7 +33,7 @@ subprojects {
     sourceCompatibility = 1.8
 
     dependencies {
-        implementation 'org.citygml4j:citygml4j:2.9.0'
+        implementation "org.citygml4j:citygml4j:$citygml4jVersion"
     }
 
     plugins.withType(MavenPublishPlugin) {
@@ -77,12 +78,12 @@ subprojects {
         }
 
         task sourcesJar(type: Jar, dependsOn: classes) {
-            classifier = 'sources'
+            archiveClassifier = 'sources'
             from sourceSets.main.allSource
         }
 
         task javadocJar(type: Jar, dependsOn: javadoc) {
-            classifier = 'javadoc'
+            archiveClassifier = 'javadoc'
             from javadoc.destinationDir
         }
 
@@ -127,7 +128,7 @@ dependencies {
     implementation project(':citygml-tools-common')
     implementation project(':global-app-mover')
     implementation project(':texture-clipper')
-    implementation 'org.citygml4j:citygml4j:2.9.0'
+    implementation "org.citygml4j:citygml4j:$citygml4jVersion"
     implementation 'info.picocli:picocli:3.9.3'
 }
 
