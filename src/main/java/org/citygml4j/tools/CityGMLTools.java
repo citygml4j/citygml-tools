@@ -43,11 +43,12 @@ public class CityGMLTools implements CommandLine.IParseResultHandler2<List<Objec
             CommandLine cmd = new CommandLine(new MainCommand());
             result = cmd.parseWithHandlers(
                     new CityGMLTools(),
-                    CommandLine.defaultExceptionHandler().andExit(1),
+                    CommandLine.defaultExceptionHandler(),
                     args);
         } catch (CommandLine.ExecutionException e) {
-            log.error("Aborting citygml-tools due to an unexpected error.");
+            log.error("The following unexpected error occurred during execution.");
             log.logStackTrace(e);
+            log.info("Aborting citygml-tools.");
             System.exit(1);
         }
 

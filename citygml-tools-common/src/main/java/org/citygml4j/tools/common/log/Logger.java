@@ -100,7 +100,7 @@ public class Logger {
 	}
 
 	public void logStackTrace(Throwable e) {
-		e.printStackTrace(System.out);
+		e.printStackTrace(System.err);
 	}
 
 	public void print(String msg) {
