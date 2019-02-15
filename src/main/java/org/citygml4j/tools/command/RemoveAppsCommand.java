@@ -4,7 +4,7 @@
  *
  * citygml-tools is part of the citygml4j project
  *
- * Copyright 2018-2019 Claus Nagel <claus.nagel@gmail.com>
+ * Copyright 2013-2019 Claus Nagel <claus.nagel@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,18 @@ package org.citygml4j.tools.command;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.CityGMLClass;
+import org.citygml4j.model.citygml.appearance.AbstractTexture;
 import org.citygml4j.model.citygml.appearance.Appearance;
+import org.citygml4j.model.citygml.appearance.GeoreferencedTexture;
+import org.citygml4j.model.citygml.appearance.ParameterizedTexture;
+import org.citygml4j.model.citygml.appearance.SurfaceDataProperty;
+import org.citygml4j.model.citygml.appearance.X3DMaterial;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.module.citygml.CityGMLModuleType;
 import org.citygml4j.model.module.citygml.CityGMLVersion;
-import org.citygml4j.tools.appmover.GlobalAppMover;
-import org.citygml4j.tools.appmover.LocalAppTarget;
-import org.citygml4j.tools.appmover.helper.GlobalAppReader;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Util;
+import org.citygml4j.util.walker.FeatureWalker;
 import org.citygml4j.xml.io.CityGMLInputFactory;
 import org.citygml4j.xml.io.CityGMLOutputFactory;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
@@ -48,17 +51,29 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-@CommandLine.Command(name = "move-global-apps",
-        description = "Converts global appearances to local ones.",
+@CommandLine.Command(name = "remove-apps",
+        description = "Remove appearances from city objects.",
         versionProvider = MainCommand.class,
         mixinStandardHelpOptions = true)
-public class GlobalAppMoverCommand implements CityGMLTool {
+public class RemoveAppsCommand implements CityGMLTool {
 
-    @CommandLine.Option(names = "--feature", description = "Feature to assign the local appearance to: top-level, nested (default: ${DEFAULT-VALUE}).")
-    private String target = "top-level";
+    @CommandLine.Option(names = "--theme", paramLabel = "<name>", description = "Only remove appearances of the given theme(s). Use 'null' for the null theme.")
+    private List<String> theme;
+
+    @CommandLine.Option(names = "--only-textures", description = "Only remove textures.")
+    private boolean onlyTextures;
+
+    @CommandLine.Option(names = "--only-materials", description = "Only remove materials.")
+    private boolean onlyMaterials;
+
+    @CommandLine.Option(names = "--only-global", description = "Only remove global appearances.")
+    private boolean onlyGlobal;
 
     @CommandLine.Option(names = "--overwrite-files", description = "Overwrite input file(s).")
     private boolean overwriteInputFiles;
@@ -73,9 +88,8 @@ public class GlobalAppMoverCommand implements CityGMLTool {
     private MainCommand main;
 
     @Override
-    public boolean execute() {
+    public boolean execute() throws Exception {
         Logger log = Logger.getInstance();
-        log.info("Executing command 'move-global-apps'.");
 
         CityGMLInputFactory in;
         try {
@@ -104,7 +118,7 @@ public class GlobalAppMoverCommand implements CityGMLTool {
 
             Path outputFile;
             if (!overwriteInputFiles) {
-                outputFile = Util.addFileNameSuffix(inputFile, "-local-app");
+                outputFile = Util.addFileNameSuffix(inputFile, "-wo-app");
                 log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
             } else {
                 outputFile = inputFile.resolveSibling("tmp-" + UUID.randomUUID());
@@ -116,28 +130,7 @@ public class GlobalAppMoverCommand implements CityGMLTool {
                 continue;
             }
 
-            GlobalAppMover appMover;
-            try {
-                log.debug("Reading global appearances from input file.");
-                GlobalAppReader reader = new GlobalAppReader(main.getCityGMLBuilder());
-                List<Appearance> appearances = reader.readGlobalApps(inputFile);
-
-                if (appearances.size() == 0) {
-                    log.info("The file does not contain global appearances. No action required.");
-                    continue;
-                }
-
-                appMover = new GlobalAppMover(appearances);
-                if (target.equalsIgnoreCase("nested"))
-                    appMover.setLocalAppTarget(LocalAppTarget.NESTED_FEATURE);
-
-                log.debug("Found " + appearances.size() + " global appearance(s).");
-            } catch (CityGMLBuilderException | CityGMLReadException e) {
-                log.error("Failed to read global appearances.", e);
-                return false;
-            }
-
-            log.debug("Reading city objects from input file and moving global appearances.");
+            log.debug("Reading city objects from input file and removing appearances.");
 
             try (CityGMLReader reader = in.createCityGMLReader(inputFile.toFile());
                  CityModelWriter writer = out.createCityModelWriter(outputFile.toFile())) {
@@ -147,6 +140,8 @@ public class GlobalAppMoverCommand implements CityGMLTool {
                 writer.setDefaultNamespace(targetVersion.getCityGMLModule(CityGMLModuleType.CORE));
                 writer.setIndentString("  ");
                 boolean isInitialized = false;
+
+                Map<Class<?>, Integer> counter = new HashMap<>();
 
                 while (reader.hasNext()) {
                     CityGML cityGML = reader.nextFeature();
@@ -162,26 +157,34 @@ public class GlobalAppMoverCommand implements CityGMLTool {
                         }
                     }
 
-                    if (cityGML instanceof AbstractCityObject) {
+                    if (cityGML instanceof AbstractCityObject && !onlyGlobal) {
                         AbstractCityObject cityObject = (AbstractCityObject) cityGML;
-                        appMover.moveGlobalApps(cityObject);
+                        cityObject.accept(new FeatureWalker(){
+                            public void visit(AbstractCityObject cityObject) {
+                                cityObject.getAppearance().removeIf(p -> process(p.getAppearance(), counter));
+                                super.visit(cityObject);
+                            }
+                        });
+
                         writer.writeFeatureMember(cityObject);
+                    }
+
+                    else if (cityGML instanceof Appearance) {
+                        Appearance appearance = (Appearance) cityGML;
+                        if (!process(appearance, counter))
+                            writer.writeFeatureMember(appearance);
                     }
                 }
 
-                if (appMover.hasRemainingGlobalApps()) {
-                    List<Appearance> appearances = appMover.getRemainingGlobalApps();
-                    log.info(appearances.size() + " global appearance(s) could not be moved due to implicit geometries.");
-                    for (Appearance appearance : appearances)
-                        writer.writeFeatureMember(appearance);
-                } else
-                    log.info("Successfully moved all global appearances.");
+                if (onlyTextures) {
+                    log.debug("Removed ParameterizedTexture elements: " + counter.getOrDefault(ParameterizedTexture.class, 0));
+                    log.debug("Removed GeoreferencedTexture elements: " + counter.getOrDefault(GeoreferencedTexture.class, 0));
+                }
 
-                log.debug("Processed city objects: " + appMover.getResultStatistic().getCityObjects());
-                log.debug("Created local appearances: " + appMover.getResultStatistic().getAppearances());
-                log.debug("Created ParameterizedTexture elements: " + appMover.getResultStatistic().getParameterizedTextures());
-                log.debug("Created GeoreferencedTexture elements: " + appMover.getResultStatistic().getGeoreferencedTextures());
-                log.debug("Created X3DMaterial elements: " + appMover.getResultStatistic().getX3DMaterials());
+                if (onlyMaterials)
+                    log.debug("Removed X3DMaterial elements: " + counter.getOrDefault(X3DMaterial.class, 0));
+
+                log.debug("Removed Appearance elements: " + counter.getOrDefault(Appearance.class, 0));
 
             } catch (CityGMLReadException e) {
                 log.error("Failed to read city objects.", e);
@@ -204,6 +207,33 @@ public class GlobalAppMoverCommand implements CityGMLTool {
         }
 
         return true;
+    }
+
+    private boolean process(Appearance appearance, Map<Class<?>, Integer> counter) {
+        if (appearance != null && (theme == null || theme.contains(appearance.getTheme()))) {
+            if (onlyMaterials == onlyTextures) {
+                counter.merge(Appearance.class, 1, Integer::sum);
+                return true;
+            }
+
+            for (Iterator<SurfaceDataProperty> iter = appearance.getSurfaceDataMember().iterator(); iter.hasNext(); ) {
+                SurfaceDataProperty property = iter.next();
+                if (onlyTextures && property.getSurfaceData() instanceof AbstractTexture) {
+                    counter.merge(property.getSurfaceData().getClass(), 1, Integer::sum);
+                    iter.remove();
+                } else if (onlyMaterials && property.getSurfaceData() instanceof X3DMaterial) {
+                    counter.merge(X3DMaterial.class, 1, Integer::sum);
+                    iter.remove();
+                }
+            }
+
+            if (!appearance.isSetSurfaceDataMember()) {
+                counter.merge(Appearance.class, 1, Integer::sum);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override

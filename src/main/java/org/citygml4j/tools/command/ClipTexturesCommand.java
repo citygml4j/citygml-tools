@@ -41,7 +41,7 @@ import java.util.List;
         description = "Clips texture images to the extent of the target surface.",
         versionProvider = MainCommand.class,
         mixinStandardHelpOptions = true)
-public class TextureClipperCommand implements CityGMLTool {
+public class ClipTexturesCommand implements CityGMLTool {
 
     @CommandLine.Option(names = {"-o", "--output"}, required = true, paramLabel = "<dir>", description = "Output directory in which to write the result files.")
     private String output;
@@ -85,7 +85,6 @@ public class TextureClipperCommand implements CityGMLTool {
     @Override
     public boolean execute() throws Exception {
         Logger log = Logger.getInstance();
-        log.info("Executing command 'clip-textures'.");
 
         CityGMLVersion targetVersion = cityGMLOutput.getVersion();
 

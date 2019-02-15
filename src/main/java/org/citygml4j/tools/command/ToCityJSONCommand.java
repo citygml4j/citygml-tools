@@ -25,6 +25,7 @@ import org.citygml4j.CityGMLContext;
 import org.citygml4j.binding.cityjson.metadata.MetadataType;
 import org.citygml4j.builder.cityjson.CityJSONBuilder;
 import org.citygml4j.builder.cityjson.json.io.writer.CityJSONOutputFactory;
+import org.citygml4j.builder.cityjson.json.io.writer.CityJSONWriteException;
 import org.citygml4j.builder.cityjson.json.io.writer.CityJSONWriter;
 import org.citygml4j.builder.cityjson.marshal.util.DefaultTextureVerticesBuilder;
 import org.citygml4j.builder.cityjson.marshal.util.DefaultVerticesBuilder;
@@ -39,6 +40,7 @@ import org.citygml4j.tools.util.SrsNameParser;
 import org.citygml4j.tools.util.SrsParseException;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.xml.io.CityGMLInputFactory;
+import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
 import picocli.CommandLine;
 
@@ -131,6 +133,9 @@ public class ToCityJSONCommand implements CityGMLTool {
             try (CityGMLReader reader = in.createCityGMLReader(inputFile.toFile())) {
                 log.debug("Reading CityJSON input file into main memory.");
                 cityGML = reader.nextFeature();
+            } catch (CityGMLReadException e) {
+                log.error("Failed to read CityGML file.", e);
+                return false;
             }
 
             if (cityGML instanceof CityModel) {
@@ -143,6 +148,9 @@ public class ToCityJSONCommand implements CityGMLTool {
                     // convert and write city model
                     writer.write(cityModel);
                     log.debug("Successfully converted CityGML file into CityJSON.");
+                } catch (CityJSONWriteException e) {
+                    log.error("Failed to write CityJSON file.", e);
+                    return false;
                 }
             } else
                 log.error("Failed to find a root CityModel element. Skipping CityGML file.");

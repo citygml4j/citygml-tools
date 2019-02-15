@@ -43,8 +43,9 @@ import java.util.stream.Stream;
         mixinStandardHelpOptions = true,
         subcommands = {
                 CommandLine.HelpCommand.class,
-                GlobalAppMoverCommand.class,
-                TextureClipperCommand.class,
+                RemoveAppsCommand.class,
+                MoveGlobalAppsCommand.class,
+                ClipTexturesCommand.class,
                 FromCityJSONCommand.class,
                 ToCityJSONCommand.class
         })

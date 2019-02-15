@@ -95,11 +95,15 @@ public class CityGMLTools implements CommandLine.IParseResultHandler2<List<Objec
         }
 
         // execute commands
+        Logger log = Logger.getInstance();
         List<Object> executionResult = new ArrayList<>();
         for (CommandLine commandLine : commandLines) {
             Object command = commandLine.getCommand();
             try {
                 CityGMLTool cityGMLTool = (CityGMLTool) command;
+                if (!(cityGMLTool instanceof MainCommand))
+                    log.info("Executing command '" + commandLine.getCommandName() + "'.");
+
                 executionResult.add(cityGMLTool.execute());
             } catch (CommandLine.ParameterException | CommandLine.ExecutionException e) {
                 throw e;

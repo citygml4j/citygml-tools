@@ -33,6 +33,7 @@ import org.citygml4j.model.module.citygml.CityGMLVersion;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.xml.io.CityGMLOutputFactory;
+import org.citygml4j.xml.io.writer.CityGMLWriteException;
 import org.citygml4j.xml.io.writer.CityGMLWriter;
 import picocli.CommandLine;
 
@@ -66,7 +67,6 @@ public class FromCityJSONCommand implements CityGMLTool {
     @Override
     public boolean execute() throws Exception {
         Logger log = Logger.getInstance();
-        log.info("Executing command 'from-cityjson'.");
 
         CityJSONBuilder builder = CityGMLContext.getInstance().createCityJSONBuilder();
         CityJSONInputFactory in = builder.createCityJSONInputFactory();
@@ -119,6 +119,9 @@ public class FromCityJSONCommand implements CityGMLTool {
                 writer.setIndentString("  ");
 
                 writer.write(cityModel);
+            } catch (CityGMLWriteException e) {
+                log.error("Failed to write CityGML file.", e);
+                return false;
             }
 
             log.debug("Successfully converted CityJSON file into CityGML.");
