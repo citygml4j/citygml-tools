@@ -45,7 +45,6 @@ import org.citygml4j.xml.io.reader.CityGMLReader;
 import picocli.CommandLine;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,9 +72,6 @@ public class ToCityJSONCommand implements CityGMLTool {
 
     @CommandLine.Option(names = "--compress-digits", paramLabel = "<digits>", description = "Number of digits to keep in compression (default: ${DEFAULT-VALUE}).")
     private int compressDigits = 3;
-
-    @CommandLine.Option(names = "--overwrite-files", description = "Overwrite output file(s).")
-    private boolean overwriteOutputFiles;
 
     @CommandLine.Mixin
     private StandardInputOptions input;
@@ -123,11 +119,6 @@ public class ToCityJSONCommand implements CityGMLTool {
 
             Path outputFile = Util.replaceFileExtension(inputFile, ".json");
             log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
-
-            if (!overwriteOutputFiles && Files.exists(outputFile)) {
-                log.error("The output file '" + outputFile.toAbsolutePath() + "' already exists. Remove it first.");
-                continue;
-            }
 
             CityGML cityGML;
             try (CityGMLReader reader = in.createCityGMLReader(inputFile.toFile())) {

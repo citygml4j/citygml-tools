@@ -38,7 +38,6 @@ import org.citygml4j.xml.io.writer.CityGMLWriter;
 import picocli.CommandLine;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,9 +47,6 @@ import java.util.List;
         versionProvider = MainCommand.class,
         mixinStandardHelpOptions = true)
 public class FromCityJSONCommand implements CityGMLTool {
-
-    @CommandLine.Option(names = "--overwrite-files", description = "Overwrite output file(s).")
-    private boolean overwriteOutputFiles;
 
     @CommandLine.Option(names = "--map-unknown-extensions", description = "Map unknown extensions to generic city objects and attributes.")
     private boolean mapUnknwonExtensions;
@@ -94,11 +90,6 @@ public class FromCityJSONCommand implements CityGMLTool {
 
             Path outputFile = outputFile = Util.replaceFileExtension(inputFile, ".gml");
             log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
-
-            if (!overwriteOutputFiles && Files.exists(outputFile)) {
-                log.error("The output file '" + outputFile.toAbsolutePath() + "' already exists. Remove it first.");
-                continue;
-            }
 
             CityModel cityModel;
             try (CityJSONReader reader = in.createCityJSONReader(inputFile.toFile())) {

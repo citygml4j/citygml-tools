@@ -75,6 +75,7 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
     @Override
     public boolean execute() {
         Logger log = Logger.getInstance();
+        String fileNameSuffix = "-local-app";
 
         CityGMLInputFactory in;
         try {
@@ -91,7 +92,7 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
         log.debug("Searching for CityGML input files.");
         List<Path> inputFiles = new ArrayList<>();
         try {
-            inputFiles.addAll(Util.listFiles(input.getFile(), "**.{gml,xml}"));
+            inputFiles.addAll(Util.listFiles(input.getFile(), "**.{gml,xml}", fileNameSuffix));
             log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
         } catch (IOException e) {
             log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
@@ -103,16 +104,11 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
 
             Path outputFile;
             if (!overwriteInputFiles) {
-                outputFile = Util.addFileNameSuffix(inputFile, "-local-app");
+                outputFile = Util.addFileNameSuffix(inputFile, fileNameSuffix);
                 log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
             } else {
                 outputFile = inputFile.resolveSibling("tmp-" + UUID.randomUUID());
                 log.debug("Writing temporary output file '" + outputFile.toAbsolutePath() + "'.");
-            }
-
-            if (Files.exists(outputFile)) {
-                log.error("The output file '" + outputFile.toAbsolutePath() + "' already exists. Remove it first.");
-                continue;
             }
 
             GlobalAppMover appMover;

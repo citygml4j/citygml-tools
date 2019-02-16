@@ -67,9 +67,6 @@ public class ClipTexturesCommand implements CityGMLTool {
     @CommandLine.Option(names = "--texture-prefix", paramLabel = "<prefix>", description = "Prefix to be used for texture file names (default: ${DEFAULT-VALUE}).")
     private String texturePrefix = "tex";
 
-    @CommandLine.Option(names = "--overwrite-files", description = "Overwrite output file(s).")
-    private boolean overwriteOutputFiles;
-
     @CommandLine.Mixin
     private StandardCityGMLOutputOptions cityGMLOutput;
 
@@ -127,11 +124,6 @@ public class ClipTexturesCommand implements CityGMLTool {
 
             Path outputFile = outputDir.resolve(rootDir.relativize(inputFile));
             log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
-
-            if (!overwriteOutputFiles && Files.exists(outputFile)) {
-                log.error("The output file '" + outputFile.toAbsolutePath() + "' already exists. Remove it first.");
-                continue;
-            }
 
             try {
                 clipper.clipTextures(inputFile, outputFile);

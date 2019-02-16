@@ -21,6 +21,8 @@
 
 package org.citygml4j.tools.util;
 
+import org.citygml4j.tools.common.log.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -44,7 +46,7 @@ public class Util {
         return path;
     }
 
-    public static List<Path> listFiles(String file, String defaultGlob) throws IOException {
+    public static List<Path> listFiles(String file, String defaultGlob, String skipSuffix) throws IOException {
         LinkedList<String> elements = parseInputFile(file);
         Path path = Paths.get(elements.pop());
 
@@ -59,11 +61,25 @@ public class Util {
         List<Path> files = new ArrayList<>();
         PathMatcher matcher = FileSystems.getDefault().getPathMatcher(glob.toString().replace("\\", "\\\\"));
         Files.walk(path).forEach((p) -> {
-            if (matcher.matches(p.toAbsolutePath().normalize()))
+            if (matcher.matches(p.toAbsolutePath().normalize())) {
+                if (skipSuffix != null && !skipSuffix.isEmpty()) {
+                    String fileName = p.getFileName().toString();
+                    int index = fileName.lastIndexOf(".");
+                    if (index > 0 && fileName.substring(0, index).endsWith(skipSuffix)) {
+                        Logger.getInstance().debug("Skipping file '" + p.toAbsolutePath() + "'.");
+                        return;
+                    }
+                }
+
                 files.add(p);
+            }
         });
 
         return files;
+    }
+
+    public static List<Path> listFiles(String file, String defaultGlob) throws IOException {
+        return listFiles(file, defaultGlob, null);
     }
 
     public static Path replaceFileExtension(Path file, String extension) {
