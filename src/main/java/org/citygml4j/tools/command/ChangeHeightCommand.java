@@ -63,8 +63,8 @@ public class ChangeHeightCommand implements CityGMLTool {
     @CommandLine.Option(names = "--offset", paramLabel = "<double>", required =  true, description = "Offset to add to height values.")
     private double offset;
 
-    @CommandLine.Option(names = "--height-mode", paramLabel = "<mode>", description = "Height mode: relative, absolute (default: ${DEFAULT-VALUE}).")
-    private String heightMode = "relative";
+    @CommandLine.Option(names = "--height-mode", paramLabel = "<mode>", description = "Height mode: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
+    private HeightMode heightMode = HeightMode.RELATIVE;
 
     @CommandLine.Option(names = "--overwrite-files", description = "Overwrite input file(s).")
     private boolean overwriteInputFiles;
@@ -119,11 +119,10 @@ public class ChangeHeightCommand implements CityGMLTool {
                 log.debug("Writing temporary output file '" + outputFile.toAbsolutePath() + "'.");
             }
 
-            HeightChanger heightChanger = HeightChanger.defaults();
+            HeightChanger heightChanger = HeightChanger.defaults()
+                    .withHeightMode(heightMode);
 
-            if (heightMode.equalsIgnoreCase("absolute")) {
-                heightChanger.withHeightMode(HeightMode.ABSOLUTE);
-
+            if (heightMode == HeightMode.ABSOLUTE) {
                 log.debug("Reading implicit geometries from input file.");
                 try {
                     heightChanger.withImplicitGeometries(implicitGeometryReader.readImplicitGeometries(inputFile));
@@ -156,7 +155,7 @@ public class ChangeHeightCommand implements CityGMLTool {
                             if (cityModelInfo.isSetBoundedBy() && cityModelInfo.getBoundedBy().isSetEnvelope()) {
                                 BoundingBox bbox = cityModelInfo.getBoundedBy().getEnvelope().toBoundingBox();
                                 if (bbox != null) {
-                                    double correction = heightMode.equalsIgnoreCase("absolute") ?
+                                    double correction = heightMode == HeightMode.ABSOLUTE ?
                                             offset - bbox.getLowerCorner().getZ() : offset;
 
                                     bbox.getLowerCorner().setZ(bbox.getLowerCorner().getZ() + correction);

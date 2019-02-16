@@ -52,15 +52,15 @@ import java.util.stream.Stream;
         })
 public class MainCommand implements CityGMLTool, CommandLine.IVersionProvider {
 
-    @CommandLine.Option(names = "--log", paramLabel = "<level>", description = "Log level: debug, info, warn, error (default: ${DEFAULT-VALUE}).")
-    private String logLevel = "info";
+    @CommandLine.Option(names = "--log", paramLabel = "<level>", description = "Log level: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
+    private LogLevel logLevel = LogLevel.INFO;
 
     private CityGMLBuilder cityGMLBuilder;
 
     @Override
     public boolean execute() throws Exception {
         Logger log = Logger.getInstance();
-        log.setLogLevel(LogLevel.fromValue(logLevel));
+        log.setLogLevel(logLevel);
 
         log.info("Starting citygml-tools.");
         CityGMLContext context = CityGMLContext.getInstance();

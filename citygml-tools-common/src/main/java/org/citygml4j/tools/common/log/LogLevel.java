@@ -21,28 +21,13 @@
 package org.citygml4j.tools.common.log;
 
 public enum LogLevel {
-	ERROR("ERROR"),
-	WARN("WARN"),
-	INFO("INFO"),
-	DEBUG("DEBUG");
-	
-	private final String value;
-
-	LogLevel(String v) {
-        value = v;
-    }
-
-    public static LogLevel fromValue(String v) {
-        for (LogLevel c: LogLevel.values()) {
-            if (c.value.equalsIgnoreCase(v))
-                return c;
-        }
-
-        return INFO;
-    }
+	ERROR,
+	WARN,
+	INFO,
+	DEBUG;
 
     @Override
     public String toString() {
-        return value;
+        return name().toLowerCase();
     }
 }

@@ -41,6 +41,8 @@ public class CityGMLTools implements CommandLine.IParseResultHandler2<List<Objec
 
         try {
             CommandLine cmd = new CommandLine(new MainCommand());
+            cmd.setCaseInsensitiveEnumValuesAllowed(true);
+
             result = cmd.parseWithHandlers(
                     new CityGMLTools(),
                     CommandLine.defaultExceptionHandler(),

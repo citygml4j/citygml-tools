@@ -51,7 +51,7 @@ public class Logger {
 		return "[" +
 				LocalDateTime.now().withNano(0).format(DateTimeFormatter.ISO_LOCAL_TIME) +
 				" " +
-				type +
+				type.name() +
 				"] ";
 	}
 
