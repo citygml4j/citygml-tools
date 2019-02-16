@@ -43,7 +43,7 @@ import java.util.stream.Stream;
         mixinStandardHelpOptions = true,
         subcommands = {
                 CommandLine.HelpCommand.class,
-                AdaptHeightCommand.class,
+                ChangeHeightCommand.class,
                 RemoveAppsCommand.class,
                 MoveGlobalAppsCommand.class,
                 ClipTexturesCommand.class,
