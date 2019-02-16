@@ -29,13 +29,16 @@ import org.citygml4j.tools.util.Constants;
 import org.citygml4j.tools.util.Util;
 import picocli.CommandLine;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 @CommandLine.Command(name = "clip-textures",
         description = "Clips texture images to the extent of the target surface.",
@@ -45,6 +48,9 @@ public class ClipTexturesCommand implements CityGMLTool {
 
     @CommandLine.Option(names = {"-o", "--output"}, required = true, paramLabel = "<dir>", description = "Output directory in which to write the result files.")
     private String output;
+
+    @CommandLine.Option(names = "--clean-output", description = "Clean output directory before processing input files.")
+    private boolean cleanOutput;
 
     @CommandLine.Option(names = "--jpeg-compression", paramLabel = "<float>", description = "Compression quality for JPEG files: value between 0.0 and 1.0 (default: ${DEFAULT-VALUE}).")
     private float jpegCompression = 1.0f;
@@ -97,6 +103,14 @@ public class ClipTexturesCommand implements CityGMLTool {
         if (outputDir.startsWith(rootDir)) {
             log.error("The output directory must not be a subfolder of or equal to the input directory.");
             return false;
+        }
+
+        // clean output folder
+        if (cleanOutput && Files.exists(outputDir)) {
+            log.debug("Cleaning output directory '" + output + "'.");
+            try (Stream<Path> paths = Files.walk(outputDir).sorted(Comparator.reverseOrder())) {
+                paths.map(Path::toFile).forEach(File::delete);
+            }
         }
 
         TextureClipper clipper = TextureClipper.defaults(main.getCityGMLBuilder())
