@@ -90,7 +90,7 @@ public class RemoveAppsCommand implements CityGMLTool {
     @Override
     public boolean execute() throws Exception {
         Logger log = Logger.getInstance();
-        String fileNameSuffix = "-wo-app";
+        String fileNameSuffix = "_wo-app";
 
         CityGMLInputFactory in;
         try {

@@ -75,7 +75,7 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
     @Override
     public boolean execute() {
         Logger log = Logger.getInstance();
-        String fileNameSuffix = "-local-app";
+        String fileNameSuffix = "_local-app";
 
         CityGMLInputFactory in;
         try {
@@ -88,6 +88,8 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
 
         CityGMLVersion targetVersion = cityGMLOutput.getVersion();
         CityGMLOutputFactory out = main.getCityGMLBuilder().createCityGMLOutputFactory(targetVersion);
+
+        GlobalAppReader globalAppReader = new GlobalAppReader(main.getCityGMLBuilder());
 
         log.debug("Searching for CityGML input files.");
         List<Path> inputFiles = new ArrayList<>();
@@ -114,9 +116,7 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
             GlobalAppMover appMover;
             try {
                 log.debug("Reading global appearances from input file.");
-                GlobalAppReader reader = new GlobalAppReader(main.getCityGMLBuilder());
-                List<Appearance> appearances = reader.readGlobalApps(inputFile);
-
+                List<Appearance> appearances = globalAppReader.readGlobalApps(inputFile);
                 if (appearances.size() == 0) {
                     log.info("The file does not contain global appearances. No action required.");
                     continue;

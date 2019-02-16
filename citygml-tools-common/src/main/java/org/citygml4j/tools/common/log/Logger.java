@@ -66,7 +66,7 @@ public class Logger {
 
 			do {
 				if (e.getMessage() != null)
-					log(LogLevel.ERROR, "Cause: " + e.getClass().getName() + ": " + e.getMessage());
+					log(type, "Cause: " + e.getClass().getName() + ": " + e.getMessage());
 			} while ((e = e.getCause()) != null);
 		}
 	}
