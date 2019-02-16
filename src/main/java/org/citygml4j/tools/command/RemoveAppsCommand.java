@@ -235,9 +235,4 @@ public class RemoveAppsCommand implements CityGMLTool {
                 || (!appearance.isSetTheme() && theme.contains("null"))
                 || theme.contains(appearance.getTheme());
     }
-
-    @Override
-    public void validate() throws CommandLine.ParameterException {
-        // nothing to do
-    }
 }

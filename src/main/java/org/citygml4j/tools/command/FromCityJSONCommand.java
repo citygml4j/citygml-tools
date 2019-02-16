@@ -120,9 +120,4 @@ public class FromCityJSONCommand implements CityGMLTool {
 
         return true;
     }
-
-    @Override
-    public void validate() throws CommandLine.ParameterException {
-        // nothing to do
-    }
 }

@@ -194,9 +194,4 @@ public class ToCityJSONCommand implements CityGMLTool {
 
         return metadata;
     }
-
-    @Override
-    public void validate() throws CommandLine.ParameterException {
-        // nothing to do
-    }
 }

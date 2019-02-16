@@ -25,5 +25,8 @@ import picocli.CommandLine;
 
 public interface CityGMLTool {
     boolean execute() throws Exception;
-    void validate() throws CommandLine.ParameterException;
+
+    default void validate() throws CommandLine.ParameterException {
+        // nothing to do
+    }
 }

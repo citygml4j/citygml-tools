@@ -100,11 +100,6 @@ public class MainCommand implements CityGMLTool, CommandLine.IVersionProvider {
     }
 
     @Override
-    public void validate() throws CommandLine.ParameterException {
-        // nothing to do
-    }
-
-    @Override
     public String[] getVersion() throws Exception {
         return new String[] {
                 getClass().getPackage().getImplementationTitle() + ", version " +
