@@ -82,7 +82,7 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
             in = main.getCityGMLBuilder().createCityGMLInputFactory();
             in.setProperty(CityGMLInputFactory.FEATURE_READ_MODE, FeatureReadMode.SPLIT_PER_COLLECTION_MEMBER);
         } catch (CityGMLBuilderException e) {
-            log.error("Failed to create CityGML input factory", e);
+            log.error("Failed to create CityGML input factory.", e);
             return false;
         }
 

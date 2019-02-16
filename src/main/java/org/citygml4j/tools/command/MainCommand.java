@@ -43,6 +43,7 @@ import java.util.stream.Stream;
         mixinStandardHelpOptions = true,
         subcommands = {
                 CommandLine.HelpCommand.class,
+                AdaptHeightCommand.class,
                 RemoveAppsCommand.class,
                 MoveGlobalAppsCommand.class,
                 ClipTexturesCommand.class,
@@ -51,7 +52,7 @@ import java.util.stream.Stream;
         })
 public class MainCommand implements CityGMLTool, CommandLine.IVersionProvider {
 
-    @CommandLine.Option(names = "--log", description = "Log level: debug, info, warn, error (default: ${DEFAULT-VALUE}).")
+    @CommandLine.Option(names = "--log", paramLabel = "<level>", description = "Log level: debug, info, warn, error (default: ${DEFAULT-VALUE}).")
     private String logLevel = "info";
 
     private CityGMLBuilder cityGMLBuilder;

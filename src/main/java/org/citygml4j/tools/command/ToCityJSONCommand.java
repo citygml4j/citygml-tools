@@ -88,7 +88,7 @@ public class ToCityJSONCommand implements CityGMLTool {
         try {
             in = main.getCityGMLBuilder().createCityGMLInputFactory();
         } catch (CityGMLBuilderException e) {
-            log.error("Failed to create CityGML input factory", e);
+            log.error("Failed to create CityGML input factory.", e);
             return false;
         }
 
