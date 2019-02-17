@@ -1,0 +1,31 @@
+plugins {
+    id 'maven-publish'
+    id 'com.jfrog.bintray' version '1.8.4'
+}
+
+dependencies {
+    implementation project(':citygml-tools-common')
+    implementation 'org.geotools:gt-epsg-extension:20.2'
+    implementation 'org.geotools:gt-epsg-hsql:20.2'
+    implementation 'org.geotools:gt-referencing:20.2'
+}
+
+bintray {
+    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+
+    publications = ['mavenJava']
+    pkg {
+        repo = 'maven'
+        name = project.name
+        desc = project.description
+        websiteUrl = 'https://github.com/citygml4j/citygml-tools'
+        vcsUrl = 'scm:git:https://github.com/citygml4j/citygml-tools.git'
+        issueTrackerUrl = 'https://github.com/citygml4j/citygml-tools/issues'
+        labels = ['citygml', 'tools', 'citygml4j', 'java', 'gis', 'ogc']
+        licenses = ['Apache-2.0']
+        version {
+            name = project.version
+        }
+    }
+}
