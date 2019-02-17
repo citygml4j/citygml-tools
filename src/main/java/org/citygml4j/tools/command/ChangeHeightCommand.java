@@ -79,7 +79,7 @@ public class ChangeHeightCommand implements CityGMLTool {
     private MainCommand main;
 
     @Override
-    public boolean execute() {
+    public boolean execute() throws Exception {
         Logger log = Logger.getInstance();
         String fileNameSuffix = "_adapted-height";
 
