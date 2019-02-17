@@ -82,7 +82,6 @@ public class ToCityJSONCommand implements CityGMLTool {
     @Override
     public boolean execute() throws Exception {
         Logger log = Logger.getInstance();
-        log.info("Executing command 'to-cityjson'.");
 
         CityGMLInputFactory in;
         try {
