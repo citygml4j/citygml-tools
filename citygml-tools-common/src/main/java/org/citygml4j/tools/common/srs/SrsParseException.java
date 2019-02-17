@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.util;
+package org.citygml4j.tools.common.srs;
 
 public class SrsParseException extends Exception {
 	private static final long serialVersionUID = -2099896956174757521L;
