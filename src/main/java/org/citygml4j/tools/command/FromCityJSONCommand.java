@@ -85,7 +85,7 @@ public class FromCityJSONCommand implements CityGMLTool {
             Path inputFile = inputFiles.get(i);
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file '" + inputFile.toAbsolutePath() + "'.");
 
-            Path outputFile = outputFile = Util.replaceFileExtension(inputFile, ".gml");
+            Path outputFile = Util.replaceFileExtension(inputFile, ".gml");
             log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
 
             CityModel cityModel;

@@ -26,6 +26,8 @@ import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.CityGMLClass;
 import org.citygml4j.model.citygml.appearance.Appearance;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
+import org.citygml4j.model.citygml.core.CityModel;
+import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.tools.appmover.GlobalAppMover;
 import org.citygml4j.tools.appmover.LocalAppTarget;
 import org.citygml4j.tools.common.helper.GlobalAppReader;
@@ -140,6 +142,9 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
                         appMover.moveGlobalApps(cityObject);
                         writer.writeFeatureMember(cityObject);
                     }
+
+                    else if (cityGML instanceof AbstractFeature && !(cityGML instanceof CityModel))
+                        writer.writeFeatureMember((AbstractFeature) cityGML);
                 }
 
                 if (appMover.hasRemainingGlobalApps()) {

@@ -148,13 +148,12 @@ public class ChangeHeightCommand implements CityGMLTool {
                         }
                     }
 
-                    if (cityGML instanceof AbstractFeature
-                            && !(cityGML instanceof CityModel)
-                            && !(cityGML instanceof Appearance)) {
+                    if (cityGML instanceof AbstractFeature && !(cityGML instanceof CityModel)) {
                         AbstractFeature feature = (AbstractFeature) cityGML;
 
                         try {
-                            heightChanger.changeHeight(feature, offset);
+                            if (!(feature instanceof Appearance))
+                                heightChanger.changeHeight(feature, offset);
                         } catch (ChangeHeightException e) {
                             log.warn("Not changing height for " + cityGML.getCityGMLClass() + " with gml:id '" +
                                     feature.getId() + "'.", e);

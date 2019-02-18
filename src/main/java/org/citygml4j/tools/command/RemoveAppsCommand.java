@@ -31,6 +31,8 @@ import org.citygml4j.model.citygml.appearance.ParameterizedTexture;
 import org.citygml4j.model.citygml.appearance.SurfaceDataProperty;
 import org.citygml4j.model.citygml.appearance.X3DMaterial;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
+import org.citygml4j.model.citygml.core.CityModel;
+import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.util.walker.FeatureWalker;
@@ -130,21 +132,29 @@ public class RemoveAppsCommand implements CityGMLTool {
                         }
                     }
 
-                    if (cityGML instanceof AbstractCityObject && !onlyGlobal) {
+                    if (cityGML instanceof AbstractCityObject) {
                         AbstractCityObject cityObject = (AbstractCityObject) cityGML;
-                        cityObject.accept(new FeatureWalker() {
-                            public void visit(AbstractCityObject cityObject) {
-                                cityObject.getAppearance().removeIf(p -> process(p.getAppearance(), counter));
-                                super.visit(cityObject);
-                            }
-                        });
+
+                        if (!onlyGlobal) {
+                            cityObject.accept(new FeatureWalker() {
+                                public void visit(AbstractCityObject cityObject) {
+                                    cityObject.getAppearance().removeIf(p -> process(p.getAppearance(), counter));
+                                    super.visit(cityObject);
+                                }
+                            });
+                        }
 
                         writer.writeFeatureMember(cityObject);
-                    } else if (cityGML instanceof Appearance) {
+                    }
+
+                    else if (cityGML instanceof Appearance) {
                         Appearance appearance = (Appearance) cityGML;
                         if (!process(appearance, counter))
                             writer.writeFeatureMember(appearance);
                     }
+
+                    else if (cityGML instanceof AbstractFeature && !(cityGML instanceof CityModel))
+                        writer.writeFeatureMember((AbstractFeature) cityGML);
                 }
 
                 if (onlyTextures) {
