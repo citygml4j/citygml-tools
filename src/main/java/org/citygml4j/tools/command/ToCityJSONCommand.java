@@ -73,6 +73,9 @@ public class ToCityJSONCommand implements CityGMLTool {
     @CommandLine.Option(names = "--compress-digits", paramLabel = "<digits>", description = "Number of digits to keep in compression (default: ${DEFAULT-VALUE}).")
     private int compressDigits = 3;
 
+    @CommandLine.Option(names = {"--pretty-print"}, description = "Format and indent CityJSON file.")
+    private boolean prettyPrint;
+
     @CommandLine.Mixin
     private StandardInputOptions input;
 
@@ -132,6 +135,10 @@ public class ToCityJSONCommand implements CityGMLTool {
             if (cityGML instanceof CityModel) {
                 try (CityJSONWriter writer = out.createCityJSONWriter(outputFile.toFile())) {
                     CityModel cityModel = (CityModel) cityGML;
+
+                    // pretty print
+                    if (prettyPrint)
+                        writer.setIndent("  ");
 
                     // retrieve metadata
                     writer.setMetadata(getMetadata(cityModel, log));
