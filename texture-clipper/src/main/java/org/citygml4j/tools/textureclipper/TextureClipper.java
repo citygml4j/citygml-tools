@@ -168,6 +168,7 @@ public class TextureClipper {
         try {
             in = builder.createCityGMLInputFactory();
             in.setProperty(CityGMLInputFactory.FEATURE_READ_MODE, FeatureReadMode.SPLIT_PER_COLLECTION_MEMBER);
+            in.setProperty(CityGMLInputFactory.SKIP_GENERIC_ADE_CONTENT, true);
         } catch (CityGMLBuilderException e) {
             throw new TextureClippingException("Failed to create CityGML input factory", e);
         }
