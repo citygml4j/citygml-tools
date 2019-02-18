@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.util;
+package org.citygml4j.tools.common.srs;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

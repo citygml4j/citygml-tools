@@ -26,18 +26,15 @@ import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.CityGMLClass;
 import org.citygml4j.model.citygml.appearance.Appearance;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
-import org.citygml4j.model.module.citygml.CityGMLModuleType;
-import org.citygml4j.model.module.citygml.CityGMLVersion;
+import org.citygml4j.model.citygml.core.CityModel;
+import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.tools.appmover.GlobalAppMover;
 import org.citygml4j.tools.appmover.LocalAppTarget;
 import org.citygml4j.tools.common.helper.GlobalAppReader;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Util;
-import org.citygml4j.xml.io.CityGMLInputFactory;
-import org.citygml4j.xml.io.CityGMLOutputFactory;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
-import org.citygml4j.xml.io.reader.FeatureReadMode;
 import org.citygml4j.xml.io.reader.ParentInfo;
 import org.citygml4j.xml.io.writer.CityGMLWriteException;
 import org.citygml4j.xml.io.writer.CityModelInfo;
@@ -73,21 +70,9 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
     private MainCommand main;
 
     @Override
-    public boolean execute() {
+    public boolean execute() throws Exception {
         Logger log = Logger.getInstance();
         String fileNameSuffix = "_local-app";
-
-        CityGMLInputFactory in;
-        try {
-            in = main.getCityGMLBuilder().createCityGMLInputFactory();
-            in.setProperty(CityGMLInputFactory.FEATURE_READ_MODE, FeatureReadMode.SPLIT_PER_COLLECTION_MEMBER);
-        } catch (CityGMLBuilderException e) {
-            log.error("Failed to create CityGML input factory.", e);
-            return false;
-        }
-
-        CityGMLVersion targetVersion = cityGMLOutput.getVersion();
-        CityGMLOutputFactory out = main.getCityGMLBuilder().createCityGMLOutputFactory(targetVersion);
 
         GlobalAppReader globalAppReader = new GlobalAppReader(main.getCityGMLBuilder());
 
@@ -134,13 +119,8 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and moving global appearances.");
 
-            try (CityGMLReader reader = in.createCityGMLReader(inputFile.toFile());
-                 CityModelWriter writer = out.createCityModelWriter(outputFile.toFile())) {
-
-                writer.setPrefixes(targetVersion);
-                writer.setSchemaLocations(targetVersion);
-                writer.setDefaultNamespace(targetVersion.getCityGMLModule(CityGMLModuleType.CORE));
-                writer.setIndentString("  ");
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true);
+                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, main.getCityGMLBuilder())) {
                 boolean isInitialized = false;
 
                 while (reader.hasNext()) {
@@ -162,6 +142,9 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
                         appMover.moveGlobalApps(cityObject);
                         writer.writeFeatureMember(cityObject);
                     }
+
+                    else if (cityGML instanceof AbstractFeature && !(cityGML instanceof CityModel))
+                        writer.writeFeatureMember((AbstractFeature) cityGML);
                 }
 
                 if (appMover.hasRemainingGlobalApps()) {
@@ -178,7 +161,7 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
                 log.debug("Created GeoreferencedTexture elements: " + appMover.getResultStatistic().getGeoreferencedTextures());
                 log.debug("Created X3DMaterial elements: " + appMover.getResultStatistic().getX3DMaterials());
 
-            } catch (CityGMLReadException e) {
+            } catch (CityGMLBuilderException | CityGMLReadException e) {
                 log.error("Failed to read city objects.", e);
                 return false;
             } catch (CityGMLWriteException e) {

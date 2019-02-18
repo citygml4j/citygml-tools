@@ -28,19 +28,14 @@ import org.citygml4j.model.citygml.CityGMLClass;
 import org.citygml4j.model.citygml.appearance.Appearance;
 import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.gml.feature.AbstractFeature;
-import org.citygml4j.model.module.citygml.CityGMLModuleType;
-import org.citygml4j.model.module.citygml.CityGMLVersion;
 import org.citygml4j.tools.common.helper.ImplicitGeometryReader;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.heightchanger.ChangeHeightException;
 import org.citygml4j.tools.heightchanger.HeightChanger;
 import org.citygml4j.tools.heightchanger.HeightMode;
 import org.citygml4j.tools.util.Util;
-import org.citygml4j.xml.io.CityGMLInputFactory;
-import org.citygml4j.xml.io.CityGMLOutputFactory;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
-import org.citygml4j.xml.io.reader.FeatureReadMode;
 import org.citygml4j.xml.io.reader.ParentInfo;
 import org.citygml4j.xml.io.writer.CityGMLWriteException;
 import org.citygml4j.xml.io.writer.CityModelInfo;
@@ -79,21 +74,9 @@ public class ChangeHeightCommand implements CityGMLTool {
     private MainCommand main;
 
     @Override
-    public boolean execute() {
+    public boolean execute() throws Exception {
         Logger log = Logger.getInstance();
         String fileNameSuffix = "_adapted-height";
-
-        CityGMLInputFactory in;
-        try {
-            in = main.getCityGMLBuilder().createCityGMLInputFactory();
-            in.setProperty(CityGMLInputFactory.FEATURE_READ_MODE, FeatureReadMode.SPLIT_PER_COLLECTION_MEMBER);
-        } catch (CityGMLBuilderException e) {
-            log.error("Failed to create CityGML input factory.", e);
-            return false;
-        }
-
-        CityGMLVersion targetVersion = cityGMLOutput.getVersion();
-        CityGMLOutputFactory out = main.getCityGMLBuilder().createCityGMLOutputFactory(targetVersion);
 
         ImplicitGeometryReader implicitGeometryReader = new ImplicitGeometryReader(main.getCityGMLBuilder());
 
@@ -134,13 +117,8 @@ public class ChangeHeightCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and changing height values.");
 
-            try (CityGMLReader reader = in.createCityGMLReader(inputFile.toFile());
-                 CityModelWriter writer = out.createCityModelWriter(outputFile.toFile())) {
-
-                writer.setPrefixes(targetVersion);
-                writer.setSchemaLocations(targetVersion);
-                writer.setDefaultNamespace(targetVersion.getCityGMLModule(CityGMLModuleType.CORE));
-                writer.setIndentString("  ");
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true);
+                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, main.getCityGMLBuilder())) {
                 boolean isInitialized = false;
 
                 while (reader.hasNext()) {
@@ -170,13 +148,12 @@ public class ChangeHeightCommand implements CityGMLTool {
                         }
                     }
 
-                    if (cityGML instanceof AbstractFeature
-                            && !(cityGML instanceof CityModel)
-                            && !(cityGML instanceof Appearance)) {
+                    if (cityGML instanceof AbstractFeature && !(cityGML instanceof CityModel)) {
                         AbstractFeature feature = (AbstractFeature) cityGML;
 
                         try {
-                            heightChanger.changeHeight(feature, offset);
+                            if (!(feature instanceof Appearance))
+                                heightChanger.changeHeight(feature, offset);
                         } catch (ChangeHeightException e) {
                             log.warn("Not changing height for " + cityGML.getCityGMLClass() + " with gml:id '" +
                                     feature.getId() + "'.", e);
@@ -186,7 +163,7 @@ public class ChangeHeightCommand implements CityGMLTool {
                     }
                 }
 
-            } catch (CityGMLReadException e) {
+            } catch (CityGMLBuilderException | CityGMLReadException e) {
                 log.error("Failed to read city objects.", e);
                 return false;
             } catch (CityGMLWriteException e) {

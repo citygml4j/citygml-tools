@@ -24,6 +24,7 @@ package org.citygml4j.tools.command;
 import org.citygml4j.CityGMLContext;
 import org.citygml4j.binding.cityjson.metadata.MetadataType;
 import org.citygml4j.builder.cityjson.CityJSONBuilder;
+import org.citygml4j.builder.cityjson.CityJSONBuilderException;
 import org.citygml4j.builder.cityjson.json.io.writer.CityJSONOutputFactory;
 import org.citygml4j.builder.cityjson.json.io.writer.CityJSONWriteException;
 import org.citygml4j.builder.cityjson.json.io.writer.CityJSONWriter;
@@ -36,10 +37,9 @@ import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.citygml.core.CityObjectMember;
 import org.citygml4j.tools.common.log.Logger;
-import org.citygml4j.tools.util.SrsNameParser;
-import org.citygml4j.tools.util.SrsParseException;
+import org.citygml4j.tools.common.srs.SrsNameParser;
+import org.citygml4j.tools.common.srs.SrsParseException;
 import org.citygml4j.tools.util.Util;
-import org.citygml4j.xml.io.CityGMLInputFactory;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
 import picocli.CommandLine;
@@ -73,6 +73,9 @@ public class ToCityJSONCommand implements CityGMLTool {
     @CommandLine.Option(names = "--compress-digits", paramLabel = "<digits>", description = "Number of digits to keep in compression (default: ${DEFAULT-VALUE}).")
     private int compressDigits = 3;
 
+    @CommandLine.Option(names = {"--pretty-print"}, description = "Format and indent CityJSON file.")
+    private boolean prettyPrint;
+
     @CommandLine.Mixin
     private StandardInputOptions input;
 
@@ -83,16 +86,14 @@ public class ToCityJSONCommand implements CityGMLTool {
     public boolean execute() throws Exception {
         Logger log = Logger.getInstance();
 
-        CityGMLInputFactory in;
+        CityJSONOutputFactory out;
         try {
-            in = main.getCityGMLBuilder().createCityGMLInputFactory();
-        } catch (CityGMLBuilderException e) {
-            log.error("Failed to create CityGML input factory.", e);
+            CityJSONBuilder builder = CityGMLContext.getInstance().createCityJSONBuilder();
+            out = builder.createCityJSONOutputFactory();
+        } catch (CityJSONBuilderException e) {
+            log.error("Failed to create CityJSON output factory.", e);
             return false;
         }
-
-        CityJSONBuilder builder = CityGMLContext.getInstance().createCityJSONBuilder();
-        CityJSONOutputFactory out = builder.createCityJSONOutputFactory();
 
         // set builder for geometry, template and texture vertices
         out.setVerticesBuilder(new DefaultVerticesBuilder().withSignificantDigits(verticesDigites));
@@ -120,10 +121,10 @@ public class ToCityJSONCommand implements CityGMLTool {
             log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
 
             CityGML cityGML;
-            try (CityGMLReader reader = in.createCityGMLReader(inputFile.toFile())) {
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), false)) {
                 log.debug("Reading CityJSON input file into main memory.");
                 cityGML = reader.nextFeature();
-            } catch (CityGMLReadException e) {
+            } catch (CityGMLBuilderException | CityGMLReadException e) {
                 log.error("Failed to read CityGML file.", e);
                 return false;
             }
@@ -131,6 +132,10 @@ public class ToCityJSONCommand implements CityGMLTool {
             if (cityGML instanceof CityModel) {
                 try (CityJSONWriter writer = out.createCityJSONWriter(outputFile.toFile())) {
                     CityModel cityModel = (CityModel) cityGML;
+
+                    // pretty print
+                    if (prettyPrint)
+                        writer.setIndent("  ");
 
                     // retrieve metadata
                     writer.setMetadata(getMetadata(cityModel, log));

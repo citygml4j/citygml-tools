@@ -6,13 +6,13 @@ plugins {
     id 'distribution'
 }
 
-version '1.1.0'
+version '1.2.0'
 mainClassName = 'org.citygml4j.tools.CityGMLTools'
 
 sourceCompatibility = 1.8
 
 ext {
-    citygml4jVersion = '2.9.1'
+    citygml4jVersion = '2.9.2-b190218.1904'
     date = new Date()
 }
 

@@ -31,16 +31,13 @@ import org.citygml4j.model.citygml.appearance.ParameterizedTexture;
 import org.citygml4j.model.citygml.appearance.SurfaceDataProperty;
 import org.citygml4j.model.citygml.appearance.X3DMaterial;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
-import org.citygml4j.model.module.citygml.CityGMLModuleType;
-import org.citygml4j.model.module.citygml.CityGMLVersion;
+import org.citygml4j.model.citygml.core.CityModel;
+import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.util.walker.FeatureWalker;
-import org.citygml4j.xml.io.CityGMLInputFactory;
-import org.citygml4j.xml.io.CityGMLOutputFactory;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
-import org.citygml4j.xml.io.reader.FeatureReadMode;
 import org.citygml4j.xml.io.reader.ParentInfo;
 import org.citygml4j.xml.io.writer.CityGMLWriteException;
 import org.citygml4j.xml.io.writer.CityModelInfo;
@@ -92,18 +89,6 @@ public class RemoveAppsCommand implements CityGMLTool {
         Logger log = Logger.getInstance();
         String fileNameSuffix = "_wo-app";
 
-        CityGMLInputFactory in;
-        try {
-            in = main.getCityGMLBuilder().createCityGMLInputFactory();
-            in.setProperty(CityGMLInputFactory.FEATURE_READ_MODE, FeatureReadMode.SPLIT_PER_COLLECTION_MEMBER);
-        } catch (CityGMLBuilderException e) {
-            log.error("Failed to create CityGML input factory.", e);
-            return false;
-        }
-
-        CityGMLVersion targetVersion = cityGMLOutput.getVersion();
-        CityGMLOutputFactory out = main.getCityGMLBuilder().createCityGMLOutputFactory(targetVersion);
-
         log.debug("Searching for CityGML input files.");
         List<Path> inputFiles = new ArrayList<>();
         try {
@@ -128,15 +113,9 @@ public class RemoveAppsCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and removing appearances.");
 
-            try (CityGMLReader reader = in.createCityGMLReader(inputFile.toFile());
-                 CityModelWriter writer = out.createCityModelWriter(outputFile.toFile())) {
-
-                writer.setPrefixes(targetVersion);
-                writer.setSchemaLocations(targetVersion);
-                writer.setDefaultNamespace(targetVersion.getCityGMLModule(CityGMLModuleType.CORE));
-                writer.setIndentString("  ");
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true);
+                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, main.getCityGMLBuilder())) {
                 boolean isInitialized = false;
-
                 Map<Class<?>, Integer> counter = new HashMap<>();
 
                 while (reader.hasNext()) {
@@ -153,21 +132,29 @@ public class RemoveAppsCommand implements CityGMLTool {
                         }
                     }
 
-                    if (cityGML instanceof AbstractCityObject && !onlyGlobal) {
+                    if (cityGML instanceof AbstractCityObject) {
                         AbstractCityObject cityObject = (AbstractCityObject) cityGML;
-                        cityObject.accept(new FeatureWalker() {
-                            public void visit(AbstractCityObject cityObject) {
-                                cityObject.getAppearance().removeIf(p -> process(p.getAppearance(), counter));
-                                super.visit(cityObject);
-                            }
-                        });
+
+                        if (!onlyGlobal) {
+                            cityObject.accept(new FeatureWalker() {
+                                public void visit(AbstractCityObject cityObject) {
+                                    cityObject.getAppearance().removeIf(p -> process(p.getAppearance(), counter));
+                                    super.visit(cityObject);
+                                }
+                            });
+                        }
 
                         writer.writeFeatureMember(cityObject);
-                    } else if (cityGML instanceof Appearance) {
+                    }
+
+                    else if (cityGML instanceof Appearance) {
                         Appearance appearance = (Appearance) cityGML;
                         if (!process(appearance, counter))
                             writer.writeFeatureMember(appearance);
                     }
+
+                    else if (cityGML instanceof AbstractFeature && !(cityGML instanceof CityModel))
+                        writer.writeFeatureMember((AbstractFeature) cityGML);
                 }
 
                 if (onlyTextures) {
@@ -180,7 +167,7 @@ public class RemoveAppsCommand implements CityGMLTool {
 
                 log.debug("Removed Appearance elements: " + counter.getOrDefault(Appearance.class, 0));
 
-            } catch (CityGMLReadException e) {
+            } catch (CityGMLBuilderException | CityGMLReadException e) {
                 log.error("Failed to read city objects.", e);
                 return false;
             } catch (CityGMLWriteException e) {
