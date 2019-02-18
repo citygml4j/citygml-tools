@@ -28,11 +28,8 @@ import org.citygml4j.builder.cityjson.json.io.reader.CityJSONInputFactory;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReadException;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReader;
 import org.citygml4j.model.citygml.core.CityModel;
-import org.citygml4j.model.module.citygml.CityGMLModuleType;
-import org.citygml4j.model.module.citygml.CityGMLVersion;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Util;
-import org.citygml4j.xml.io.CityGMLOutputFactory;
 import org.citygml4j.xml.io.writer.CityGMLWriteException;
 import org.citygml4j.xml.io.writer.CityGMLWriter;
 import picocli.CommandLine;
@@ -72,9 +69,6 @@ public class FromCityJSONCommand implements CityGMLTool {
             in.setProcessUnknownExtensions(mapUnknwonExtensions);
         }
 
-        CityGMLVersion targetVersion = cityGMLOutput.getVersion();
-        CityGMLOutputFactory out = main.getCityGMLBuilder().createCityGMLOutputFactory(targetVersion);
-
         log.debug("Searching for CityJSON input files.");
         List<Path> inputFiles = new ArrayList<>();
         try {
@@ -103,12 +97,7 @@ public class FromCityJSONCommand implements CityGMLTool {
                 return false;
             }
 
-            try (CityGMLWriter writer = out.createCityGMLWriter(outputFile.toFile())) {
-                writer.setPrefixes(targetVersion);
-                writer.setSchemaLocations(targetVersion);
-                writer.setDefaultNamespace(targetVersion.getCityGMLModule(CityGMLModuleType.CORE));
-                writer.setIndentString("  ");
-
+            try (CityGMLWriter writer = cityGMLOutput.createCityGMLWriter(outputFile, main.getCityGMLBuilder())) {
                 writer.write(cityModel);
             } catch (CityGMLWriteException e) {
                 log.error("Failed to write CityGML file.", e);

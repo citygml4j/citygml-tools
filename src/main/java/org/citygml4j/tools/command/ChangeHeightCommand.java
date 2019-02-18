@@ -28,8 +28,6 @@ import org.citygml4j.model.citygml.CityGMLClass;
 import org.citygml4j.model.citygml.appearance.Appearance;
 import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.gml.feature.AbstractFeature;
-import org.citygml4j.model.module.citygml.CityGMLModuleType;
-import org.citygml4j.model.module.citygml.CityGMLVersion;
 import org.citygml4j.tools.common.helper.ImplicitGeometryReader;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.heightchanger.ChangeHeightException;
@@ -37,7 +35,6 @@ import org.citygml4j.tools.heightchanger.HeightChanger;
 import org.citygml4j.tools.heightchanger.HeightMode;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.xml.io.CityGMLInputFactory;
-import org.citygml4j.xml.io.CityGMLOutputFactory;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
 import org.citygml4j.xml.io.reader.FeatureReadMode;
@@ -93,9 +90,6 @@ public class ChangeHeightCommand implements CityGMLTool {
             return false;
         }
 
-        CityGMLVersion targetVersion = cityGMLOutput.getVersion();
-        CityGMLOutputFactory out = main.getCityGMLBuilder().createCityGMLOutputFactory(targetVersion);
-
         ImplicitGeometryReader implicitGeometryReader = new ImplicitGeometryReader(main.getCityGMLBuilder());
 
         log.debug("Searching for CityGML input files.");
@@ -136,12 +130,7 @@ public class ChangeHeightCommand implements CityGMLTool {
             log.debug("Reading city objects from input file and changing height values.");
 
             try (CityGMLReader reader = in.createCityGMLReader(inputFile.toFile());
-                 CityModelWriter writer = out.createCityModelWriter(outputFile.toFile())) {
-
-                writer.setPrefixes(targetVersion);
-                writer.setSchemaLocations(targetVersion);
-                writer.setDefaultNamespace(targetVersion.getCityGMLModule(CityGMLModuleType.CORE));
-                writer.setIndentString("  ");
+                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, main.getCityGMLBuilder())) {
                 boolean isInitialized = false;
 
                 while (reader.hasNext()) {

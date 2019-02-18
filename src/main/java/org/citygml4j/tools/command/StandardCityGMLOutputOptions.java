@@ -21,15 +21,65 @@
 
 package org.citygml4j.tools.command;
 
+import org.citygml4j.builder.jaxb.CityGMLBuilder;
+import org.citygml4j.model.module.ModuleContext;
+import org.citygml4j.model.module.citygml.CityGMLModuleType;
 import org.citygml4j.model.module.citygml.CityGMLVersion;
+import org.citygml4j.xml.io.CityGMLOutputFactory;
+import org.citygml4j.xml.io.writer.AbstractCityGMLWriter;
+import org.citygml4j.xml.io.writer.CityGMLWriteException;
+import org.citygml4j.xml.io.writer.CityGMLWriter;
+import org.citygml4j.xml.io.writer.CityModelWriter;
 import picocli.CommandLine;
+
+import java.nio.file.Path;
 
 public class StandardCityGMLOutputOptions {
 
     @CommandLine.Option(names = "--citygml", description = "CityGML version used for output file: 2.0, 1.0 (default: ${DEFAULT-VALUE}).")
     private String version = "2.0";
 
+    CityGMLOutputFactory out;
+
     public CityGMLVersion getVersion() {
         return version.equals("1.0") ? CityGMLVersion.v1_0_0 : CityGMLVersion.v2_0_0;
     }
+
+    public CityGMLOutputFactory createCityGMLOutputFactory(CityGMLBuilder builder) {
+        return builder.createCityGMLOutputFactory(getVersion());
+    }
+
+    public CityModelWriter createCityModelWriter(Path outputFile, CityGMLBuilder builder) throws CityGMLWriteException {
+        CityGMLVersion version = getVersion();
+
+        CityGMLOutputFactory out = builder.createCityGMLOutputFactory(version);
+        CityModelWriter writer = out.createCityModelWriter(outputFile.toFile());
+        setDefaultXMLContext(writer, version);
+
+        return writer;
+    }
+
+    public CityGMLWriter createCityGMLWriter(Path outputFile, CityGMLBuilder builder) throws CityGMLWriteException {
+        CityGMLVersion version = getVersion();
+
+        CityGMLOutputFactory out = builder.createCityGMLOutputFactory(version);
+        CityGMLWriter writer = out.createCityGMLWriter(outputFile.toFile());
+        setDefaultXMLContext(writer, version);
+
+        return writer;
+    }
+
+    public void setDefaultXMLContext(AbstractCityGMLWriter writer) {
+        CityGMLVersion version = getVersion();
+        setDefaultXMLContext(writer, version);
+    }
+
+    private void setDefaultXMLContext(AbstractCityGMLWriter writer, CityGMLVersion version) {
+        ModuleContext moduleContext = new ModuleContext(version);
+        writer.setPrefixes(moduleContext);
+        writer.setSchemaLocations(moduleContext);
+        writer.setDefaultNamespace(version.getCityGMLModule(CityGMLModuleType.CORE));
+        writer.setIndentString("  ");
+    }
+
 }

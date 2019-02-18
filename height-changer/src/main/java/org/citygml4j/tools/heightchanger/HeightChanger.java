@@ -133,6 +133,8 @@ public class HeightChanger {
         public void visit(LinearRing linearRing) {
             List<Double> coords = linearRing.toList3d();
             linearRing.unsetPosOrPointPropertyOrPointRep();
+            linearRing.unsetCoord();
+            linearRing.unsetCoordinates();
             linearRing.setPosList(adaptPositionList(coords));
         }
 
@@ -140,6 +142,7 @@ public class HeightChanger {
         public void visit(LineString lineString) {
             List<Double> coords = lineString.toList3d();
             lineString.unsetPosOrPointPropertyOrPointRepOrCoord();
+            lineString.unsetCoordinates();
             lineString.setPosList(adaptPositionList(coords));
         }
 
@@ -151,6 +154,7 @@ public class HeightChanger {
                     LineStringSegment lineString = (LineStringSegment)segment;
                     List<Double> coords = lineString.toList3d();
                     lineString.unsetPosOrPointPropertyOrPointRep();
+                    lineString.unsetCoordinates();
                     lineString.setPosList(adaptPositionList(coords));
                 }
             }
