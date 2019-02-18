@@ -22,8 +22,7 @@
 package org.citygml4j.tools.command;
 
 import com.google.gson.JsonSyntaxException;
-import org.citygml4j.CityGMLContext;
-import org.citygml4j.builder.cityjson.CityJSONBuilder;
+import org.citygml4j.builder.cityjson.CityJSONBuilderException;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONInputFactory;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReadException;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReader;
@@ -61,12 +60,16 @@ public class FromCityJSONCommand implements CityGMLTool {
     public boolean execute() throws Exception {
         Logger log = Logger.getInstance();
 
-        CityJSONBuilder builder = CityGMLContext.getInstance().createCityJSONBuilder();
-        CityJSONInputFactory in = builder.createCityJSONInputFactory();
-
-        if (mapUnknwonExtensions) {
-            log.debug("Mapping unknown extensions to generic city objects and attributes.");
-            in.setProcessUnknownExtensions(mapUnknwonExtensions);
+        CityJSONInputFactory in;
+        try {
+            in = input.createCityJSONInputFactory();
+            if (mapUnknwonExtensions) {
+                log.debug("Mapping unknown extensions to generic city objects and attributes.");
+                in.setProcessUnknownExtensions(mapUnknwonExtensions);
+            }
+        } catch (CityJSONBuilderException e) {
+            log.error("Failed to create CityJSON input factory.", e);
+            return false;
         }
 
         log.debug("Searching for CityJSON input files.");

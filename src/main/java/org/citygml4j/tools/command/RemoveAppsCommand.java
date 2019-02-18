@@ -34,10 +34,8 @@ import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.util.walker.FeatureWalker;
-import org.citygml4j.xml.io.CityGMLInputFactory;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
-import org.citygml4j.xml.io.reader.FeatureReadMode;
 import org.citygml4j.xml.io.reader.ParentInfo;
 import org.citygml4j.xml.io.writer.CityGMLWriteException;
 import org.citygml4j.xml.io.writer.CityModelInfo;
@@ -89,16 +87,6 @@ public class RemoveAppsCommand implements CityGMLTool {
         Logger log = Logger.getInstance();
         String fileNameSuffix = "_wo-app";
 
-        CityGMLInputFactory in;
-        try {
-            in = main.getCityGMLBuilder().createCityGMLInputFactory();
-            in.setProperty(CityGMLInputFactory.FEATURE_READ_MODE, FeatureReadMode.SPLIT_PER_COLLECTION_MEMBER);
-            in.setProperty(CityGMLInputFactory.SKIP_GENERIC_ADE_CONTENT, true);
-        } catch (CityGMLBuilderException e) {
-            log.error("Failed to create CityGML input factory.", e);
-            return false;
-        }
-
         log.debug("Searching for CityGML input files.");
         List<Path> inputFiles = new ArrayList<>();
         try {
@@ -123,7 +111,7 @@ public class RemoveAppsCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and removing appearances.");
 
-            try (CityGMLReader reader = in.createCityGMLReader(inputFile.toFile());
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true);
                  CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, main.getCityGMLBuilder())) {
                 boolean isInitialized = false;
                 Map<Class<?>, Integer> counter = new HashMap<>();
@@ -169,7 +157,7 @@ public class RemoveAppsCommand implements CityGMLTool {
 
                 log.debug("Removed Appearance elements: " + counter.getOrDefault(Appearance.class, 0));
 
-            } catch (CityGMLReadException e) {
+            } catch (CityGMLBuilderException | CityGMLReadException e) {
                 log.error("Failed to read city objects.", e);
                 return false;
             } catch (CityGMLWriteException e) {
