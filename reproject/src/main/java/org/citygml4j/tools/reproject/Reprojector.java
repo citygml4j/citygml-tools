@@ -26,7 +26,6 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -47,29 +46,15 @@ public class Reprojector {
 
     }
 
-    void setTargetCRS(int epsg, boolean forceXY) throws ReprojectionException {
-        crsUtil.getCoordinateReferenceSystem(epsg, forceXY);
-        targetCRS = crsUtil.getSrsName(epsg);
+    void setTargetCRS(String crs, boolean forceXY) throws ReprojectionException {
+        targetCRS = setCRS(crs, forceXY, true);
         if (targetSRSName == null)
             targetSRSName = targetCRS;
     }
 
-    void setTargetCRS(String srsName, boolean forceXY) throws ReprojectionException {
-        crsUtil.getCoordinateReferenceSystem(srsName, forceXY);
-        targetCRS = srsName;
-        if (targetSRSName == null)
-            targetSRSName = targetCRS;
-    }
-
-    void setTargetCRSFromWKT(String wkt) throws ReprojectionException {
-        CoordinateReferenceSystem crs = crsUtil.getCoordinateReferenceSystemFromWKT(wkt);
-        targetCRS = wkt;
-
-        if (targetSRSName == null) {
-            targetSRSName = crsUtil.lookupIdentifier(crs, true);
-            if (targetSRSName == null)
-                throw new ReprojectionException("Failed to find identifier for the WKT CRS '" + crs.getName() + "'.");
-        }
+    void setSourceCRS(String crs) throws ReprojectionException {
+        String sourceCRS = setCRS(crs, false, false);
+        srsNameHelper.forceSRSName(sourceCRS);
     }
 
     void setTargetSRSName(String srsName) {
@@ -78,21 +63,6 @@ public class Reprojector {
 
     void setKeepHeightValues(boolean keepHeightValues) {
         this.keepHeightValues = keepHeightValues;
-    }
-
-    void setSourceCRS(int epsg) throws ReprojectionException {
-        crsUtil.getCoordinateReferenceSystem(epsg);
-        srsNameHelper.forceSRSName(crsUtil.getSrsName(epsg));
-    }
-
-    void setSourceCRS(String srsName) throws ReprojectionException {
-        crsUtil.getCoordinateReferenceSystem(srsName);
-        srsNameHelper.forceSRSName(srsName);
-    }
-
-    void setSourceCRSFromWKT(String wkt) throws ReprojectionException {
-        crsUtil.getCoordinateReferenceSystemFromWKT(wkt);
-        srsNameHelper.forceSRSName(wkt);
     }
 
     void setSourceSwapXY(boolean sourceSwapXY) {
@@ -316,5 +286,29 @@ public class Reprojector {
         }
 
         return coords;
+    }
+
+    private String setCRS(String crs, boolean forceXY, boolean isTargetCRS) throws ReprojectionException {
+        if (crs.matches("[0-9]+")) {
+            int epsg = Integer.parseInt(crs);
+            crsUtil.getCoordinateReferenceSystem(epsg, forceXY);
+            return crsUtil.getSrsName(epsg);
+        }
+
+        else if (crs.matches("^.*?((CRS)|(CS)|(OPERATION))\\[.+")) {
+            CoordinateReferenceSystem tmp = crsUtil.getCoordinateReferenceSystemFromWKT(crs);
+            if (isTargetCRS && targetSRSName == null) {
+                targetSRSName = crsUtil.lookupIdentifier(tmp, true);
+                if (targetSRSName == null)
+                    throw new ReprojectionException("Failed to find identifier for the WKT CRS '" + tmp.getName() + "'.");
+            }
+
+            return crs;
+        }
+
+        else {
+            crsUtil.getCoordinateReferenceSystem(crs, forceXY);
+            return crs;
+        }
     }
 }

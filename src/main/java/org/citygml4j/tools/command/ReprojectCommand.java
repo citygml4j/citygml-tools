@@ -5,6 +5,7 @@ import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.CityGMLClass;
 import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.gml.feature.AbstractFeature;
+import org.citygml4j.tools.common.log.LogLevel;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.reproject.ReprojectionBuilder;
 import org.citygml4j.tools.reproject.ReprojectionBuilderException;
@@ -79,7 +80,7 @@ public class ReprojectCommand implements CityGMLTool {
                     .build();
 
             log.debug("Using the following target CRS definition:");
-            log.print(reprojector.getTargetCRSAsWKT());
+            log.print(LogLevel.DEBUG, reprojector.getTargetCRSAsWKT());
 
         } catch (ReprojectionBuilderException e) {
             log.error("Failed to create reprojection configuration.", e);

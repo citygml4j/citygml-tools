@@ -51,17 +51,20 @@ public class SRSNameHelper {
     }
 
     public String getSRSName(AbstractGML gml) throws ReprojectionException {
-        if (forceSRSName == null) {
-            try {
-                return gml.accept(walker);
-            } catch (RuntimeException e) {
-                throw new ReprojectionException(e.getMessage());
-            }
-        } else
+        if (forceSRSName != null)
             return forceSRSName;
+
+        try {
+            return gml.accept(walker);
+        } catch (RuntimeException e) {
+            throw new ReprojectionException(e.getMessage());
+        }
     }
 
     public String getSRSName(Envelope envelope) throws ReprojectionException {
+        if (forceSRSName != null)
+            return forceSRSName;
+
         try {
             String srsName = null;
 
