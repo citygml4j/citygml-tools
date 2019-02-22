@@ -36,7 +36,7 @@ public class ReprojectCommand implements CityGMLTool {
     @CommandLine.Option(names = "--target-crs", paramLabel = "<crs>", required = true, description = "Target CRS for the reprojection given as EPSG code, as GML srsName or as OGC WKT with escaped quotes.")
     private String targetCRS;
 
-    @CommandLine.Option(names = "--target-name", paramLabel = "<name>", description = "GML srsName to be used in the CityGML output file.")
+    @CommandLine.Option(names = "--target-name", paramLabel = "<name>", description = "GML srsName to be used in the output file.")
     private String targetSRSName;
 
     @CommandLine.Option(names = "--target-force-xy", description = "Force XY axis order for target CRS.")
@@ -45,10 +45,10 @@ public class ReprojectCommand implements CityGMLTool {
     @CommandLine.Option(names = "--keep-height-values", description = "Do not reproject height values.")
     private boolean keepHeightValues;
 
-    @CommandLine.Option(names = "--source-crs", paramLabel = "<crs>", description = "If provided, the source CRS overrides any reference system in the input file(s). Given as EPSG code, as GML srsName or as OGC WKT with escaped quotes.")
+    @CommandLine.Option(names = "--source-crs", paramLabel = "<crs>", description = "If provided, the source CRS overrides any reference system in the input file. Given as EPSG code, as GML srsName or as OGC WKT with escaped quotes.")
     private String sourceCRS;
 
-    @CommandLine.Option(names = "--source-swap-xy", description = "Swap XY axes for all geometries in the input file(s).")
+    @CommandLine.Option(names = "--source-swap-xy", description = "Swap XY axes for all geometries in the input file.")
     private boolean sourceSwapXY;
 
     @CommandLine.Option(names = "--overwrite-files", description = "Overwrite input file(s).")
