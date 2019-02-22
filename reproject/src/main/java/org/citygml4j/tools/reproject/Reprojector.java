@@ -4,6 +4,7 @@ import org.citygml4j.geometry.BoundingBox;
 import org.citygml4j.geometry.Matrix;
 import org.citygml4j.model.citygml.appearance.GeoreferencedTexture;
 import org.citygml4j.model.citygml.core.ImplicitGeometry;
+import org.citygml4j.model.citygml.relief.AbstractReliefComponent;
 import org.citygml4j.model.gml.GML;
 import org.citygml4j.model.gml.base.AbstractGML;
 import org.citygml4j.model.gml.feature.AbstractFeature;
@@ -19,15 +20,19 @@ import org.citygml4j.model.gml.geometry.primitives.LineStringSegment;
 import org.citygml4j.model.gml.geometry.primitives.LinearRing;
 import org.citygml4j.model.gml.geometry.primitives.Point;
 import org.citygml4j.model.gml.geometry.primitives.PointProperty;
+import org.citygml4j.model.gml.geometry.primitives.Polygon;
 import org.citygml4j.tools.reproject.util.CRSUtil;
 import org.citygml4j.tools.reproject.util.SRSNameHelper;
 import org.citygml4j.util.walker.GMLWalker;
+import org.citygml4j.util.walker.GeometryWalker;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Reprojector {
     private final TransformationWalker transformationWalker = new TransformationWalker();
@@ -196,13 +201,36 @@ public class Reprojector {
         @Override
         public void visit(GeoreferencedTexture georeferencedTexture) {
             if (georeferencedTexture.isSetReferencePoint() && georeferencedTexture.getReferencePoint().isSetPoint()) {
-                visit(georeferencedTexture.getReferencePoint().getPoint());
+                Point point = georeferencedTexture.getReferencePoint().getPoint();
+                visit(point);
 
                 // make sure the reference point is 2D
-                DirectPosition position = georeferencedTexture.getReferencePoint().getPoint().getPos();
-                position.getValue().remove(3);
-                position.setSrsDimension(2);
+                DirectPosition pos = point.getPos();
+                pos.setSrsDimension(2);
+                pos.getValue().remove(2);
             }
+        }
+
+        @Override
+        public void visit(AbstractReliefComponent reliefComponent) {
+            if (reliefComponent.isSetExtent() && reliefComponent.getExtent().isSetPolygon()) {
+                Polygon polygon = reliefComponent.getExtent().getPolygon();
+                visit(polygon);
+
+                // make sure the extent polygon is 2D
+                polygon.accept(new GeometryWalker() {
+                    public void visit(LinearRing linearRing) {
+                        DirectPositionList posList = linearRing.getPosList();
+                        posList.setSrsDimension(2);
+                        posList.setValue(IntStream.range(0, posList.getValue().size())
+                                .filter(i -> (i + 1) % 3 != 0)
+                                .mapToObj(i -> posList.getValue().get(i))
+                                .collect(Collectors.toList()));
+                    }
+                });
+            }
+
+            super.visit(reliefComponent);
         }
 
         private DirectPositionList transformPositionList(List<Double> coords, String srsName, GML gml) {
