@@ -286,29 +286,30 @@ public class Reprojector {
 
         try {
             MathTransform transform = crsUtil.getTransformation(srsName, targetCRS);
-            double[] srsPts = new double[transform.getSourceDimensions()];
-            double[] dstPts = new double[transform.getTargetDimensions()];
+            if (!transform.isIdentity()) {
+                double[] srsPts = new double[transform.getSourceDimensions()];
+                double[] dstPts = new double[transform.getTargetDimensions()];
 
-            for (int i = 0; i < coords.size(); i += 3) {
-                if (!sourceSwapXY) {
-                    srsPts[0] = coords.get(i);
-                    srsPts[1] = coords.get(i + 1);
-                } else {
-                    srsPts[0] = coords.get(i + 1);
-                    srsPts[1] = coords.get(i);
+                for (int i = 0; i < coords.size(); i += 3) {
+                    if (!sourceSwapXY) {
+                        srsPts[0] = coords.get(i);
+                        srsPts[1] = coords.get(i + 1);
+                    } else {
+                        srsPts[0] = coords.get(i + 1);
+                        srsPts[1] = coords.get(i);
+                    }
+
+                    if (transform.getSourceDimensions() == 3)
+                        srsPts[2] = coords.get(i + 2);
+
+                    transform.transform(srsPts, 0, dstPts, 0, 1);
+
+                    coords.set(i, dstPts[0]);
+                    coords.set(i + 1, dstPts[1]);
+                    if (transform.getSourceDimensions() == 3 && !keepHeightValues)
+                        coords.set(i + 2, dstPts[2]);
                 }
-
-                if (transform.getSourceDimensions() == 3)
-                    srsPts[2] = coords.get(i + 2);
-
-                transform.transform(srsPts, 0, dstPts, 0, 1);
-
-                coords.set(i, dstPts[0]);
-                coords.set(i + 1, dstPts[1]);
-                if (transform.getSourceDimensions() == 3 && !keepHeightValues)
-                    coords.set(i + 2, dstPts[2]);
             }
-
         } catch (ReprojectionException | TransformException e) {
             throw new RuntimeException("Failed to transform coordinates.", e);
         }
