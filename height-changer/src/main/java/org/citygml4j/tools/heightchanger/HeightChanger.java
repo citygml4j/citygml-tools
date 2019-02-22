@@ -9,7 +9,6 @@ import org.citygml4j.model.gml.geometry.AbstractGeometry;
 import org.citygml4j.model.gml.geometry.GeometryProperty;
 import org.citygml4j.model.gml.geometry.primitives.AbstractCurveSegment;
 import org.citygml4j.model.gml.geometry.primitives.Curve;
-import org.citygml4j.model.gml.geometry.primitives.CurveSegmentArrayProperty;
 import org.citygml4j.model.gml.geometry.primitives.DirectPosition;
 import org.citygml4j.model.gml.geometry.primitives.DirectPositionList;
 import org.citygml4j.model.gml.geometry.primitives.LineString;
@@ -148,14 +147,15 @@ public class HeightChanger {
 
         @Override
         public void visit(Curve curve) {
-            CurveSegmentArrayProperty property = curve.getSegments();
-            for (AbstractCurveSegment segment : property.getCurveSegment()) {
-                if (segment instanceof LineStringSegment) {
-                    LineStringSegment lineString = (LineStringSegment)segment;
-                    List<Double> coords = lineString.toList3d();
-                    lineString.unsetPosOrPointPropertyOrPointRep();
-                    lineString.unsetCoordinates();
-                    lineString.setPosList(adaptPositionList(coords));
+            if (curve.isSetSegments() && curve.getSegments().isSetCurveSegment()) {
+                for (AbstractCurveSegment segment : curve.getSegments().getCurveSegment()) {
+                    if (segment instanceof LineStringSegment) {
+                        LineStringSegment lineString = (LineStringSegment) segment;
+                        List<Double> coords = lineString.toList3d();
+                        lineString.unsetPosOrPointPropertyOrPointRep();
+                        lineString.unsetCoordinates();
+                        lineString.setPosList(adaptPositionList(coords));
+                    }
                 }
             }
         }
