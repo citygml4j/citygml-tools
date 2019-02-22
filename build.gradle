@@ -21,6 +21,9 @@ allprojects {
 
     repositories {
         maven {
+            url 'http://download.osgeo.org/webdav/geotools'
+        }
+        maven {
             url 'https://repository.apache.org/content/repositories/snapshots'
         }
         jcenter()
@@ -128,6 +131,7 @@ dependencies {
     implementation project(':citygml-tools-common')
     implementation project(':global-app-mover')
     implementation project(':height-changer')
+    implementation project(':reproject')
     implementation project(':texture-clipper')
     implementation "org.citygml4j:citygml4j:$citygml4jVersion"
     implementation 'info.picocli:picocli:3.9.3'

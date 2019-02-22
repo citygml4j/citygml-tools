@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Logger {
 	private static Logger instance = new Logger();
 
-	private LogLevel consoleLogLevel = LogLevel.INFO;
+	private LogLevel level = LogLevel.INFO;
 	private AtomicInteger warnings = new AtomicInteger(0);
 	private AtomicInteger errors = new AtomicInteger(0);
 
@@ -39,34 +39,34 @@ public class Logger {
 		return instance;
 	}
 
-	public void setLogLevel(LogLevel consoleLogLevel) {
-		this.consoleLogLevel = consoleLogLevel;
+	public void setLogLevel(LogLevel level) {
+		this.level = level;
 	}
 
 	public LogLevel getLogLevel() {
-		return consoleLogLevel;
+		return level;
 	}
 
-	private String getPrefix(LogLevel type) {
+	private String getPrefix(LogLevel level) {
 		return "[" +
 				LocalDateTime.now().withNano(0).format(DateTimeFormatter.ISO_LOCAL_TIME) +
 				" " +
-				type.name() +
+				level.name() +
 				"] ";
 	}
 
-	private void log(LogLevel type, String msg) {
-		if (consoleLogLevel.ordinal() >= type.ordinal())
-			System.out.println(getPrefix(type) + msg);
+	private void log(LogLevel level, String msg) {
+		if (this.level.ordinal() >= level.ordinal())
+			System.out.println(getPrefix(level) + msg);
 	}
 
-	private void log(LogLevel type, String msg, Throwable e) {
-		if (consoleLogLevel.ordinal() >= type.ordinal()) {
-			System.out.println(getPrefix(type) + msg);
+	private void log(LogLevel level, String msg, Throwable e) {
+		if (this.level.ordinal() >= level.ordinal()) {
+			System.out.println(getPrefix(level) + msg);
 
 			do {
 				if (e.getMessage() != null)
-					log(type, "Cause: " + e.getClass().getName() + ": " + e.getMessage());
+					log(level, "Cause: " + e.getClass().getName() + ": " + e.getMessage());
 			} while ((e = e.getCause()) != null);
 		}
 	}
@@ -103,8 +103,9 @@ public class Logger {
 		e.printStackTrace(System.err);
 	}
 
-	public void print(String msg) {
-		System.out.println(msg);
+	public void print(LogLevel level, String msg) {
+		if (this.level.ordinal() >= level.ordinal())
+			System.out.println(msg);
 	}
 
 	public int getNumberOfErrors() {

@@ -40,7 +40,17 @@ public class StandardCityGMLOutputOptions {
     private String version = "2.0";
 
     public CityGMLVersion getVersion() {
-        return version.equals("1.0") ? CityGMLVersion.v1_0_0 : CityGMLVersion.v2_0_0;
+        if (version.equals("1.0"))
+            return CityGMLVersion.v1_0_0;
+
+        try {
+            if (Double.parseDouble(version) == 1)
+                return CityGMLVersion.v1_0_0;
+        } catch (NumberFormatException e) {
+            //
+        }
+
+        return CityGMLVersion.v2_0_0;
     }
 
     public CityGMLOutputFactory createCityGMLOutputFactory(CityGMLBuilder builder) {
