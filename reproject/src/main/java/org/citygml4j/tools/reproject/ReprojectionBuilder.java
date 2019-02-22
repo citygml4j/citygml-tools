@@ -72,7 +72,7 @@ public class ReprojectionBuilder {
                 }
 
                 if (epsg > 0)
-                    reprojector.setTargetCRS(Integer.parseInt(targetCRS), targetForceXY);
+                    reprojector.setTargetCRS(epsg, targetForceXY);
                 else {
                     if (targetCRS.matches("^.*?((CRS)|(CS)|(OPERATION))\\[.+"))
                         reprojector.setTargetCRSFromWKT(targetCRS);
@@ -100,7 +100,7 @@ public class ReprojectionBuilder {
                 }
 
                 if (epsg > 0)
-                    reprojector.setSourceCRS(Integer.parseInt(sourceCRS));
+                    reprojector.setSourceCRS(epsg);
                 else {
                     if (sourceCRS.matches("^.*?((CRS)|(CS)|(OPERATION))\\[.+"))
                         reprojector.setSourceCRSFromWKT(sourceCRS);
