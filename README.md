@@ -1,5 +1,5 @@
 # citygml-tools
-citygml-tools is a CLI program that bundles several operations for processing
+citygml-tools is a command line utility that bundles several operations for processing
 CityGML files.
 
 ## License
