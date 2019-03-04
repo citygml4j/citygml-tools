@@ -55,7 +55,6 @@ import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
 import org.citygml4j.xml.io.reader.FeatureReadMode;
 import org.citygml4j.xml.io.writer.CityGMLWriteException;
-import org.citygml4j.xml.io.writer.CityModelInfo;
 import org.citygml4j.xml.io.writer.CityModelWriter;
 
 import javax.imageio.IIOImage;
@@ -198,8 +197,7 @@ public class TextureClipper {
 
                 // write city model
                 if (!isInitialized) {
-                    CityModelInfo cityModelInfo = CityModelInfoReader.getCityModelInfo(cityGML, reader.getParentInfo());
-                    writer.setCityModelInfo(cityModelInfo);
+                    writer.setCityModelInfo(CityModelInfoReader.getCityModelInfo(cityGML, reader.getParentInfo()));
                     writer.writeStartDocument();
                     isInitialized = true;
                 }
