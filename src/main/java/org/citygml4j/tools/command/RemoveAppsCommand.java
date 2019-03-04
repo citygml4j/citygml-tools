@@ -60,7 +60,7 @@ import java.util.UUID;
         mixinStandardHelpOptions = true)
 public class RemoveAppsCommand implements CityGMLTool {
 
-    @CommandLine.Option(names = "--theme", paramLabel = "<name>", description = "Only remove appearances of the given theme(s). Use 'null' as name for the null theme.")
+    @CommandLine.Option(names = "--theme", paramLabel = "<name>", split = ",", description = "Only remove appearances of the given theme(s). Use 'null' as name for the null theme.")
     private List<String> theme;
 
     @CommandLine.Option(names = "--only-textures", description = "Only remove textures.")
