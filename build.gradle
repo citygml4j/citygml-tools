@@ -12,7 +12,7 @@ mainClassName = 'org.citygml4j.tools.CityGMLTools'
 sourceCompatibility = 1.8
 
 ext {
-    citygml4jVersion = '2.9.2-b190218.1904'
+    citygml4jVersion = '2.9.2-b190304.1705'
     date = new Date()
 }
 
