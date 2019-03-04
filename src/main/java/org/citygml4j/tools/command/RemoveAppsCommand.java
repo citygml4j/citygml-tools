@@ -23,7 +23,6 @@ package org.citygml4j.tools.command;
 
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.model.citygml.CityGML;
-import org.citygml4j.model.citygml.CityGMLClass;
 import org.citygml4j.model.citygml.appearance.AbstractTexture;
 import org.citygml4j.model.citygml.appearance.Appearance;
 import org.citygml4j.model.citygml.appearance.GeoreferencedTexture;
@@ -33,12 +32,12 @@ import org.citygml4j.model.citygml.appearance.X3DMaterial;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.gml.feature.AbstractFeature;
+import org.citygml4j.tools.common.helper.CityModelInfoReader;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.util.walker.FeatureWalker;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
-import org.citygml4j.xml.io.reader.ParentInfo;
 import org.citygml4j.xml.io.writer.CityGMLWriteException;
 import org.citygml4j.xml.io.writer.CityModelInfo;
 import org.citygml4j.xml.io.writer.CityModelWriter;
@@ -123,13 +122,10 @@ public class RemoveAppsCommand implements CityGMLTool {
 
                     // write city model
                     if (!isInitialized) {
-                        ParentInfo parentInfo = reader.getParentInfo();
-                        if (parentInfo != null && parentInfo.getCityGMLClass() == CityGMLClass.CITY_MODEL) {
-                            CityModelInfo cityModelInfo = new CityModelInfo(parentInfo);
-                            writer.setCityModelInfo(cityModelInfo);
-                            writer.writeStartDocument();
-                            isInitialized = true;
-                        }
+                        CityModelInfo cityModelInfo = CityModelInfoReader.getCityModelInfo(cityGML, reader.getParentInfo());
+                        writer.setCityModelInfo(cityModelInfo);
+                        writer.writeStartDocument();
+                        isInitialized = true;
                     }
 
                     if (cityGML instanceof AbstractCityObject) {

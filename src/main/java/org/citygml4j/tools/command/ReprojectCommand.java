@@ -2,9 +2,9 @@ package org.citygml4j.tools.command;
 
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.model.citygml.CityGML;
-import org.citygml4j.model.citygml.CityGMLClass;
 import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.gml.feature.AbstractFeature;
+import org.citygml4j.tools.common.helper.CityModelInfoReader;
 import org.citygml4j.tools.common.log.LogLevel;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.reproject.ReprojectionBuilder;
@@ -14,7 +14,6 @@ import org.citygml4j.tools.reproject.Reprojector;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
-import org.citygml4j.xml.io.reader.ParentInfo;
 import org.citygml4j.xml.io.writer.CityGMLWriteException;
 import org.citygml4j.xml.io.writer.CityModelInfo;
 import org.citygml4j.xml.io.writer.CityModelWriter;
@@ -119,22 +118,19 @@ public class ReprojectCommand implements CityGMLTool {
                     CityGML cityGML = reader.nextFeature();
 
                     if (!isInitialized) {
-                        ParentInfo parentInfo = reader.getParentInfo();
-                        if (parentInfo != null && parentInfo.getCityGMLClass() == CityGMLClass.CITY_MODEL) {
-                            CityModelInfo cityModelInfo = new CityModelInfo(parentInfo);
+                        CityModelInfo cityModelInfo = CityModelInfoReader.getCityModelInfo(cityGML, reader.getParentInfo());
 
-                            if (cityModelInfo.isSetBoundedBy()) {
-                                if (cityModelInfo.getBoundedBy().isSetEnvelope()
-                                        &&cityModelInfo.getBoundedBy().getEnvelope().isSetSrsName())
-                                    reprojector.setFallbackSRSName(cityModelInfo.getBoundedBy().getEnvelope().getSrsName());
+                        if (cityModelInfo.isSetBoundedBy()) {
+                            if (cityModelInfo.getBoundedBy().isSetEnvelope()
+                                    &&cityModelInfo.getBoundedBy().getEnvelope().isSetSrsName())
+                                reprojector.setFallbackSRSName(cityModelInfo.getBoundedBy().getEnvelope().getSrsName());
 
-                                reprojector.reproject(cityModelInfo.getBoundedBy());
-                            }
-
-                            writer.setCityModelInfo(cityModelInfo);
-                            writer.writeStartDocument();
-                            isInitialized = true;
+                            reprojector.reproject(cityModelInfo.getBoundedBy());
                         }
+
+                        writer.setCityModelInfo(cityModelInfo);
+                        writer.writeStartDocument();
+                        isInitialized = true;
                     }
 
                     if (cityGML instanceof AbstractFeature && !(cityGML instanceof CityModel)) {
