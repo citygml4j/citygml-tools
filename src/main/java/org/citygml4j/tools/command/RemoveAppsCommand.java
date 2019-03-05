@@ -30,7 +30,6 @@ import org.citygml4j.model.citygml.appearance.ParameterizedTexture;
 import org.citygml4j.model.citygml.appearance.SurfaceDataProperty;
 import org.citygml4j.model.citygml.appearance.X3DMaterial;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
-import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.log.Logger;
@@ -111,7 +110,8 @@ public class RemoveAppsCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and removing appearances.");
 
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true);
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true,
+                    input.createSkipFilter("CityModel"));
                  CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, main.getCityGMLBuilder())) {
                 boolean isInitialized = false;
                 Map<Class<?>, Integer> counter = new HashMap<>();
@@ -147,7 +147,7 @@ public class RemoveAppsCommand implements CityGMLTool {
                             writer.writeFeatureMember(appearance);
                     }
 
-                    else if (cityGML instanceof AbstractFeature && !(cityGML instanceof CityModel))
+                    else if (cityGML instanceof AbstractFeature)
                         writer.writeFeatureMember((AbstractFeature) cityGML);
                 }
 

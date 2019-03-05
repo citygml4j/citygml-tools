@@ -41,8 +41,8 @@ import org.citygml4j.model.citygml.appearance.SurfaceDataProperty;
 import org.citygml4j.model.citygml.appearance.TexCoordList;
 import org.citygml4j.model.citygml.appearance.TextureAssociation;
 import org.citygml4j.model.citygml.appearance.TextureCoordinates;
-import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.gml.feature.AbstractFeature;
+import org.citygml4j.model.module.Modules;
 import org.citygml4j.model.module.citygml.CityGMLModuleType;
 import org.citygml4j.model.module.citygml.CityGMLVersion;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
@@ -181,7 +181,9 @@ public class TextureClipper {
 
         log.debug("Reading city objects from input file and clipping textures.");
 
-        try (CityGMLReader reader = in.createCityGMLReader(inputFile.toFile());
+        try (CityGMLReader reader = in.createFilteredCityGMLReader(in.createCityGMLReader(inputFile.toFile()),
+                name -> !name.getLocalPart().equals("CityModel")
+                        || !Modules.isCityGMLModuleNamespace(name.getNamespaceURI()));
              CityModelWriter writer = out.createCityModelWriter(outputFile.toFile())) {
 
             writer.setPrefixes(targetVersion);
@@ -202,7 +204,7 @@ public class TextureClipper {
                     isInitialized = true;
                 }
 
-                if (cityGML instanceof AbstractFeature && !(cityGML instanceof CityModel)) {
+                if (cityGML instanceof AbstractFeature) {
                     AbstractFeature feature = (AbstractFeature) cityGML;
                     feature.accept(walker);
                     if (!walker.shouldWalk())
