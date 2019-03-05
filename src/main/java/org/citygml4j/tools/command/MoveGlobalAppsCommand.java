@@ -137,7 +137,9 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
                         writer.writeFeatureMember(cityObject);
                     }
 
-                    else if (cityGML instanceof AbstractFeature && !(cityGML instanceof CityModel))
+                    else if (cityGML instanceof AbstractFeature
+                            && !(cityGML instanceof CityModel)
+                            && !(cityGML instanceof Appearance))
                         writer.writeFeatureMember((AbstractFeature) cityGML);
                 }
 
