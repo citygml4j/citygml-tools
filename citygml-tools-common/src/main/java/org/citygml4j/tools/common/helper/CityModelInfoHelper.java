@@ -6,7 +6,7 @@ import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.xml.io.reader.ParentInfo;
 import org.citygml4j.xml.io.writer.CityModelInfo;
 
-public class CityModelInfoReader {
+public class CityModelInfoHelper {
 
     public static CityModelInfo getCityModelInfo(CityGML cityGML, ParentInfo parentInfo) {
         if (parentInfo == null)

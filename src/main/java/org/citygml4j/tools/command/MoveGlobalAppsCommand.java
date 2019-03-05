@@ -29,7 +29,7 @@ import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.tools.appmover.GlobalAppMover;
 import org.citygml4j.tools.appmover.LocalAppTarget;
-import org.citygml4j.tools.common.helper.CityModelInfoReader;
+import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.helper.GlobalAppReader;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Util;
@@ -126,7 +126,7 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
 
                     // write city model
                     if (!isInitialized) {
-                        writer.setCityModelInfo(CityModelInfoReader.getCityModelInfo(cityGML, reader.getParentInfo()));
+                        writer.setCityModelInfo(CityModelInfoHelper.getCityModelInfo(cityGML, reader.getParentInfo()));
                         writer.writeStartDocument();
                         isInitialized = true;
                     }

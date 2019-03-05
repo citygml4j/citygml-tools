@@ -45,7 +45,7 @@ import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.model.module.citygml.CityGMLModuleType;
 import org.citygml4j.model.module.citygml.CityGMLVersion;
-import org.citygml4j.tools.common.helper.CityModelInfoReader;
+import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.util.gmlid.DefaultGMLIdManager;
 import org.citygml4j.util.walker.FeatureWalker;
@@ -197,7 +197,7 @@ public class TextureClipper {
 
                 // write city model
                 if (!isInitialized) {
-                    writer.setCityModelInfo(CityModelInfoReader.getCityModelInfo(cityGML, reader.getParentInfo()));
+                    writer.setCityModelInfo(CityModelInfoHelper.getCityModelInfo(cityGML, reader.getParentInfo()));
                     writer.writeStartDocument();
                     isInitialized = true;
                 }
