@@ -7,7 +7,7 @@ import org.citygml4j.model.citygml.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.gml.feature.AbstractFeature;
-import org.citygml4j.tools.common.helper.CityModelInfoReader;
+import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.helper.GlobalAppReader;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.lodfilter.LodFilter;
@@ -109,7 +109,7 @@ public class FilterLodsCommand implements CityGMLTool {
                     CityGML cityGML = reader.nextFeature();
 
                     if (!isInitialized) {
-                        writer.setCityModelInfo(CityModelInfoReader.getCityModelInfo(cityGML, reader.getParentInfo()));
+                        writer.setCityModelInfo(CityModelInfoHelper.getCityModelInfo(cityGML, reader.getParentInfo()));
                         writer.writeStartDocument();
                         isInitialized = true;
                     }
