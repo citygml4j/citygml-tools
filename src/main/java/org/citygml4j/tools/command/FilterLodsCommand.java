@@ -101,7 +101,8 @@ public class FilterLodsCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and filtering LoDs.");
 
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true);
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true,
+                    input.createSkipFilter("CityModel", "Appearance"));
                  CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, main.getCityGMLBuilder())) {
                 boolean isInitialized = false;
 
@@ -136,9 +137,7 @@ public class FilterLodsCommand implements CityGMLTool {
                             writer.writeFeatureMember(cityObject);
                     }
 
-                    else if (cityGML instanceof AbstractFeature
-                            && !(cityGML instanceof CityModel)
-                            && !(cityGML instanceof Appearance))
+                    else if (cityGML instanceof AbstractFeature)
                         writer.writeFeatureMember((AbstractFeature) cityGML);
                 }
 
