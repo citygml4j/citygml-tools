@@ -27,13 +27,18 @@ import org.citygml4j.builder.cityjson.CityJSONBuilderException;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONInputFactory;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
+import org.citygml4j.model.module.Modules;
 import org.citygml4j.xml.io.CityGMLInputFactory;
+import org.citygml4j.xml.io.reader.CityGMLInputFilter;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
 import org.citygml4j.xml.io.reader.FeatureReadMode;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class StandardInputOptions {
 
@@ -44,20 +49,30 @@ public class StandardInputOptions {
         return file;
     }
 
-    public CityGMLInputFactory createCityGMLInputFactory(CityGMLBuilder builder) throws CityGMLBuilderException {
+    public CityGMLInputFactory createCityGMLInputFactory(CityGMLBuilder builder, boolean useChunks) throws CityGMLBuilderException {
         CityGMLInputFactory in = builder.createCityGMLInputFactory();
         in.setProperty(CityGMLInputFactory.SKIP_GENERIC_ADE_CONTENT, true);
+
+        if (useChunks)
+            in.setProperty(CityGMLInputFactory.FEATURE_READ_MODE, FeatureReadMode.SPLIT_PER_COLLECTION_MEMBER);
 
         return in;
     }
 
     public CityGMLReader createCityGMLReader(Path inputFile, CityGMLBuilder builder, boolean useChunks) throws CityGMLBuilderException, CityGMLReadException {
-        CityGMLInputFactory in = createCityGMLInputFactory(builder);
-
-        if (useChunks)
-            in.setProperty(CityGMLInputFactory.FEATURE_READ_MODE, FeatureReadMode.SPLIT_PER_COLLECTION_MEMBER);
-
+        CityGMLInputFactory in = createCityGMLInputFactory(builder, useChunks);
         return in.createCityGMLReader(inputFile.toFile());
+    }
+
+    public CityGMLReader createCityGMLReader(Path inputFile, CityGMLBuilder builder, boolean useChunks, CityGMLInputFilter filter) throws CityGMLBuilderException, CityGMLReadException {
+        CityGMLInputFactory in = createCityGMLInputFactory(builder, useChunks);
+        return in.createFilteredCityGMLReader(in.createCityGMLReader(inputFile.toFile()), filter);
+    }
+
+    public CityGMLInputFilter createSkipFilter(String... localNames) {
+        Set<String> filter = new HashSet<>(Arrays.asList(localNames));
+        return name -> !filter.contains(name.getLocalPart())
+                || !Modules.isCityGMLModuleNamespace(name.getNamespaceURI());
     }
 
     public CityJSONInputFactory createCityJSONInputFactory() throws CityJSONBuilderException {

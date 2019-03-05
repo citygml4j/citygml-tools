@@ -25,7 +25,6 @@ import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.appearance.Appearance;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
-import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.tools.appmover.GlobalAppMover;
 import org.citygml4j.tools.appmover.LocalAppTarget;
@@ -117,7 +116,8 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and moving global appearances.");
 
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true);
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true,
+                    input.createSkipFilter("CityModel", "Appearance"));
                  CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, main.getCityGMLBuilder())) {
                 boolean isInitialized = false;
 
@@ -137,9 +137,7 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
                         writer.writeFeatureMember(cityObject);
                     }
 
-                    else if (cityGML instanceof AbstractFeature
-                            && !(cityGML instanceof CityModel)
-                            && !(cityGML instanceof Appearance))
+                    else if (cityGML instanceof AbstractFeature)
                         writer.writeFeatureMember((AbstractFeature) cityGML);
                 }
 

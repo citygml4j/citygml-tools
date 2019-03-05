@@ -47,7 +47,6 @@ import java.util.stream.Stream;
                 RemoveAppsCommand.class,
                 MoveGlobalAppsCommand.class,
                 ClipTexturesCommand.class,
-                FilterLodsCommand.class,
                 ReprojectCommand.class,
                 FromCityJSONCommand.class,
                 ToCityJSONCommand.class

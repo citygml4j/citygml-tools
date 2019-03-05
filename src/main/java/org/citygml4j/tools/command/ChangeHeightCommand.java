@@ -25,7 +25,6 @@ import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.geometry.BoundingBox;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.appearance.Appearance;
-import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.helper.ImplicitGeometryReader;
@@ -116,7 +115,8 @@ public class ChangeHeightCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and changing height values.");
 
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true);
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true,
+                    input.createSkipFilter("CityModel"));
                  CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, main.getCityGMLBuilder())) {
                 boolean isInitialized = false;
 
@@ -144,7 +144,7 @@ public class ChangeHeightCommand implements CityGMLTool {
                         isInitialized = true;
                     }
 
-                    if (cityGML instanceof AbstractFeature && !(cityGML instanceof CityModel)) {
+                    if (cityGML instanceof AbstractFeature) {
                         AbstractFeature feature = (AbstractFeature) cityGML;
 
                         try {
