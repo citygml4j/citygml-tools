@@ -5,7 +5,6 @@ import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.appearance.Appearance;
 import org.citygml4j.model.citygml.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
-import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.helper.GlobalAppReader;
@@ -23,6 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -82,6 +83,7 @@ public class FilterLodsCommand implements CityGMLTool {
                 log.debug("Writing temporary output file '" + outputFile.toAbsolutePath() + "'.");
             }
 
+            List<CityObjectGroup> groups = null;
             List<Appearance> appearances;
             try {
                 log.debug("Reading global appearances from input file.");
@@ -116,29 +118,23 @@ public class FilterLodsCommand implements CityGMLTool {
                     }
 
                     if (cityGML instanceof CityObjectGroup) {
-                        CityObjectGroup group = (CityObjectGroup) cityGML;
+                        if (groups == null)
+                            groups = new ArrayList<>();
 
-                        if (group.isSetGroupMember() || group.isSetGroupParent()) {
-                            Set<String> ids = lodFilter.getRemovedCityObjectIds();
-
-                            if (group.isSetGroupMember())
-                                group.getGroupMember().removeIf(member -> member.isSetHref()
-                                        && ids.contains(member.getHref().replaceAll("^#", "")));
-
-                            if (group.isSetGroupMember())
-                                writer.writeFeatureMember(group);
-                        }
-                    }
-
-                    else if (cityGML instanceof AbstractCityObject) {
+                        groups.add((CityObjectGroup) cityGML);
+                    } else if (cityGML instanceof AbstractCityObject) {
                         AbstractCityObject cityObject = (AbstractCityObject) cityGML;
                         cityObject = lodFilter.apply(cityObject);
                         if (cityObject != null)
                             writer.writeFeatureMember(cityObject);
-                    }
-
-                    else if (cityGML instanceof AbstractFeature)
+                    } else if (cityGML instanceof AbstractFeature)
                         writer.writeFeatureMember((AbstractFeature) cityGML);
+                }
+
+                if (groups != null) {
+                    cleanupGroups(groups, lodFilter.getRemovedCityObjectIds());
+                    for (CityObjectGroup group : groups)
+                        writer.writeFeatureMember(group);
                 }
 
                 if (lodFilter.hasRemainingGlobalApps()) {
@@ -167,5 +163,32 @@ public class FilterLodsCommand implements CityGMLTool {
         }
 
         return true;
+    }
+
+    private void cleanupGroups(List<CityObjectGroup> groups, Set<String> ids) {
+        for (CityObjectGroup group : groups) {
+            if (group.isSetGroupMember())
+                group.getGroupMember().removeIf(member -> member.isSetHref()
+                        && ids.contains(member.getHref().replaceAll("^#", "")));
+
+            if (group.isSetGroupParent()
+                    && group.getGroupParent().isSetHref()
+                    && ids.contains(group.getGroupParent().getHref().replaceAll("^#", "")))
+                group.unsetGroupParent();
+        }
+
+        Set<String> groupIds = new HashSet<>();
+        for (Iterator<CityObjectGroup> iter = groups.iterator(); iter.hasNext(); ) {
+            CityObjectGroup group = iter.next();
+
+            if (!group.isSetGroupMember()) {
+                iter.remove();
+                if (group.isSetId())
+                    groupIds.add(group.getId());
+            }
+        }
+
+        if (!groupIds.isEmpty())
+            cleanupGroups(groups, groupIds);
     }
 }
