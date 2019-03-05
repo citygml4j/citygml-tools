@@ -27,7 +27,7 @@ import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.appearance.Appearance;
 import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.gml.feature.AbstractFeature;
-import org.citygml4j.tools.common.helper.CityModelInfoReader;
+import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.helper.ImplicitGeometryReader;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.heightchanger.ChangeHeightException;
@@ -125,7 +125,7 @@ public class ChangeHeightCommand implements CityGMLTool {
 
                     // write city model
                     if (!isInitialized) {
-                        CityModelInfo cityModelInfo = CityModelInfoReader.getCityModelInfo(cityGML, reader.getParentInfo());
+                        CityModelInfo cityModelInfo = CityModelInfoHelper.getCityModelInfo(cityGML, reader.getParentInfo());
 
                         if (cityModelInfo.isSetBoundedBy() && cityModelInfo.getBoundedBy().isSetEnvelope()) {
                             BoundingBox bbox = cityModelInfo.getBoundedBy().getEnvelope().toBoundingBox();
