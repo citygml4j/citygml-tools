@@ -116,28 +116,14 @@ public class LodFilter {
 
         else {
             boolean[] filterLods = new boolean[5];
-            int[] min = {Integer.MAX_VALUE};
-            int[] max = {-Integer.MAX_VALUE};
+            MinMaxLodWalker minMaxLodWalker = new MinMaxLodWalker();
+            cityObject.accept(minMaxLodWalker);
 
-            cityObject.accept(new FeatureWalker() {
-                public void visit(AbstractCityObject cityObject) {
-                    LodRepresentation representation = cityObject.getLodRepresentation();
-                    if (representation.hasLodRepresentations()) {
-                        for (int lod = 0; lod < lods.length; lod++) {
-                            if (lods[lod] && representation.isSetRepresentation(lod)) {
-                                if (lod < min[0]) min[0] = lod;
-                                if (lod > max[0]) max[0] = lod;
-                            }
-                        }
-                    }
-                }
-            });
+            if (mode == LodFilterMode.MAXIMUM && minMaxLodWalker.max != -Integer.MAX_VALUE)
+                filterLods[minMaxLodWalker.max] = true;
 
-            if (mode == LodFilterMode.MAXIMUM && max[0] != -Integer.MAX_VALUE)
-                filterLods[max[0]] = true;
-
-            if (mode == LodFilterMode.MINIMUM && min[0] != Integer.MAX_VALUE)
-                filterLods[min[0]] = true;
+            if (mode == LodFilterMode.MINIMUM && minMaxLodWalker.min != Integer.MAX_VALUE)
+                filterLods[minMaxLodWalker.min] = true;
 
             return filterLods;
         }
@@ -172,6 +158,23 @@ public class LodFilter {
         }
 
         return false;
+    }
+
+    private final class MinMaxLodWalker extends FeatureWalker {
+        int min = Integer.MAX_VALUE;
+        int max = -Integer.MAX_VALUE;
+
+        public void visit(AbstractCityObject cityObject) {
+            LodRepresentation representation = cityObject.getLodRepresentation();
+            if (representation.hasLodRepresentations()) {
+                for (int lod = 0; lod < lods.length; lod++) {
+                    if (lods[lod] && representation.isSetRepresentation(lod)) {
+                        if (lod < min) min = lod;
+                        if (lod > max) max = lod;
+                    }
+                }
+            }
+        }
     }
 
 }
