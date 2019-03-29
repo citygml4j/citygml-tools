@@ -306,7 +306,7 @@ public class Reprojector {
 
                     coords.set(i, dstPts[0]);
                     coords.set(i + 1, dstPts[1]);
-                    if (transform.getSourceDimensions() == 3 && !keepHeightValues)
+                    if (transform.getTargetDimensions() == 3 && !keepHeightValues)
                         coords.set(i + 2, dstPts[2]);
                 }
             }
