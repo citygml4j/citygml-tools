@@ -1,6 +1,26 @@
 Change Log
 ==========
 
+### 1.2.0 - 2019-04-18
+
+##### Additions
+* Added new `remove-apps`, `change-height`, `reproject`, and `filter-lods` commands
+  * `remove-apps`: Removes appearances from city objects.
+  * `change-height`: Changes the height values of city objects by a given offset.
+  * `reproject`: Reprojects city objects to a new spatial reference system.
+  * `filter-lods`: Filters the LoD representations of city objects.
+* Overwrite output files per default for every command
+* Added `--clean-output` option to `clip-textures` command
+* Added `--pretty-print` option to `to-cityjson` command
+
+##### Fixes
+* Output files created in a previous run of a command are not processed when re-running the command anymore.
+* Catch and log exceptions while reading CityJSON files.
+* Minor bugfixes and improvements.
+
+##### Miscellaneous
+* Switched to citygml4j version 2.9.2.
+
 ### 1.1.0 - 2019-02-06
 
 ##### Additions
