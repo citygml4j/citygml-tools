@@ -44,24 +44,19 @@ following:
     > citygml-tools help [COMMAND]
 
 ## Using citygml-tools as library
-citygml-tools is not just a CLI program. The following operations are also available as separate JAR libraries:
+citygml-tools is not just a CLI program. Most operations are also available as separate JAR libraries. Simply put the library file from the `lib` folder on your classpath to use the operation in your citygml4j project. The `citygml-tools-common-<version>.jar` library renders a mandatory dependency for all operations.
 
-* move-global-apps
-* texture-clipper
-
-Simply put the library file from the `lib` folder on your classpath to use the operation in your citygml4j project. The `citygml-tools-common-<version>.jar` library renders a mandatory dependency for all operations.
-
-The libraries are also available as [Maven](http://maven.apache.org/) artifacts from the [Maven Central Repository](https://search.maven.org/search?q=org.citygml4j.tools) and from [JCenter](https://bintray.com/bintray/jcenter). For example, to add `move-global-apps` to your project with Maven, add the following code to your `pom.xml`. You may need to adapt the `move-global-apps` version number.
+The libraries are also available as [Maven](http://maven.apache.org/) artifacts from the [Maven Central Repository](https://search.maven.org/search?q=org.citygml4j.tools) and from [JCenter](https://bintray.com/bintray/jcenter). For example, to add the `global-app-mover` library for removing global appearances to your project with Maven, add the following code to your `pom.xml`. You may need to adapt the `global-app-mover` version number.
 
 ```xml
 <dependency>
   <groupId>org.citygml4j.tools</groupId>
-  <artifactId>move-global-apps</artifactId>
+  <artifactId>global-app-mover</artifactId>
   <version>1.1.0</version>
 </dependency>
 ```
 
-Here is how you use `move-global-apps` with your Gradle project:
+Here is how you use `global-app-mover` with your Gradle project:
 
 ```gradle
 repositories {
@@ -69,7 +64,7 @@ repositories {
 }
 
 dependencies {
-  compile 'org.citygml4j.tools:move-global-apps:1.1.0'
+  compile 'org.citygml4j.tools:global-app-mover:1.1.0'
 }
 ```
 
