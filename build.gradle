@@ -6,7 +6,7 @@ plugins {
     id 'distribution'
 }
 
-version '1.2.0'
+version '1.3.0'
 mainClassName = 'org.citygml4j.tools.CityGMLTools'
 
 sourceCompatibility = 1.8
