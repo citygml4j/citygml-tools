@@ -6,9 +6,9 @@ CityGML files.
 citygml-tools is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0). See the `LICENSE` file for more details.
 
 ## Latest release
-The latest stable release of citygml-tools is 1.1.0.
+The latest stable release of citygml-tools is 1.2.0.
 
-Download the citygml-tools 1.1.0 release binaries [here](https://github.com/citygml4j/citygml-tools/releases/download/v1.1.0/citygml-tools-1.1.0.zip). Previous releases are available from the [releases section](https://github.com/citygml4j/citygml-tools/releases).
+Download the citygml-tools 1.2.0 release binaries [here](https://github.com/citygml4j/citygml-tools/releases/download/v1.2.0/citygml-tools-1.2.0.zip). Previous releases are available from the [releases section](https://github.com/citygml4j/citygml-tools/releases).
 
 ## Contributing
 * To file bugs found in the software create a GitHub issue.
@@ -20,44 +20,43 @@ Download and unzip the latest release or build the program from source. Afterwar
 
 Use the following command to list the available operations.
 
-    > citygml-tools --help
-    
-    Usage: citygml-tools [-hV] [--log=<logLevel>] [COMMAND]
-    Collection of tools for processing CityGML files.
-          --log=<logLevel>   Log level: debug, info, warn, error (default: info).
-      -h, --help             Show this help message and exit.
-      -V, --version          Print version information and exit.
-    Commands:
-      help              Displays help information about the specified command
-      move-global-apps  Converts global appearances to local ones.
-      clip-textures     Clips texture images to the extent of the target surface.
-      from-cityjson     Converts CityJSON files into CityGML.
-      to-cityjson       Converts CityGML files into CityJSON.
-
+```
+> citygml-tools --help
+Usage: citygml-tools [-hV] [--log=<level>] [COMMAND]
+Collection of tools for processing CityGML files.
+      --log=<level>   Log level: error, warn, info, debug (default: info).
+  -h, --help          Show this help message and exit.
+  -V, --version       Print version information and exit.
+Commands:
+  help              Displays help information about the specified command
+  change-height     Changes the height values of city objects by a given offset.
+  remove-apps       Removes appearances from city objects.
+  move-global-apps  Converts global appearances to local ones.
+  clip-textures     Clips texture images to the extent of the target surface.
+  filter-lods       Filters the LoD representations of city objects.
+  reproject         Reprojects city objects to a new spatial reference system.
+  from-cityjson     Converts CityJSON files into CityGML.
+  to-cityjson       Converts CityGML files into CityJSON.
+```
 To display information about how to use a specific command, type the
 following:
 
     > citygml-tools help [COMMAND]
 
 ## Using citygml-tools as library
-citygml-tools is not just a CLI program. The following operations are also available as separate JAR libraries:
+citygml-tools is not just a CLI program. Most operations are also available as separate JAR libraries. Simply put the library file from the `lib` folder on your classpath to use the operation in your citygml4j project. The `citygml-tools-common-<version>.jar` library renders a mandatory dependency for all operations.
 
-* move-global-apps
-* texture-clipper
-
-Simply put the library file from the `lib` folder on your classpath to use the operation in your citygml4j project. The `citygml-tools-common-<version>.jar` library renders a mandatory dependency for all operations.
-
-The libraries are also available as [Maven](http://maven.apache.org/) artifacts from the [Maven Central Repository](https://search.maven.org/search?q=org.citygml4j.tools) and from [JCenter](https://bintray.com/bintray/jcenter). For example, to add `move-global-apps` to your project with Maven, add the following code to your `pom.xml`. You may need to adapt the `move-global-apps` version number.
+The libraries are also available as [Maven](http://maven.apache.org/) artifacts from the [Maven Central Repository](https://search.maven.org/search?q=org.citygml4j.tools) and from [JCenter](https://bintray.com/bintray/jcenter). For example, to add the `global-app-mover` library for removing global appearances to your project with Maven, add the following code to your `pom.xml`. You may need to adapt the `global-app-mover` version number.
 
 ```xml
 <dependency>
   <groupId>org.citygml4j.tools</groupId>
-  <artifactId>move-global-apps</artifactId>
-  <version>1.0.0</version>
+  <artifactId>global-app-mover</artifactId>
+  <version>1.1.0</version>
 </dependency>
 ```
 
-Here is how you use `move-global-apps` with your Gradle project:
+Here is how you use `global-app-mover` with your Gradle project:
 
 ```gradle
 repositories {
@@ -65,7 +64,7 @@ repositories {
 }
 
 dependencies {
-  compile 'org.citygml4j.tools:move-global-apps:1.0.0'
+  compile 'org.citygml4j.tools:global-app-mover:1.1.0'
 }
 ```
 

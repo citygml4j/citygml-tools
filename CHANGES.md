@@ -14,7 +14,7 @@ Change Log
 * Added `--pretty-print` option to `to-cityjson` command
 
 ##### Fixes
-* Output files created in a previous run of a command are not processed when re-running the command anymore.
+* Output files created in a previous run of a command are not processed when re-running the command.
 * Catch and log exceptions while reading CityJSON files.
 * Minor bugfixes and improvements.
 
