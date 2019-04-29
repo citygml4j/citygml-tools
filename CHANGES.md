@@ -4,7 +4,7 @@ Change Log
 ### 1.3.0 - 2019-04-29
 
 ##### Additions
-* The `to-cityjson` and `from-cityjson` commands now support [CityJSON 1.0](https://www.cityjson.org/specs/1.0.0/).
+* The `to-cityjson` and `from-cityjson` commands now support [CityJSON 1.0](https://www.cityjson.org/specs/1.0.0/). Note that previous versions of CityJSON are no longer supported.
 
 ### 1.2.0 - 2019-04-18
 
