@@ -43,6 +43,11 @@ following:
 
     > citygml-tools help [COMMAND]
 
+## System requirements
+* Java JRE or JDK >= 1.8
+  
+citygml-tools can be run on any platform providing appropriate Java support. 
+
 ## Using citygml-tools as library
 citygml-tools is not just a CLI program. Most operations are also available as separate JAR libraries. Simply put the library file from the `lib` folder on your classpath to use the operation in your citygml4j project. The `citygml-tools-common-<version>.jar` library renders a mandatory dependency for all operations.
 
