@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+### 1.3.1 - 2019-08-11
+
+##### Fixes
+* Fixed `IndexOutOfBoundsException` if `gml:Envelope` is declared but empty. [#5](https://github.com/citygml4j/citygml-tools/issues/5)
+
+##### Miscellaneous
+* Updated to citygml4j version 2.10.2.
+
 ### 1.3.0 - 2019-04-29
 
 ##### Additions
