@@ -73,6 +73,9 @@ public class ToCityJSONCommand implements CityGMLTool {
     @CommandLine.Option(names = "--compress-digits", paramLabel = "<digits>", description = "Number of digits to keep in compression (default: ${DEFAULT-VALUE}).")
     private int compressDigits = 3;
 
+    @CommandLine.Option(names = {"--remove-duplicate-child-geometries"}, description = "Remove child geometries if they are duplicate. If no child geometries remain, the child object is skipped.")
+    private boolean removeDuplicateChildGeometries;
+
     @CommandLine.Option(names = {"--pretty-print"}, description = "Format and indent CityJSON file.")
     private boolean prettyPrint;
 
@@ -99,6 +102,9 @@ public class ToCityJSONCommand implements CityGMLTool {
         out.setVerticesBuilder(new DefaultVerticesBuilder().withSignificantDigits(verticesDigites));
         out.setTemplatesVerticesBuilder(new DefaultVerticesBuilder().withSignificantDigits(templateDigites));
         out.setTextureVerticesBuilder(new DefaultTextureVerticesBuilder().withSignificantDigits(textureVerticesDigites));
+
+        // remove duplicate child geometries if requested
+        out.setRemoveDuplicateChildGeometries(removeDuplicateChildGeometries);
 
         // apply compression if requested
         if (compress)
