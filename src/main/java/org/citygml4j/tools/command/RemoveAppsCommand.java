@@ -82,7 +82,7 @@ public class RemoveAppsCommand implements CityGMLTool {
     private MainCommand main;
 
     @Override
-    public boolean execute() throws Exception {
+    public Integer call() throws Exception {
         Logger log = Logger.getInstance();
         String fileNameSuffix = "_wo-app";
 
@@ -163,10 +163,10 @@ public class RemoveAppsCommand implements CityGMLTool {
 
             } catch (CityGMLBuilderException | CityGMLReadException e) {
                 log.error("Failed to read city objects.", e);
-                return false;
+                return 1;
             } catch (CityGMLWriteException e) {
                 log.error("Failed to write city objects.", e);
-                return false;
+                return 1;
             }
 
             if (overwriteInputFiles) {
@@ -176,12 +176,12 @@ public class RemoveAppsCommand implements CityGMLTool {
                     Files.move(outputFile, outputFile.resolveSibling(inputFile.getFileName()));
                 } catch (IOException e) {
                     log.error("Failed to overwrite input file.", e);
-                    return false;
+                    return 1;
                 }
             }
         }
 
-        return true;
+        return 0;
     }
 
     private boolean process(Appearance appearance, Map<Class<?>, Integer> counter) {

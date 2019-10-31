@@ -57,7 +57,7 @@ public class FromCityJSONCommand implements CityGMLTool {
     private MainCommand main;
 
     @Override
-    public boolean execute() throws Exception {
+    public Integer call() throws Exception {
         Logger log = Logger.getInstance();
 
         CityJSONInputFactory in;
@@ -69,7 +69,7 @@ public class FromCityJSONCommand implements CityGMLTool {
             }
         } catch (CityJSONBuilderException e) {
             log.error("Failed to create CityJSON input factory.", e);
-            return false;
+            return 1;
         }
 
         log.debug("Searching for CityJSON input files.");
@@ -97,19 +97,19 @@ public class FromCityJSONCommand implements CityGMLTool {
                 if (e.getCause() instanceof JsonSyntaxException)
                     log.error("Maybe an unsupported CityJSON version?");
 
-                return false;
+                return 1;
             }
 
             try (CityGMLWriter writer = cityGMLOutput.createCityGMLWriter(outputFile, main.getCityGMLBuilder())) {
                 writer.write(cityModel);
             } catch (CityGMLWriteException e) {
                 log.error("Failed to write CityGML file.", e);
-                return false;
+                return 1;
             }
 
             log.debug("Successfully converted CityJSON file into CityGML.");
         }
 
-        return true;
+        return 0;
     }
 }

@@ -86,7 +86,7 @@ public class ClipTexturesCommand implements CityGMLTool {
     private CommandLine.Model.CommandSpec spec;
 
     @Override
-    public boolean execute() throws Exception {
+    public Integer call() throws Exception {
         Logger log = Logger.getInstance();
 
         CityGMLVersion targetVersion = cityGMLOutput.getVersion();
@@ -95,14 +95,14 @@ public class ClipTexturesCommand implements CityGMLTool {
         Path outputDir = Constants.WORKING_DIR.resolve(Paths.get(output));
         if (Files.isRegularFile(outputDir)) {
             log.error("The output '" + output + "' is a file but must be a directory.");
-            return false;
+            return 1;
         }
 
         // check that output and input directories are different
         Path rootDir = Util.getRootDirectory(input.getFile());
         if (outputDir.startsWith(rootDir)) {
             log.error("The output directory must not be a subfolder of or equal to the input directory.");
-            return false;
+            return 1;
         }
 
         // clean output folder
@@ -143,11 +143,10 @@ public class ClipTexturesCommand implements CityGMLTool {
                 clipper.clipTextures(inputFile, outputFile);
             } catch (TextureClippingException e) {
                 log.error("Failed to clip textures.", e);
-                continue;
             }
         }
 
-        return true;
+        return 0;
     }
 
     @Override

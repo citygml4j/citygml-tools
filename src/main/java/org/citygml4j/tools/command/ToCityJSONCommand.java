@@ -86,7 +86,7 @@ public class ToCityJSONCommand implements CityGMLTool {
     private MainCommand main;
 
     @Override
-    public boolean execute() throws Exception {
+    public Integer call() throws Exception {
         Logger log = Logger.getInstance();
 
         CityJSONOutputFactory out;
@@ -95,7 +95,7 @@ public class ToCityJSONCommand implements CityGMLTool {
             out = builder.createCityJSONOutputFactory();
         } catch (CityJSONBuilderException e) {
             log.error("Failed to create CityJSON output factory.", e);
-            return false;
+            return 1;
         }
 
         // set builder for geometry, template and texture vertices
@@ -132,7 +132,7 @@ public class ToCityJSONCommand implements CityGMLTool {
                 cityGML = reader.nextFeature();
             } catch (CityGMLBuilderException | CityGMLReadException e) {
                 log.error("Failed to read CityGML file.", e);
-                return false;
+                return 1;
             }
 
             if (cityGML instanceof CityModel) {
@@ -151,13 +151,13 @@ public class ToCityJSONCommand implements CityGMLTool {
                     log.debug("Successfully converted CityGML file into CityJSON.");
                 } catch (CityJSONWriteException e) {
                     log.error("Failed to write CityJSON file.", e);
-                    return false;
+                    return 1;
                 }
             } else
                 log.error("Failed to find a root CityModel element. Skipping CityGML file.");
         }
 
-        return true;
+        return 0;
     }
 
     private MetadataType getMetadata(CityModel cityModel, Logger log) {

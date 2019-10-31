@@ -23,9 +23,9 @@ package org.citygml4j.tools.command;
 
 import picocli.CommandLine;
 
-public interface CityGMLTool {
-    boolean execute() throws Exception;
+import java.util.concurrent.Callable;
 
+public interface CityGMLTool extends Callable<Integer> {
     default void validate() throws CommandLine.ParameterException {
         // nothing to do
     }

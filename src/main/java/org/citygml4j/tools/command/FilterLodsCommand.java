@@ -76,7 +76,7 @@ public class FilterLodsCommand implements CityGMLTool {
     private MainCommand main;
 
     @Override
-    public boolean execute() throws Exception {
+    public Integer call() throws Exception {
         Logger log = Logger.getInstance();
         String fileNameSuffix = "_filtered_lods";
 
@@ -111,7 +111,7 @@ public class FilterLodsCommand implements CityGMLTool {
                 appearances = globalAppReader.readGlobalApps(inputFile);
             } catch (CityGMLBuilderException | CityGMLReadException e) {
                 log.error("Failed to read global appearances.", e);
-                return false;
+                return 1;
             }
 
             LodFilter lodFilter = new LodFilter()
@@ -165,10 +165,10 @@ public class FilterLodsCommand implements CityGMLTool {
 
             } catch (CityGMLBuilderException | CityGMLReadException e) {
                 log.error("Failed to read city objects.", e);
-                return false;
+                return 1;
             } catch (CityGMLWriteException e) {
                 log.error("Failed to write city objects.", e);
-                return false;
+                return 1;
             }
 
             if (overwriteInputFiles) {
@@ -178,12 +178,12 @@ public class FilterLodsCommand implements CityGMLTool {
                     Files.move(outputFile, outputFile.resolveSibling(inputFile.getFileName()));
                 } catch (IOException e) {
                     log.error("Failed to overwrite input file.", e);
-                    return false;
+                    return 1;
                 }
             }
         }
 
-        return true;
+        return 0;
     }
 
     private void cleanupGroups(List<CityObjectGroup> groups, Set<String> ids) {

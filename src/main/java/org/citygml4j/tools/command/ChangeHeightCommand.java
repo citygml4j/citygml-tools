@@ -72,7 +72,7 @@ public class ChangeHeightCommand implements CityGMLTool {
     private MainCommand main;
 
     @Override
-    public boolean execute() throws Exception {
+    public Integer call() throws Exception {
         Logger log = Logger.getInstance();
         String fileNameSuffix = "_adapted-height";
 
@@ -109,7 +109,7 @@ public class ChangeHeightCommand implements CityGMLTool {
                     heightChanger.withImplicitGeometries(implicitGeometryReader.readImplicitGeometries(inputFile));
                 } catch (CityGMLReadException e) {
                     log.error("Failed to parse implicit geometries.", e);
-                    return false;
+                    return 1;
                 }
             }
 
@@ -161,10 +161,10 @@ public class ChangeHeightCommand implements CityGMLTool {
 
             } catch (CityGMLBuilderException | CityGMLReadException e) {
                 log.error("Failed to read city objects.", e);
-                return false;
+                return 1;
             } catch (CityGMLWriteException e) {
                 log.error("Failed to write city objects.", e);
-                return false;
+                return 1;
             }
 
             if (overwriteInputFiles) {
@@ -174,11 +174,11 @@ public class ChangeHeightCommand implements CityGMLTool {
                     Files.move(outputFile, outputFile.resolveSibling(inputFile.getFileName()));
                 } catch (IOException e) {
                     log.error("Failed to overwrite input file.", e);
-                    return false;
+                    return 1;
                 }
             }
         }
 
-        return true;
+        return 0;
     }
 }

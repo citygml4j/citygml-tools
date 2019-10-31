@@ -83,7 +83,7 @@ public class ReprojectCommand implements CityGMLTool {
     private MainCommand main;
 
     @Override
-    public boolean execute() {
+    public Integer call() throws Exception {
         Logger log = Logger.getInstance();
         String fileNameSuffix = "_reprojected";
 
@@ -103,7 +103,7 @@ public class ReprojectCommand implements CityGMLTool {
 
         } catch (ReprojectionBuilderException e) {
             log.error("Failed to create reprojection configuration.", e);
-            return false;
+            return 1;
         }
 
         log.debug("Searching for CityGML input files.");
@@ -162,13 +162,13 @@ public class ReprojectCommand implements CityGMLTool {
                 }
             } catch (ReprojectionException e) {
                 log.error("Failed to reproject city objects.", e);
-                return false;
+                return 1;
             } catch (CityGMLBuilderException | CityGMLReadException e) {
                 log.error("Failed to read city objects.", e);
-                return false;
+                return 1;
             } catch (CityGMLWriteException e) {
                 log.error("Failed to write city objects.", e);
-                return false;
+                return 1;
             }
 
             if (overwriteInputFiles) {
@@ -178,11 +178,11 @@ public class ReprojectCommand implements CityGMLTool {
                     Files.move(outputFile, outputFile.resolveSibling(inputFile.getFileName()));
                 } catch (IOException e) {
                     log.error("Failed to overwrite input file.", e);
-                    return false;
+                    return 1;
                 }
             }
         }
 
-        return true;
+        return 0;
     }
 }

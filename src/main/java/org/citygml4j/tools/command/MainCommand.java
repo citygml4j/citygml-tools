@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.ServiceLoader;
 import java.util.stream.Stream;
 
@@ -41,6 +42,7 @@ import java.util.stream.Stream;
         description = "Collection of tools for processing CityGML files.",
         versionProvider = MainCommand.class,
         mixinStandardHelpOptions = true,
+        synopsisSubcommandLabel = "COMMAND",
         subcommands = {
                 CommandLine.HelpCommand.class,
                 ChangeHeightCommand.class,
@@ -57,10 +59,26 @@ public class MainCommand implements CityGMLTool, CommandLine.IVersionProvider {
     @CommandLine.Option(names = "--log", paramLabel = "<level>", description = "Log level: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
     private LogLevel logLevel = LogLevel.INFO;
 
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec;
+
     private CityGMLBuilder cityGMLBuilder;
 
     @Override
-    public boolean execute() throws Exception {
+    public Integer call() throws Exception {
+        // check whether at least one subcommand is given
+        CommandLine.ParseResult parseResult = spec.commandLine().getParseResult();
+        List<CommandLine> commandLines = parseResult.asCommandLineList();
+        if (commandLines.size() == 1)
+            throw new CommandLine.ParameterException(spec.commandLine(), "Missing required subcommand.");
+
+        // validate subcommand
+        for (CommandLine commandLine : commandLines) {
+            Object command = commandLine.getCommand();
+            if (command instanceof CityGMLTool)
+                ((CityGMLTool) command).validate();
+        }
+
         Logger log = Logger.getInstance();
         log.setLogLevel(logLevel);
 
@@ -89,13 +107,14 @@ public class MainCommand implements CityGMLTool, CommandLine.IVersionProvider {
             }
         } catch (IOException e) {
             log.error("Failed to initialize ADE extensions.", e);
-            return false;
+            return 1;
         }
 
         log.info("Initializing application environment.");
         cityGMLBuilder = context.createCityGMLBuilder(classLoader);
 
-        return true;
+        log.info("Executing command '" + commandLines.get(0).getCommandName() + "'.");
+        return 0;
     }
 
     public CityGMLBuilder getCityGMLBuilder() {
