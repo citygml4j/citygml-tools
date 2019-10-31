@@ -36,6 +36,7 @@ import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.citygml.core.CityObjectMember;
+import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.common.srs.SrsNameParser;
 import org.citygml4j.tools.common.srs.SrsParseException;
@@ -51,10 +52,9 @@ import java.util.List;
 
 @CommandLine.Command(name = "to-cityjson",
         description = "Converts CityGML files into CityJSON.",
-        versionProvider = MainCommand.class,
+        versionProvider = CityGMLTools.class,
         mixinStandardHelpOptions = true)
 public class ToCityJSONCommand implements CityGMLTool {
-
     @CommandLine.Option(names = "--epsg", paramLabel = "<code>", description = "EPSG code to be used as CRS metadata.")
     private int epsg = 0;
 
@@ -83,7 +83,7 @@ public class ToCityJSONCommand implements CityGMLTool {
     private StandardInputOptions input;
 
     @CommandLine.ParentCommand
-    private MainCommand main;
+    private CityGMLTools cityGMLTools;
 
     @Override
     public Integer call() throws Exception {
@@ -127,7 +127,7 @@ public class ToCityJSONCommand implements CityGMLTool {
             log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
 
             CityGML cityGML;
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), false)) {
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, cityGMLTools.getCityGMLBuilder(), false)) {
                 log.debug("Reading CityJSON input file into main memory.");
                 cityGML = reader.nextFeature();
             } catch (CityGMLBuilderException | CityGMLReadException e) {

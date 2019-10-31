@@ -31,6 +31,7 @@ import org.citygml4j.model.citygml.appearance.SurfaceDataProperty;
 import org.citygml4j.model.citygml.appearance.X3DMaterial;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.gml.feature.AbstractFeature;
+import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Util;
@@ -53,10 +54,9 @@ import java.util.UUID;
 
 @CommandLine.Command(name = "remove-apps",
         description = "Removes appearances from city objects.",
-        versionProvider = MainCommand.class,
+        versionProvider = CityGMLTools.class,
         mixinStandardHelpOptions = true)
 public class RemoveAppsCommand implements CityGMLTool {
-
     @CommandLine.Option(names = "--theme", paramLabel = "<name>", split = ",", description = "Only remove appearances of the given theme(s). Use 'null' as name for the null theme.")
     private List<String> theme;
 
@@ -79,7 +79,7 @@ public class RemoveAppsCommand implements CityGMLTool {
     private StandardInputOptions input;
 
     @CommandLine.ParentCommand
-    private MainCommand main;
+    private CityGMLTools cityGMLTools;
 
     @Override
     public Integer call() throws Exception {
@@ -110,9 +110,9 @@ public class RemoveAppsCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and removing appearances.");
 
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true,
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, cityGMLTools.getCityGMLBuilder(), true,
                     input.createSkipFilter("CityModel"));
-                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, main.getCityGMLBuilder())) {
+                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, cityGMLTools.getCityGMLBuilder())) {
                 boolean isInitialized = false;
                 Map<Class<?>, Integer> counter = new HashMap<>();
 

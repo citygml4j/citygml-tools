@@ -24,6 +24,7 @@ package org.citygml4j.tools.command;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.gml.feature.AbstractFeature;
+import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.log.LogLevel;
 import org.citygml4j.tools.common.log.Logger;
@@ -48,10 +49,9 @@ import java.util.UUID;
 
 @CommandLine.Command(name = "reproject",
         description = "Reprojects city objects to a new spatial reference system.",
-        versionProvider = MainCommand.class,
+        versionProvider = CityGMLTools.class,
         mixinStandardHelpOptions = true)
 public class ReprojectCommand implements CityGMLTool {
-
     @CommandLine.Option(names = "--target-crs", paramLabel = "<crs>", required = true, description = "Target CRS for the reprojection given as EPSG code, as GML srsName or as OGC WKT with escaped quotes.")
     private String targetCRS;
 
@@ -80,7 +80,7 @@ public class ReprojectCommand implements CityGMLTool {
     private StandardInputOptions input;
 
     @CommandLine.ParentCommand
-    private MainCommand main;
+    private CityGMLTools cityGMLTools;
 
     @Override
     public Integer call() throws Exception {
@@ -130,9 +130,9 @@ public class ReprojectCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and reprojecting coordinates.");
 
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true,
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, cityGMLTools.getCityGMLBuilder(), true,
                     input.createSkipFilter("CityModel"));
-                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, main.getCityGMLBuilder())) {
+                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, cityGMLTools.getCityGMLBuilder())) {
                 boolean isInitialized = false;
 
                 while (reader.hasNext()) {

@@ -26,6 +26,7 @@ import org.citygml4j.geometry.BoundingBox;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.appearance.Appearance;
 import org.citygml4j.model.gml.feature.AbstractFeature;
+import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.helper.ImplicitGeometryReader;
 import org.citygml4j.tools.common.log.Logger;
@@ -49,10 +50,9 @@ import java.util.UUID;
 
 @CommandLine.Command(name = "change-height",
         description = "Changes the height values of city objects by a given offset.",
-        versionProvider = MainCommand.class,
+        versionProvider = CityGMLTools.class,
         mixinStandardHelpOptions = true)
 public class ChangeHeightCommand implements CityGMLTool {
-
     @CommandLine.Option(names = "--offset", paramLabel = "<double>", required =  true, description = "Offset to add to height values.")
     private double offset;
 
@@ -69,14 +69,14 @@ public class ChangeHeightCommand implements CityGMLTool {
     private StandardInputOptions input;
 
     @CommandLine.ParentCommand
-    private MainCommand main;
+    private CityGMLTools cityGMLTools;
 
     @Override
     public Integer call() throws Exception {
         Logger log = Logger.getInstance();
         String fileNameSuffix = "_adapted-height";
 
-        ImplicitGeometryReader implicitGeometryReader = new ImplicitGeometryReader(main.getCityGMLBuilder());
+        ImplicitGeometryReader implicitGeometryReader = new ImplicitGeometryReader(cityGMLTools.getCityGMLBuilder());
 
         log.debug("Searching for CityGML input files.");
         List<Path> inputFiles = new ArrayList<>();
@@ -115,9 +115,9 @@ public class ChangeHeightCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and changing height values.");
 
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true,
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, cityGMLTools.getCityGMLBuilder(), true,
                     input.createSkipFilter("CityModel"));
-                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, main.getCityGMLBuilder())) {
+                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, cityGMLTools.getCityGMLBuilder())) {
                 boolean isInitialized = false;
 
                 while (reader.hasNext()) {

@@ -21,51 +21,161 @@
 
 package org.citygml4j.tools;
 
-import org.citygml4j.tools.command.MainCommand;
+import org.citygml4j.CityGMLContext;
+import org.citygml4j.builder.jaxb.CityGMLBuilder;
+import org.citygml4j.model.citygml.ade.binding.ADEContext;
+import org.citygml4j.tools.command.ChangeHeightCommand;
+import org.citygml4j.tools.command.CityGMLTool;
+import org.citygml4j.tools.command.ClipTexturesCommand;
+import org.citygml4j.tools.command.FilterLodsCommand;
+import org.citygml4j.tools.command.FromCityJSONCommand;
+import org.citygml4j.tools.command.MoveGlobalAppsCommand;
+import org.citygml4j.tools.command.RemoveAppsCommand;
+import org.citygml4j.tools.command.ReprojectCommand;
+import org.citygml4j.tools.command.ToCityJSONCommand;
+import org.citygml4j.tools.common.log.LogLevel;
 import org.citygml4j.tools.common.log.Logger;
+import org.citygml4j.tools.util.Constants;
+import org.citygml4j.tools.util.URLClassLoader;
 import org.citygml4j.tools.util.Util;
 import picocli.CommandLine;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 
-public class CityGMLTools implements CommandLine.IExecutionExceptionHandler {
+@CommandLine.Command(name = "citygml-tools",
+        description = "Collection of tools for processing CityGML files.",
+        versionProvider = CityGMLTools.class,
+        mixinStandardHelpOptions = true,
+        synopsisSubcommandLabel = "COMMAND",
+        subcommands = {
+                CommandLine.HelpCommand.class,
+                ChangeHeightCommand.class,
+                RemoveAppsCommand.class,
+                MoveGlobalAppsCommand.class,
+                ClipTexturesCommand.class,
+                FilterLodsCommand.class,
+                ReprojectCommand.class,
+                FromCityJSONCommand.class,
+                ToCityJSONCommand.class
+        })
+public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProvider {
     private static final Logger log = Logger.getInstance();
+    private CommandLine subcommand;
+    private CityGMLBuilder cityGMLBuilder;
 
-    public static void main(String[] args) {
+    @CommandLine.Option(names = "--log", paramLabel = "<level>", description = "Log level: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
+    private LogLevel logLevel = LogLevel.INFO;
+
+    public static void main(String[] args) throws Exception {
+        CityGMLTools cityGMLTools = new CityGMLTools();
         Instant start = Instant.now();
+        int exitCode = 1;
 
-        CommandLine cmd = new CommandLine(new MainCommand())
+        CommandLine cmd = new CommandLine(cityGMLTools)
                 .setCaseInsensitiveEnumValuesAllowed(true)
-                .setExecutionExceptionHandler(new CityGMLTools())
                 .setExecutionStrategy(new CommandLine.RunAll());
 
-        int exitCode = cmd.execute(args);
+        try {
+            CommandLine.ParseResult parseResult = cmd.parseArgs(args);
+            if (CommandLine.printHelpIfRequested(parseResult))
+                return;
 
-        if (exitCode != 0) {
-            if (exitCode != CommandLine.ExitCode.USAGE)
+            // check for required subcommand
+            List<CommandLine> commandLines = parseResult.asCommandLineList();
+            if (commandLines.size() == 1)
+                throw new CommandLine.ParameterException(cmd, "Missing required subcommand.");
+
+            // validate commands
+            for (CommandLine commandLine : commandLines) {
+                Object command = commandLine.getCommand();
+                if (command instanceof CityGMLTool)
+                    ((CityGMLTool) command).validate();
+            }
+
+            // execute commands
+            cityGMLTools.subcommand = commandLines.get(1);
+            exitCode = cmd.getExecutionStrategy().execute(parseResult);
+
+            log.info("Total execution time: " + Util.formatElapsedTime(Duration.between(start, Instant.now()).toMillis()) + ".");
+            int warnings = log.getNumberOfWarnings();
+            int errors = log.getNumberOfErrors();
+
+            if (exitCode != 0)
                 log.warn("citygml-tools execution failed.");
+            else if (errors != 0 || warnings != 0)
+                log.info("citygml-tools finished with " + warnings + " warning(s) and " + errors + " error(s).");
+            else
+                log.info("citygml-tools successfully completed.");
 
-            System.exit(exitCode);
+        } catch (CommandLine.ParameterException e) {
+            cmd.getParameterExceptionHandler().handleParseException(e, args);
+        } catch (Throwable e) {
+            log.error("The following unexpected error occurred during execution.");
+            log.logStackTrace(e);
+            log.warn("citygml-tools execution failed.");
         }
 
-        log.info("Total execution time: " + Util.formatElapsedTime(
-                Duration.between(start, Instant.now()).toMillis()) + ".");
-
-        int warnings = log.getNumberOfWarnings();
-        int errors = log.getNumberOfErrors();
-
-        if (errors != 0 || warnings != 0)
-            log.info("citygml-tools finished with " + warnings + " warning(s) and " + errors + " error(s).");
-        else
-            log.info("citygml-tools successfully completed.");
+        System.exit(exitCode);
     }
 
     @Override
-    public int handleExecutionException(Exception e, CommandLine commandLine, CommandLine.ParseResult parseResult) throws Exception {
-        log.error("The following unexpected error occurred during execution.");
-        throw e instanceof CommandLine.ExecutionException ?
-                (CommandLine.ExecutionException) e :
-                new CommandLine.ExecutionException(commandLine, "Error while executing command (" + commandLine.getCommand() + "):", e);
+    public Integer call() throws Exception {
+        log.setLogLevel(logLevel);
+        log.info("Starting citygml-tools.");
+
+        CityGMLContext context = CityGMLContext.getInstance();
+
+        // search for ADE extensions
+        URLClassLoader classLoader = new URLClassLoader(CityGMLTools.class.getClassLoader());
+        try {
+            Path adeExtensionsDir = Constants.APP_HOME.resolve(Constants.ADE_EXTENSIONS_DIR);
+            if (Files.exists(adeExtensionsDir)) {
+                try (Stream<Path> stream = Files.walk(adeExtensionsDir)
+                        .filter(path -> path.getFileName().toString().toLowerCase().endsWith(".jar"))) {
+                    stream.forEach(classLoader::addPath);
+                }
+            }
+
+            if (classLoader.getURLs().length > 0) {
+                log.info("Loading ADE extensions.");
+                ServiceLoader<ADEContext> adeLoader = ServiceLoader.load(ADEContext.class, classLoader);
+
+                for (ADEContext adeContext : adeLoader) {
+                    log.debug("Registering ADE extension '" + adeContext.getClass().getTypeName() + "'.");
+                    context.registerADEContext(adeContext);
+                }
+            }
+        } catch (IOException e) {
+            log.error("Failed to initialize ADE extensions.", e);
+            return 1;
+        }
+
+        log.info("Initializing application environment.");
+        cityGMLBuilder = context.createCityGMLBuilder(classLoader);
+
+        log.info("Executing command '" + subcommand.getCommandName() + "'.");
+        return 0;
+    }
+
+    public CityGMLBuilder getCityGMLBuilder() {
+        return cityGMLBuilder;
+    }
+
+    @Override
+    public String[] getVersion() {
+        return new String[]{
+                getClass().getPackage().getImplementationTitle() + ", version " +
+                        getClass().getPackage().getImplementationVersion() + "\n" +
+                        "(c) 2018-" + LocalDate.now().getYear() + " Claus Nagel <claus.nagel@gmail.com>\n"
+        };
     }
 }

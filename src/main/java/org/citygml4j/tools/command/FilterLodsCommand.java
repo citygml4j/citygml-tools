@@ -27,6 +27,7 @@ import org.citygml4j.model.citygml.appearance.Appearance;
 import org.citygml4j.model.citygml.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.gml.feature.AbstractFeature;
+import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.helper.GlobalAppReader;
 import org.citygml4j.tools.common.log.Logger;
@@ -51,7 +52,7 @@ import java.util.UUID;
 
 @CommandLine.Command(name = "filter-lods",
         description = "Filters the LoD representations of city objects.",
-        versionProvider = MainCommand.class,
+        versionProvider = CityGMLTools.class,
         mixinStandardHelpOptions = true)
 public class FilterLodsCommand implements CityGMLTool {
     @CommandLine.Option(names = "--lod", paramLabel = "<lod>", required = true, split = ",", description = "LoD to filter: 0, 1, 2, 3, 4.")
@@ -73,14 +74,14 @@ public class FilterLodsCommand implements CityGMLTool {
     private StandardInputOptions input;
 
     @CommandLine.ParentCommand
-    private MainCommand main;
+    private CityGMLTools cityGMLTools;
 
     @Override
     public Integer call() throws Exception {
         Logger log = Logger.getInstance();
         String fileNameSuffix = "_filtered_lods";
 
-        GlobalAppReader globalAppReader = new GlobalAppReader(main.getCityGMLBuilder());
+        GlobalAppReader globalAppReader = new GlobalAppReader(cityGMLTools.getCityGMLBuilder());
 
         log.debug("Searching for CityGML input files.");
         List<Path> inputFiles = new ArrayList<>();
@@ -124,9 +125,9 @@ public class FilterLodsCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and filtering LoDs.");
 
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, main.getCityGMLBuilder(), true,
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, cityGMLTools.getCityGMLBuilder(), true,
                     input.createSkipFilter("CityModel", "Appearance"));
-                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, main.getCityGMLBuilder())) {
+                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, cityGMLTools.getCityGMLBuilder())) {
                 boolean isInitialized = false;
 
                 while (reader.hasNext()) {
