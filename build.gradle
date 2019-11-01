@@ -23,9 +23,6 @@ allprojects {
         maven {
             url 'http://download.osgeo.org/webdav/geotools'
         }
-        maven {
-            url 'https://repository.apache.org/content/repositories/snapshots'
-        }
         jcenter()
     }
 }
