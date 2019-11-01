@@ -1,6 +1,20 @@
 Change Log
 ==========
 
+### 1.3.2 - 2019-11-01
+
+##### Additions
+* Added option `--remove-duplicate-child-geometries` to the `to-cityjson` command to avoid redundant geometries. [#7](https://github.com/citygml4j/citygml-tools/issues/7)
+
+##### Fixes
+* Fixed possible endless loop in `to-cityjson` command. [#8](https://github.com/citygml4j/citygml-tools/issues/8)
+* Fixed creation of geometries for CityJSON city objects with nested boundary surfaces. [#7](https://github.com/citygml4j/citygml-tools/issues/7)
+
+##### Miscellaneous
+* Updated to citygml4j version 2.10.4.
+* Updated commons-imaging for `texture-clipper`.
+* Bumped version of `texture-clipper` to 1.1.1.
+
 ### 1.3.1 - 2019-08-11
 
 ##### Fixes

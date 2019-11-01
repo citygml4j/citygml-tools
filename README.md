@@ -6,9 +6,9 @@ CityGML files.
 citygml-tools is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0). See the `LICENSE` file for more details.
 
 ## Latest release
-The latest stable release of citygml-tools is 1.3.1.
+The latest stable release of citygml-tools is 1.3.2.
 
-Download the citygml-tools 1.3.1 release binaries [here](https://github.com/citygml4j/citygml-tools/releases/download/v1.3.1/citygml-tools-1.3.1.zip). Previous releases are available from the [releases section](https://github.com/citygml4j/citygml-tools/releases).
+Download the citygml-tools 1.3.2 release binaries [here](https://github.com/citygml4j/citygml-tools/releases/download/v1.3.2/citygml-tools-1.3.2.zip). Previous releases are available from the [releases section](https://github.com/citygml4j/citygml-tools/releases).
 
 ## Contributing
 * To file bugs found in the software create a GitHub issue.
@@ -22,7 +22,7 @@ Use the following command to list the available operations.
 
 ```
 > citygml-tools --help
-Usage: citygml-tools [-hV] [--log=<level>] [COMMAND]
+Usage: citygml-tools [-hV] [--log=<level>] COMMAND
 Collection of tools for processing CityGML files.
       --log=<level>   Log level: error, warn, info, debug (default: info).
   -h, --help          Show this help message and exit.
@@ -41,7 +41,7 @@ Commands:
 To display information about how to use a specific command, type the
 following:
 
-    > citygml-tools help [COMMAND]
+    > citygml-tools help COMMAND
 
 ## System requirements
 * Java JRE or JDK >= 1.8
