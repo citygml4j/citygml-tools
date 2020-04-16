@@ -33,6 +33,7 @@ import org.citygml4j.tools.command.MoveGlobalAppsCommand;
 import org.citygml4j.tools.command.RemoveAppsCommand;
 import org.citygml4j.tools.command.ReprojectCommand;
 import org.citygml4j.tools.command.ToCityJSONCommand;
+import org.citygml4j.tools.command.ValidateCommand;
 import org.citygml4j.tools.common.log.LogLevel;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Constants;
@@ -59,6 +60,7 @@ import java.util.stream.Stream;
         synopsisSubcommandLabel = "COMMAND",
         subcommands = {
                 CommandLine.HelpCommand.class,
+                ValidateCommand.class,
                 ChangeHeightCommand.class,
                 RemoveAppsCommand.class,
                 MoveGlobalAppsCommand.class,

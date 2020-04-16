@@ -55,12 +55,20 @@ public class Logger {
 				"] ";
 	}
 
-	private void log(LogLevel level, String msg) {
+	public void log(LogLevel level, String msg) {
+		log(level, msg, true);
+	}
+
+	public void log(LogLevel level, String msg, boolean count) {
+		if (count)
+			count(level);
+
 		if (this.level.ordinal() >= level.ordinal())
 			System.out.println(getPrefix(level) + msg);
 	}
 
 	private void log(LogLevel level, String msg, Throwable e) {
+		count(level);
 		if (this.level.ordinal() >= level.ordinal()) {
 			System.out.println(getPrefix(level) + msg);
 
@@ -70,6 +78,8 @@ public class Logger {
 			} while ((e = e.getCause()) != null);
 		}
 	}
+
+
 
 	public void debug(String msg) {		
 		log(LogLevel.DEBUG, msg);
@@ -81,22 +91,18 @@ public class Logger {
 
 	public void warn(String msg) {
 		log(LogLevel.WARN, msg);
-		warnings.incrementAndGet();
 	}
 
 	public void warn(String msg, Throwable e) {
 		log(LogLevel.WARN, msg, e);
-		warnings.incrementAndGet();
 	}
 
 	public void error(String msg) {
 		log(LogLevel.ERROR, msg);
-		errors.incrementAndGet();
 	}
 
 	public void error(String msg, Throwable e) {
 		log(LogLevel.ERROR, msg, e);
-		errors.incrementAndGet();
 	}
 
 	public void logStackTrace(Throwable e) {
@@ -116,4 +122,14 @@ public class Logger {
 		return warnings.get();
 	}
 
+	private void count(LogLevel level) {
+		switch (level) {
+			case WARN:
+				warnings.incrementAndGet();
+				break;
+			case ERROR:
+				errors.incrementAndGet();
+				break;
+		}
+	}
 }
