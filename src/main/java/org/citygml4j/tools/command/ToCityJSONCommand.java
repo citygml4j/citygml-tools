@@ -30,6 +30,7 @@ import org.citygml4j.builder.cityjson.json.io.writer.CityJSONWriter;
 import org.citygml4j.builder.cityjson.marshal.util.DefaultTextureVerticesBuilder;
 import org.citygml4j.builder.cityjson.marshal.util.DefaultVerticesBuilder;
 import org.citygml4j.builder.cityjson.marshal.util.DefaultVerticesTransformer;
+import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.cityjson.metadata.MetadataType;
 import org.citygml4j.model.citygml.CityGML;
@@ -40,6 +41,7 @@ import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.common.srs.SrsNameParser;
 import org.citygml4j.tools.common.srs.SrsParseException;
+import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
@@ -82,12 +84,10 @@ public class ToCityJSONCommand implements CityGMLTool {
     @CommandLine.Mixin
     private StandardInputOptions input;
 
-    @CommandLine.ParentCommand
-    private CityGMLTools cityGMLTools;
-
     @Override
     public Integer call() throws Exception {
         Logger log = Logger.getInstance();
+        CityGMLBuilder cityGMLBuilder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
 
         CityJSONOutputFactory out;
         try {
@@ -127,7 +127,7 @@ public class ToCityJSONCommand implements CityGMLTool {
             log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
 
             CityGML cityGML;
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, cityGMLTools.getCityGMLBuilder(), false)) {
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, cityGMLBuilder, false)) {
                 log.debug("Reading CityJSON input file into main memory.");
                 cityGML = reader.nextFeature();
             } catch (CityGMLBuilderException | CityGMLReadException e) {

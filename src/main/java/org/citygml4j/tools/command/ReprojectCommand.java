@@ -21,6 +21,7 @@
 
 package org.citygml4j.tools.command;
 
+import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.gml.feature.AbstractFeature;
@@ -32,6 +33,7 @@ import org.citygml4j.tools.reproject.ReprojectionBuilder;
 import org.citygml4j.tools.reproject.ReprojectionBuilderException;
 import org.citygml4j.tools.reproject.ReprojectionException;
 import org.citygml4j.tools.reproject.Reprojector;
+import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
@@ -79,12 +81,10 @@ public class ReprojectCommand implements CityGMLTool {
     @CommandLine.Mixin
     private StandardInputOptions input;
 
-    @CommandLine.ParentCommand
-    private CityGMLTools cityGMLTools;
-
     @Override
     public Integer call() throws Exception {
         Logger log = Logger.getInstance();
+        CityGMLBuilder cityGMLBuilder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
         String fileNameSuffix = "_reprojected";
 
         Reprojector reprojector;
@@ -130,9 +130,9 @@ public class ReprojectCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and reprojecting coordinates.");
 
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, cityGMLTools.getCityGMLBuilder(), true,
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, cityGMLBuilder, true,
                     input.createSkipFilter("CityModel"));
-                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, cityGMLTools.getCityGMLBuilder())) {
+                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, cityGMLBuilder)) {
                 boolean isInitialized = false;
 
                 while (reader.hasNext()) {

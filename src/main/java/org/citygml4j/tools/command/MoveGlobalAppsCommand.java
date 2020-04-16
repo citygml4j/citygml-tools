@@ -21,6 +21,7 @@
 
 package org.citygml4j.tools.command;
 
+import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.appearance.Appearance;
@@ -32,6 +33,7 @@ import org.citygml4j.tools.appmover.LocalAppTarget;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.helper.GlobalAppReader;
 import org.citygml4j.tools.common.log.Logger;
+import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
@@ -63,15 +65,13 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
     @CommandLine.Mixin
     private StandardInputOptions input;
 
-    @CommandLine.ParentCommand
-    private CityGMLTools cityGMLTools;
-
     @Override
     public Integer call() throws Exception {
         Logger log = Logger.getInstance();
+        CityGMLBuilder cityGMLBuilder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
         String fileNameSuffix = "_local-app";
 
-        GlobalAppReader globalAppReader = new GlobalAppReader(cityGMLTools.getCityGMLBuilder());
+        GlobalAppReader globalAppReader = new GlobalAppReader(cityGMLBuilder);
 
         log.debug("Searching for CityGML input files.");
         List<Path> inputFiles = new ArrayList<>();
@@ -116,9 +116,9 @@ public class MoveGlobalAppsCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and moving global appearances.");
 
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, cityGMLTools.getCityGMLBuilder(), true,
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, cityGMLBuilder, true,
                     input.createSkipFilter("CityModel", "Appearance"));
-                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, cityGMLTools.getCityGMLBuilder())) {
+                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, cityGMLBuilder)) {
                 boolean isInitialized = false;
 
                 while (reader.hasNext()) {

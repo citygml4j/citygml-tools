@@ -26,9 +26,11 @@ import org.citygml4j.builder.cityjson.CityJSONBuilderException;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONInputFactory;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReadException;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReader;
+import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.log.Logger;
+import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.xml.io.writer.CityGMLWriteException;
 import org.citygml4j.xml.io.writer.CityGMLWriter;
@@ -53,12 +55,10 @@ public class FromCityJSONCommand implements CityGMLTool {
     @CommandLine.Mixin
     private StandardInputOptions input;
 
-    @CommandLine.ParentCommand
-    private CityGMLTools cityGMLTools;
-
     @Override
     public Integer call() throws Exception {
         Logger log = Logger.getInstance();
+        CityGMLBuilder cityGMLBuilder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
 
         CityJSONInputFactory in;
         try {
@@ -100,7 +100,7 @@ public class FromCityJSONCommand implements CityGMLTool {
                 return 1;
             }
 
-            try (CityGMLWriter writer = cityGMLOutput.createCityGMLWriter(outputFile, cityGMLTools.getCityGMLBuilder())) {
+            try (CityGMLWriter writer = cityGMLOutput.createCityGMLWriter(outputFile, cityGMLBuilder)) {
                 writer.write(cityModel);
             } catch (CityGMLWriteException e) {
                 log.error("Failed to write CityGML file.", e);

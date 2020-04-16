@@ -21,12 +21,14 @@
 
 package org.citygml4j.tools.command;
 
+import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.model.module.citygml.CityGMLVersion;
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.textureclipper.TextureClipper;
 import org.citygml4j.tools.textureclipper.TextureClippingException;
 import org.citygml4j.tools.util.Constants;
+import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.tools.util.Util;
 import picocli.CommandLine;
 
@@ -79,15 +81,13 @@ public class ClipTexturesCommand implements CityGMLTool {
     @CommandLine.Mixin
     private StandardInputOptions input;
 
-    @CommandLine.ParentCommand
-    private CityGMLTools cityGMLTools;
-
     @CommandLine.Spec
     private CommandLine.Model.CommandSpec spec;
 
     @Override
     public Integer call() throws Exception {
         Logger log = Logger.getInstance();
+        CityGMLBuilder cityGMLBuilder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
 
         CityGMLVersion targetVersion = cityGMLOutput.getVersion();
 
@@ -113,7 +113,7 @@ public class ClipTexturesCommand implements CityGMLTool {
             }
         }
 
-        TextureClipper clipper = TextureClipper.defaults(cityGMLTools.getCityGMLBuilder())
+        TextureClipper clipper = TextureClipper.defaults(cityGMLBuilder)
                 .withJPEGCompression(jpegCompression)
                 .forceJPEG(forceJPEG)
                 .adaptTextureCoordinates(adaptTexCoords)

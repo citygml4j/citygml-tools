@@ -36,6 +36,7 @@ import org.citygml4j.tools.command.ToCityJSONCommand;
 import org.citygml4j.tools.common.log.LogLevel;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Constants;
+import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.tools.util.URLClassLoader;
 import org.citygml4j.tools.util.Util;
 import picocli.CommandLine;
@@ -70,7 +71,6 @@ import java.util.stream.Stream;
 public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProvider {
     private static final Logger log = Logger.getInstance();
     private CommandLine subcommand;
-    private CityGMLBuilder cityGMLBuilder;
 
     @CommandLine.Option(names = "--log", paramLabel = "<level>", description = "Log level: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
     private LogLevel logLevel = LogLevel.INFO;
@@ -160,14 +160,11 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
         }
 
         log.info("Initializing application environment.");
-        cityGMLBuilder = context.createCityGMLBuilder(classLoader);
+        CityGMLBuilder cityGMLBuilder = context.createCityGMLBuilder(classLoader);
+        ObjectRegistry.getInstance().put(cityGMLBuilder);
 
         log.info("Executing command '" + subcommand.getCommandName() + "'.");
         return 0;
-    }
-
-    public CityGMLBuilder getCityGMLBuilder() {
-        return cityGMLBuilder;
     }
 
     @Override
