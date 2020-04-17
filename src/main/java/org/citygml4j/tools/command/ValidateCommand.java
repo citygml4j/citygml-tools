@@ -31,6 +31,7 @@ import picocli.CommandLine;
         mixinStandardHelpOptions = true,
         synopsisSubcommandLabel = "COMMAND",
         subcommands = {
+                CommandLine.HelpCommand.class,
                 XMLSchemaCommand.class
         })
 public class ValidateCommand implements CityGMLTool {
