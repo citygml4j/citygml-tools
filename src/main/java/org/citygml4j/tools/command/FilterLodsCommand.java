@@ -84,12 +84,13 @@ public class FilterLodsCommand implements CityGMLTool {
         GlobalAppReader globalAppReader = new GlobalAppReader(cityGMLBuilder);
 
         log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles = new ArrayList<>();
+        List<Path> inputFiles;
         try {
-            inputFiles.addAll(Util.listFiles(input.getFile(), "**.{gml,xml}", fileNameSuffix));
+            inputFiles = new ArrayList<>(Util.listFiles(input.getFile(), "**.{gml,xml}", fileNameSuffix));
             log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
         } catch (IOException e) {
             log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
+            return 0;
         }
 
         for (int i = 0; i < inputFiles.size(); i++) {

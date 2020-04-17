@@ -89,6 +89,16 @@ public class ToCityJSONCommand implements CityGMLTool {
         Logger log = Logger.getInstance();
         CityGMLBuilder cityGMLBuilder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
 
+        log.debug("Searching for CityGML input files.");
+        List<Path> inputFiles;
+        try {
+            inputFiles = new ArrayList<>(Util.listFiles(input.getFile(), "**.{gml,xml}"));
+            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
+        } catch (IOException e) {
+            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
+            return 0;
+        }
+
         CityJSONOutputFactory out;
         try {
             CityJSONBuilder builder = CityGMLContext.getInstance().createCityJSONBuilder();
@@ -109,15 +119,6 @@ public class ToCityJSONCommand implements CityGMLTool {
         // apply compression if requested
         if (compress)
             out.setVerticesTransformer(new DefaultVerticesTransformer().withSignificantDigits(compressDigits));
-
-        log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles = new ArrayList<>();
-        try {
-            inputFiles.addAll(Util.listFiles(input.getFile(), "**.{gml,xml}"));
-            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
-        } catch (IOException e) {
-            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
-        }
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);

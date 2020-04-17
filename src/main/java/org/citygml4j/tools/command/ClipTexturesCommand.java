@@ -91,6 +91,16 @@ public class ClipTexturesCommand implements CityGMLTool {
 
         CityGMLVersion targetVersion = cityGMLOutput.getVersion();
 
+        log.debug("Searching for CityGML input files.");
+        List<Path> inputFiles;
+        try {
+            inputFiles = new ArrayList<>(Util.listFiles(input.getFile(), "**.{gml,xml}"));
+            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
+        } catch (IOException e) {
+            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
+            return 0;
+        }
+
         // check output directory
         Path outputDir = Constants.WORKING_DIR.resolve(Paths.get(output));
         if (Files.isRegularFile(outputDir)) {
@@ -122,15 +132,6 @@ public class ClipTexturesCommand implements CityGMLTool {
                 .withNumberOfBuckets(noOfBuckets)
                 .withTextureFileNamePrefix(texturePrefix)
                 .withTargetVersion(targetVersion);
-
-        log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles = new ArrayList<>();
-        try {
-            inputFiles.addAll(Util.listFiles(input.getFile(), "**.{gml,xml}"));
-            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
-        } catch (IOException e) {
-            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
-        }
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);

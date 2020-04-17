@@ -87,6 +87,16 @@ public class ReprojectCommand implements CityGMLTool {
         CityGMLBuilder cityGMLBuilder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
         String fileNameSuffix = "_reprojected";
 
+        log.debug("Searching for CityGML input files.");
+        List<Path> inputFiles;
+        try {
+            inputFiles = new ArrayList<>(Util.listFiles(input.getFile(), "**.{gml,xml}", fileNameSuffix));
+            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
+        } catch (IOException e) {
+            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
+            return 0;
+        }
+
         Reprojector reprojector;
         try {
             reprojector = ReprojectionBuilder.defaults()
@@ -104,15 +114,6 @@ public class ReprojectCommand implements CityGMLTool {
         } catch (ReprojectionBuilderException e) {
             log.error("Failed to create reprojection configuration.", e);
             return 1;
-        }
-
-        log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles = new ArrayList<>();
-        try {
-            inputFiles.addAll(Util.listFiles(input.getFile(), "**.{gml,xml}", fileNameSuffix));
-            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
-        } catch (IOException e) {
-            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
         }
 
         for (int i = 0; i < inputFiles.size(); i++) {

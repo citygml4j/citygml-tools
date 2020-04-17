@@ -60,6 +60,16 @@ public class FromCityJSONCommand implements CityGMLTool {
         Logger log = Logger.getInstance();
         CityGMLBuilder cityGMLBuilder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
 
+        log.debug("Searching for CityJSON input files.");
+        List<Path> inputFiles;
+        try {
+            inputFiles = new ArrayList<>(Util.listFiles(input.getFile(), "**.{json,cityjson}"));
+            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
+        } catch (IOException e) {
+            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
+            return 0;
+        }
+
         CityJSONInputFactory in;
         try {
             in = input.createCityJSONInputFactory();
@@ -70,15 +80,6 @@ public class FromCityJSONCommand implements CityGMLTool {
         } catch (CityJSONBuilderException e) {
             log.error("Failed to create CityJSON input factory.", e);
             return 1;
-        }
-
-        log.debug("Searching for CityJSON input files.");
-        List<Path> inputFiles = new ArrayList<>();
-        try {
-            inputFiles.addAll(Util.listFiles(input.getFile(), "**.{json,cityjson}"));
-            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
-        } catch (IOException e) {
-            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
         }
 
         for (int i = 0; i < inputFiles.size(); i++) {
