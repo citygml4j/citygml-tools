@@ -56,13 +56,7 @@ public class Logger {
 	}
 
 	public void log(LogLevel level, String msg) {
-		log(level, msg, true);
-	}
-
-	public void log(LogLevel level, String msg, boolean count) {
-		if (count)
-			count(level);
-
+		count(level);
 		if (this.level.ordinal() >= level.ordinal())
 			System.out.println(getPrefix(level) + msg);
 	}
@@ -71,15 +65,12 @@ public class Logger {
 		count(level);
 		if (this.level.ordinal() >= level.ordinal()) {
 			System.out.println(getPrefix(level) + msg);
-
 			do {
 				if (e.getMessage() != null)
 					log(level, "Cause: " + e.getClass().getName() + ": " + e.getMessage());
 			} while ((e = e.getCause()) != null);
 		}
 	}
-
-
 
 	public void debug(String msg) {		
 		log(LogLevel.DEBUG, msg);

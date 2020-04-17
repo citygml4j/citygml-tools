@@ -107,8 +107,8 @@ public class XMLSchemaCommand implements CityGMLTool {
                 if (errorHandler.errors == 0)
                     log.info("The file is valid.");
                 else {
+                    log.warn("The file is invalid. Found " + errorHandler.errors + " error(s).");
                     invalid++;
-                    log.log(LogLevel.ERROR, "The file is invalid. Found " + errorHandler.errors + " error(s).", false);
                 }
             } catch (SAXException | IOException e) {
                 log.error("Failed to validate CityGML file.", e);
@@ -123,10 +123,10 @@ public class XMLSchemaCommand implements CityGMLTool {
             if (invalid == 0)
                 log.info("Validation complete. All files are valid.");
             else
-                log.log(LogLevel.ERROR, "Validation complete. Found " + invalid + " invalid file(s).", false);
+                log.warn("Validation complete. Found " + invalid + " invalid file(s).");
         }
 
-        return 0;
+        return invalid == 0 ? 0 : 3;
     }
 
     private class ValidationErrorHandler implements ErrorHandler {
@@ -157,7 +157,7 @@ public class XMLSchemaCommand implements CityGMLTool {
             }
 
             if (!suppressValidationErrors)
-                log.log(level, type + " at [" + location + "]: " + e.getMessage(), false);
+                log.log(level, type + " at [" + location + "]: " + e.getMessage());
         }
 
         private void reset() {
