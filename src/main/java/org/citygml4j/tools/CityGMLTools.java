@@ -33,6 +33,7 @@ import org.citygml4j.tools.command.MoveGlobalAppsCommand;
 import org.citygml4j.tools.command.RemoveAppsCommand;
 import org.citygml4j.tools.command.ReprojectCommand;
 import org.citygml4j.tools.command.ToCityJSONCommand;
+import org.citygml4j.tools.command.ValidateCommand;
 import org.citygml4j.tools.common.log.LogLevel;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Constants;
@@ -59,6 +60,7 @@ import java.util.stream.Stream;
         synopsisSubcommandLabel = "COMMAND",
         subcommands = {
                 CommandLine.HelpCommand.class,
+                ValidateCommand.class,
                 ChangeHeightCommand.class,
                 RemoveAppsCommand.class,
                 MoveGlobalAppsCommand.class,
@@ -109,7 +111,7 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
             int warnings = log.getNumberOfWarnings();
             int errors = log.getNumberOfErrors();
 
-            if (exitCode != 0)
+            if (exitCode == 1)
                 log.warn("citygml-tools execution failed.");
             else if (errors != 0 || warnings != 0)
                 log.info("citygml-tools finished with " + warnings + " warning(s) and " + errors + " error(s).");
@@ -118,6 +120,7 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
 
         } catch (CommandLine.ParameterException e) {
             cmd.getParameterExceptionHandler().handleParseException(e, args);
+            exitCode = 2;
         } catch (Throwable e) {
             log.error("The following unexpected error occurred during execution.");
             log.logStackTrace(e);
