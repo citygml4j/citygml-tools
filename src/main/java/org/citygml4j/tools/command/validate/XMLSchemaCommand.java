@@ -51,8 +51,11 @@ import java.util.List;
         versionProvider = CityGMLTools.class,
         mixinStandardHelpOptions = true)
 public class XMLSchemaCommand implements CityGMLTool {
-    @CommandLine.Option(names = {"-s", "--suppress-validation-errors"}, description = "Do not show the validation errors for a concise report.")
+    @CommandLine.Option(names = {"-s", "--suppress-validation-errors"}, description = "Do not show validation errors for a concise report.")
     private boolean suppressValidationErrors;
+
+    @CommandLine.Option(names = "--schema", paramLabel = "<URI>", description = "Load additional XML schema from a file or URL. Note that the official CityGML schemas cannot be replaced.")
+    private List<String> schemas;
 
     @CommandLine.Mixin
     private StandardInputOptions input;
@@ -64,6 +67,16 @@ public class XMLSchemaCommand implements CityGMLTool {
 
         log.info("Performing XML validation against the official CityGML schemas.");
 
+        log.debug("Searching for CityGML input files.");
+        List<Path> inputFiles;
+        try {
+            inputFiles = new ArrayList<>(Util.listFiles(input.getFile(), "**.{gml,xml}"));
+            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
+        } catch (IOException e) {
+            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
+            return 0;
+        }
+
         log.debug("Loading default CityGML schemas.");
         SchemaHandler schemaHandler;
         try {
@@ -73,7 +86,18 @@ public class XMLSchemaCommand implements CityGMLTool {
             return 1;
         }
 
-        log.debug("Creating validator object.");
+        if (schemas != null && !schemas.isEmpty()) {
+            for (String schema : schemas) {
+                try {
+                    log.debug("Loading additional XML schema from '" + schema + "'.");
+                    schemaHandler.parseSchema("", schema);
+                } catch (SAXException e) {
+                    log.error("Failed to load XML schema from '" + schema + "'.", e);
+                    return 1;
+                }
+            }
+        }
+
         Validator validator;
         try {
             SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
@@ -82,15 +106,6 @@ public class XMLSchemaCommand implements CityGMLTool {
         } catch (SAXException e) {
             log.error("Failed to create validator object.", e);
             return 1;
-        }
-
-        log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles = new ArrayList<>();
-        try {
-            inputFiles.addAll(Util.listFiles(input.getFile(), "**.{gml,xml}"));
-            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
-        } catch (IOException e) {
-            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
         }
 
         ValidationErrorHandler errorHandler = new ValidationErrorHandler();
@@ -119,14 +134,13 @@ public class XMLSchemaCommand implements CityGMLTool {
             }
         }
 
-        if (inputFiles.size() > 0) {
-            if (invalid == 0)
-                log.info("Validation complete. All files are valid.");
-            else
-                log.warn("Validation complete. Found " + invalid + " invalid file(s).");
+        if (invalid == 0) {
+            log.info("Validation complete. All files are valid.");
+            return 0;
+        } else {
+            log.warn("Validation complete. Found " + invalid + " invalid file(s).");
+            return 3;
         }
-
-        return invalid == 0 ? 0 : 3;
     }
 
     private class ValidationErrorHandler implements ErrorHandler {
