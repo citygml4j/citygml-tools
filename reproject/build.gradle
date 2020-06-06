@@ -5,9 +5,9 @@ plugins {
 
 dependencies {
     implementation project(':citygml-tools-common')
-    implementation 'org.geotools:gt-epsg-extension:20.2'
-    implementation 'org.geotools:gt-epsg-hsql:20.2'
-    implementation 'org.geotools:gt-referencing:20.2'
+    implementation 'org.geotools:gt-epsg-extension:23.1'
+    implementation 'org.geotools:gt-epsg-hsql:23.1'
+    implementation 'org.geotools:gt-referencing:23.1'
 }
 
 bintray {
