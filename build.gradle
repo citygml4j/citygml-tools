@@ -12,7 +12,7 @@ mainClassName = 'org.citygml4j.tools.CityGMLTools'
 sourceCompatibility = 1.8
 
 ext {
-    citygml4jVersion = '2.10.5'
+    citygml4jVersion = '2.11.0-b20200606-1436'
     date = new Date()
 }
 
@@ -132,7 +132,7 @@ dependencies {
     implementation project(':reproject')
     implementation project(':texture-clipper')
     implementation "org.citygml4j:citygml4j:$citygml4jVersion"
-    implementation 'info.picocli:picocli:4.2.0'
+    implementation 'info.picocli:picocli:4.3.2'
 }
 
 jar {

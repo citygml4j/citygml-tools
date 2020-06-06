@@ -108,17 +108,8 @@ public class ToCityJSONCommand implements CityGMLTool {
             return 1;
         }
 
-        // set builder for geometry, template and texture vertices
-        out.setVerticesBuilder(new DefaultVerticesBuilder().withSignificantDigits(verticesDigites));
-        out.setTemplatesVerticesBuilder(new DefaultVerticesBuilder().withSignificantDigits(templateDigites));
-        out.setTextureVerticesBuilder(new DefaultTextureVerticesBuilder().withSignificantDigits(textureVerticesDigites));
-
         // remove duplicate child geometries if requested
         out.setRemoveDuplicateChildGeometries(removeDuplicateChildGeometries);
-
-        // apply compression if requested
-        if (compress)
-            out.setVerticesTransformer(new DefaultVerticesTransformer().withSignificantDigits(compressDigits));
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
@@ -139,6 +130,15 @@ public class ToCityJSONCommand implements CityGMLTool {
             if (cityGML instanceof CityModel) {
                 try (CityJSONWriter writer = out.createCityJSONWriter(outputFile.toFile())) {
                     CityModel cityModel = (CityModel) cityGML;
+
+                    // set builder for geometry, template and texture vertices
+                    writer.setVerticesBuilder(new DefaultVerticesBuilder().withSignificantDigits(verticesDigites));
+                    writer.setTemplatesVerticesBuilder(new DefaultVerticesBuilder().withSignificantDigits(templateDigites));
+                    writer.setTextureVerticesBuilder(new DefaultTextureVerticesBuilder().withSignificantDigits(textureVerticesDigites));
+
+                    // apply compression if requested
+                    if (compress)
+                        writer.setVerticesTransformer(new DefaultVerticesTransformer().withSignificantDigits(compressDigits));
 
                     // pretty print
                     if (prettyPrint)
