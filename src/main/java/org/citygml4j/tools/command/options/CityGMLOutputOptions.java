@@ -25,6 +25,7 @@ import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.model.module.ModuleContext;
 import org.citygml4j.model.module.citygml.CityGMLModuleType;
 import org.citygml4j.model.module.citygml.CityGMLVersion;
+import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.xml.io.CityGMLOutputFactory;
 import org.citygml4j.xml.io.writer.AbstractCityGMLWriter;
 import org.citygml4j.xml.io.writer.CityGMLWriteException;
@@ -52,24 +53,27 @@ public class CityGMLOutputOptions extends OutputOptions {
         return CityGMLVersion.v2_0_0;
     }
 
-    public CityGMLOutputFactory createCityGMLOutputFactory(CityGMLBuilder builder) {
-        return builder.createCityGMLOutputFactory(getVersion());
+    private CityGMLOutputFactory createCityGMLOutputFactory(CityGMLVersion version) {
+        CityGMLBuilder builder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
+        return builder.createCityGMLOutputFactory(version);
     }
 
-    public CityModelWriter createCityModelWriter(Path outputFile, CityGMLBuilder builder) throws CityGMLWriteException {
-        CityGMLVersion version = getVersion();
+    public CityGMLOutputFactory createCityGMLOutputFactory() {
+        return createCityGMLOutputFactory(getVersion());
+    }
 
-        CityGMLOutputFactory out = builder.createCityGMLOutputFactory(version);
+    public CityModelWriter createCityModelWriter(Path outputFile) throws CityGMLWriteException {
+        CityGMLVersion version = getVersion();
+        CityGMLOutputFactory out = createCityGMLOutputFactory(version);
         CityModelWriter writer = out.createCityModelWriter(outputFile.toFile(), getEncoding());
         setDefaultXMLContext(writer, version);
 
         return writer;
     }
 
-    public CityGMLWriter createCityGMLWriter(Path outputFile, CityGMLBuilder builder) throws CityGMLWriteException {
+    public CityGMLWriter createCityGMLWriter(Path outputFile) throws CityGMLWriteException {
         CityGMLVersion version = getVersion();
-
-        CityGMLOutputFactory out = builder.createCityGMLOutputFactory(version);
+        CityGMLOutputFactory out = createCityGMLOutputFactory(version);
         CityGMLWriter writer = out.createCityGMLWriter(outputFile.toFile(), getEncoding());
         setDefaultXMLContext(writer, version);
 

@@ -92,7 +92,7 @@ public class FromCityJSONCommand implements CityGMLTool {
                 return 1;
             }
 
-            try (CityGMLWriter writer = cityGMLOutput.createCityGMLWriter(outputFile, cityGMLBuilder)) {
+            try (CityGMLWriter writer = cityGMLOutput.createCityGMLWriter(outputFile)) {
                 writer.write(cityModel);
             } catch (CityGMLWriteException e) {
                 log.error("Failed to write CityGML file.", e);

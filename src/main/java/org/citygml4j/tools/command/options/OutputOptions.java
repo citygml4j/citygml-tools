@@ -21,6 +21,7 @@
 
 package org.citygml4j.tools.command.options;
 
+import org.citygml4j.CityGMLContext;
 import org.citygml4j.builder.cityjson.CityJSONBuilder;
 import org.citygml4j.builder.cityjson.CityJSONBuilderException;
 import org.citygml4j.builder.cityjson.json.io.writer.CityJSONOutputFactory;
@@ -38,14 +39,15 @@ public class OutputOptions {
         return encoding;
     }
 
-    public CityJSONOutputFactory createCityJSONOutputFactory(CityJSONBuilder builder, boolean removeDuplicateChildGeometries) throws CityJSONBuilderException {
+    public CityJSONOutputFactory createCityJSONOutputFactory(boolean removeDuplicateChildGeometries) throws CityJSONBuilderException {
+        CityJSONBuilder builder = CityGMLContext.getInstance().createCityJSONBuilder();
         CityJSONOutputFactory out = builder.createCityJSONOutputFactory();
         out.setRemoveDuplicateChildGeometries(removeDuplicateChildGeometries);
 
         return out;
     }
 
-    public CityJSONWriter createCityJSONWriter(Path outputFile, CityJSONBuilder builder, boolean removeDuplicateChildGeometries) throws CityJSONBuilderException, CityJSONWriteException {
-        return createCityJSONOutputFactory(builder, removeDuplicateChildGeometries).createCityJSONWriter(outputFile.toFile(), encoding);
+    public CityJSONWriter createCityJSONWriter(Path outputFile, boolean removeDuplicateChildGeometries) throws CityJSONBuilderException, CityJSONWriteException {
+        return createCityJSONOutputFactory(removeDuplicateChildGeometries).createCityJSONWriter(outputFile.toFile(), encoding);
     }
 }

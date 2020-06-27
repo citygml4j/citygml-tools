@@ -21,7 +21,6 @@
 
 package org.citygml4j.tools.command;
 
-import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.appearance.AbstractTexture;
@@ -37,7 +36,6 @@ import org.citygml4j.tools.command.options.CityGMLOutputOptions;
 import org.citygml4j.tools.command.options.InputOptions;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.log.Logger;
-import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.util.walker.FeatureWalker;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
@@ -85,7 +83,6 @@ public class RemoveAppsCommand implements CityGMLTool {
     @Override
     public Integer call() throws Exception {
         Logger log = Logger.getInstance();
-        CityGMLBuilder cityGMLBuilder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
         String fileNameSuffix = "_wo-app";
 
         log.debug("Searching for CityGML input files.");
@@ -113,9 +110,8 @@ public class RemoveAppsCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and removing appearances.");
 
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, cityGMLBuilder, true,
-                    input.createSkipFilter("CityModel"));
-                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, cityGMLBuilder)) {
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, input.createSkipFilter("CityModel"));
+                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile)) {
                 boolean isInitialized = false;
                 Map<Class<?>, Integer> counter = new HashMap<>();
 

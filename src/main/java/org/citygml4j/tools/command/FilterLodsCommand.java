@@ -80,9 +80,9 @@ public class FilterLodsCommand implements CityGMLTool {
     @Override
     public Integer call() throws Exception {
         Logger log = Logger.getInstance();
-        CityGMLBuilder cityGMLBuilder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
         String fileNameSuffix = "_filtered_lods";
 
+        CityGMLBuilder cityGMLBuilder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
         GlobalAppReader globalAppReader = new GlobalAppReader(cityGMLBuilder);
 
         log.debug("Searching for CityGML input files.");
@@ -128,9 +128,8 @@ public class FilterLodsCommand implements CityGMLTool {
 
             log.debug("Reading city objects from input file and filtering LoDs.");
 
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, cityGMLBuilder, true,
-                    input.createSkipFilter("CityModel", "Appearance"));
-                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile, cityGMLBuilder)) {
+            try (CityGMLReader reader = input.createCityGMLReader(inputFile, input.createSkipFilter("CityModel", "Appearance"));
+                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile)) {
                 boolean isInitialized = false;
 
                 while (reader.hasNext()) {

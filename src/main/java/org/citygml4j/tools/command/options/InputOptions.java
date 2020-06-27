@@ -30,6 +30,7 @@ import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReader;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.model.module.Modules;
+import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.xml.io.CityGMLInputFactory;
 import org.citygml4j.xml.io.reader.CityGMLInputFilter;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
@@ -57,7 +58,8 @@ public class InputOptions {
         return encoding;
     }
 
-    public CityGMLInputFactory createCityGMLInputFactory(CityGMLBuilder builder, boolean useChunks) throws CityGMLBuilderException {
+    public CityGMLInputFactory createCityGMLInputFactory(boolean useChunks) throws CityGMLBuilderException {
+        CityGMLBuilder builder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
         CityGMLInputFactory in = builder.createCityGMLInputFactory();
         in.setProperty(CityGMLInputFactory.SKIP_GENERIC_ADE_CONTENT, true);
 
@@ -67,15 +69,15 @@ public class InputOptions {
         return in;
     }
 
-    public CityGMLReader createCityGMLReader(Path inputFile, CityGMLBuilder builder, boolean useChunks) throws CityGMLBuilderException, CityGMLReadException {
-        CityGMLInputFactory in = createCityGMLInputFactory(builder, useChunks);
+    public CityGMLReader createCityGMLReader(Path inputFile, boolean useChunks) throws CityGMLBuilderException, CityGMLReadException {
+        CityGMLInputFactory in = createCityGMLInputFactory(useChunks);
         return encoding == null ?
                 in.createCityGMLReader(inputFile.toFile()) :
                 in.createCityGMLReader(inputFile.toFile(), encoding);
     }
 
-    public CityGMLReader createCityGMLReader(Path inputFile, CityGMLBuilder builder, boolean useChunks, CityGMLInputFilter filter) throws CityGMLBuilderException, CityGMLReadException {
-        CityGMLInputFactory in = createCityGMLInputFactory(builder, useChunks);
+    public CityGMLReader createCityGMLReader(Path inputFile, CityGMLInputFilter filter) throws CityGMLBuilderException, CityGMLReadException {
+        CityGMLInputFactory in = createCityGMLInputFactory(true);
         CityGMLReader reader = encoding == null ?
                 in.createCityGMLReader(inputFile.toFile()) :
                 in.createCityGMLReader(inputFile.toFile(), encoding);
