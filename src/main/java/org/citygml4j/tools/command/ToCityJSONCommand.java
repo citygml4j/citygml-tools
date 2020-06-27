@@ -23,8 +23,6 @@ package org.citygml4j.tools.command;
 
 import org.citygml4j.CityGMLContext;
 import org.citygml4j.builder.cityjson.CityJSONBuilder;
-import org.citygml4j.builder.cityjson.CityJSONBuilderException;
-import org.citygml4j.builder.cityjson.json.io.writer.CityJSONOutputFactory;
 import org.citygml4j.builder.cityjson.json.io.writer.CityJSONWriteException;
 import org.citygml4j.builder.cityjson.json.io.writer.CityJSONWriter;
 import org.citygml4j.builder.cityjson.marshal.util.DefaultTextureVerticesBuilder;
@@ -39,6 +37,7 @@ import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.citygml.core.CityObjectMember;
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.command.options.InputOptions;
+import org.citygml4j.tools.command.options.OutputOptions;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.common.srs.SrsNameParser;
 import org.citygml4j.tools.common.srs.SrsParseException;
@@ -85,10 +84,14 @@ public class ToCityJSONCommand implements CityGMLTool {
     @CommandLine.Mixin
     private InputOptions input;
 
+    @CommandLine.Mixin
+    private OutputOptions output;
+
     @Override
     public Integer call() throws Exception {
         Logger log = Logger.getInstance();
         CityGMLBuilder cityGMLBuilder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
+        CityJSONBuilder cityJSONBuilder = CityGMLContext.getInstance().createCityJSONBuilder();
 
         log.debug("Searching for CityGML input files.");
         List<Path> inputFiles;
@@ -99,18 +102,6 @@ public class ToCityJSONCommand implements CityGMLTool {
             log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
             return 0;
         }
-
-        CityJSONOutputFactory out;
-        try {
-            CityJSONBuilder builder = CityGMLContext.getInstance().createCityJSONBuilder();
-            out = builder.createCityJSONOutputFactory();
-        } catch (CityJSONBuilderException e) {
-            log.error("Failed to create CityJSON output factory.", e);
-            return 1;
-        }
-
-        // remove duplicate child geometries if requested
-        out.setRemoveDuplicateChildGeometries(removeDuplicateChildGeometries);
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
@@ -129,7 +120,7 @@ public class ToCityJSONCommand implements CityGMLTool {
             }
 
             if (cityGML instanceof CityModel) {
-                try (CityJSONWriter writer = out.createCityJSONWriter(outputFile.toFile())) {
+                try (CityJSONWriter writer = output.createCityJSONWriter(outputFile, cityJSONBuilder, removeDuplicateChildGeometries)) {
                     CityModel cityModel = (CityModel) cityGML;
 
                     // set builder for geometry, template and texture vertices

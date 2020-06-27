@@ -133,7 +133,9 @@ public class ClipTexturesCommand implements CityGMLTool {
                 .withAppearanceDirectory(appearanceDir)
                 .withNumberOfBuckets(noOfBuckets)
                 .withTextureFileNamePrefix(texturePrefix)
-                .withTargetVersion(targetVersion);
+                .withTargetVersion(targetVersion)
+                .withInputEncoding(input.getEncoding())
+                .withOutputEncoding(cityGMLOutput.getEncoding());
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);

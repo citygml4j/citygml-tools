@@ -34,8 +34,8 @@ import picocli.CommandLine;
 
 import java.nio.file.Path;
 
-public class CityGMLOutputOptions {
-    @CommandLine.Option(names = "--citygml", description = "CityGML version used for output file: 2.0, 1.0 (default: ${DEFAULT-VALUE}).")
+public class CityGMLOutputOptions extends OutputOptions {
+    @CommandLine.Option(names = "--citygml", description = "CityGML version used for output file(s): 2.0, 1.0 (default: ${DEFAULT-VALUE}).")
     private String version = "2.0";
 
     public CityGMLVersion getVersion() {
@@ -60,7 +60,7 @@ public class CityGMLOutputOptions {
         CityGMLVersion version = getVersion();
 
         CityGMLOutputFactory out = builder.createCityGMLOutputFactory(version);
-        CityModelWriter writer = out.createCityModelWriter(outputFile.toFile());
+        CityModelWriter writer = out.createCityModelWriter(outputFile.toFile(), getEncoding());
         setDefaultXMLContext(writer, version);
 
         return writer;
@@ -70,7 +70,7 @@ public class CityGMLOutputOptions {
         CityGMLVersion version = getVersion();
 
         CityGMLOutputFactory out = builder.createCityGMLOutputFactory(version);
-        CityGMLWriter writer = out.createCityGMLWriter(outputFile.toFile());
+        CityGMLWriter writer = out.createCityGMLWriter(outputFile.toFile(), getEncoding());
         setDefaultXMLContext(writer, version);
 
         return writer;

@@ -51,6 +51,7 @@ import org.citygml4j.util.gmlid.DefaultGMLIdManager;
 import org.citygml4j.util.walker.FeatureWalker;
 import org.citygml4j.xml.io.CityGMLInputFactory;
 import org.citygml4j.xml.io.CityGMLOutputFactory;
+import org.citygml4j.xml.io.reader.CityGMLInputFilter;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
 import org.citygml4j.xml.io.reader.FeatureReadMode;
@@ -87,12 +88,13 @@ public class TextureClipper {
 
     private boolean adaptTexCoords;
     private int significantDigits = 7;
-
     private String appearanceDir = "appearance";
     private String fileNamePrefix = "tex";
     private int noOfBuckets = 0;
 
     private CityGMLVersion targetVersion;
+    private String inputEncoding;
+    private String outputEncoding = "UTF-8";
 
     private TextureClipper(CityGMLBuilder builder) {
         this.builder = builder;
@@ -161,18 +163,19 @@ public class TextureClipper {
         return this;
     }
 
+    public TextureClipper withInputEncoding(String inputEncoding) {
+        this.inputEncoding = inputEncoding;
+        return this;
+    }
+
+    public TextureClipper withOutputEncoding(String outputEncoding) {
+        if (outputEncoding != null)
+            this.outputEncoding = outputEncoding;
+
+        return this;
+    }
+
     public void clipTextures(Path inputFile, Path outputFile) throws TextureClippingException {
-        CityGMLInputFactory in;
-        try {
-            in = builder.createCityGMLInputFactory();
-            in.setProperty(CityGMLInputFactory.FEATURE_READ_MODE, FeatureReadMode.SPLIT_PER_COLLECTION_MEMBER);
-            in.setProperty(CityGMLInputFactory.SKIP_GENERIC_ADE_CONTENT, true);
-        } catch (CityGMLBuilderException e) {
-            throw new TextureClippingException("Failed to create CityGML input factory", e);
-        }
-
-        CityGMLOutputFactory out = builder.createCityGMLOutputFactory(targetVersion);
-
         try {
             appearanceDir = createAppearanceDir(outputFile.getParent(), appearanceDir);
         } catch (IOException e) {
@@ -181,11 +184,10 @@ public class TextureClipper {
 
         log.debug("Reading city objects from input file and clipping textures.");
 
-        try (CityGMLReader reader = in.createFilteredCityGMLReader(in.createCityGMLReader(inputFile.toFile()),
+        try (CityGMLReader reader = createFilteredCityGMLReader(inputFile, builder,
                 name -> !name.getLocalPart().equals("CityModel")
                         || !Modules.isCityGMLModuleNamespace(name.getNamespaceURI()));
-             CityModelWriter writer = out.createCityModelWriter(outputFile.toFile())) {
-
+             CityModelWriter writer = createCityModelWriter(outputFile)) {
             writer.setPrefixes(targetVersion);
             writer.setSchemaLocations(targetVersion);
             writer.setDefaultNamespace(targetVersion.getCityGMLModule(CityGMLModuleType.CORE));
@@ -213,7 +215,7 @@ public class TextureClipper {
                     writer.writeFeatureMember(feature);
                 }
             }
-        } catch (CityGMLReadException e) {
+        } catch (CityGMLBuilderException | CityGMLReadException e) {
             throw new TextureClippingException("Failed to read city objects.", e);
         } catch (CityGMLWriteException e) {
             throw new TextureClippingException("Failed to write city objects.", e);
@@ -223,18 +225,17 @@ public class TextureClipper {
     private final class AppearanceWalker extends FeatureWalker {
         private final Path inputDir;
         private final Path outputDir;
+
+        private final Map<String, String> copies = new HashMap<>();
+        private final CopyBuilder copyBuilder = new ShallowCopyBuilder();
+        private final Matcher extensionMatcher = Pattern.compile("(.*)\\.(.+)$").matcher("");
+
         private Appearance appearance;
         private int textureCounter;
-        private Map<String, String> copies;
-        private CopyBuilder copyBuilder;
-
-        private Matcher extensionMatcher = Pattern.compile("(.*)\\.(.+)$").matcher("");
 
         AppearanceWalker(Path inputDir, Path outputDir) {
             this.inputDir = inputDir;
             this.outputDir = outputDir;
-            copies = new HashMap<>();
-            copyBuilder = new ShallowCopyBuilder();
         }
 
         @Override
@@ -556,6 +557,23 @@ public class TextureClipper {
         private int getBucket() {
             return Math.abs((textureCounter - 1) % noOfBuckets + 1);
         }
+    }
+
+    private CityGMLReader createFilteredCityGMLReader(Path inputFile, CityGMLBuilder builder, CityGMLInputFilter filter) throws CityGMLBuilderException, CityGMLReadException {
+        CityGMLInputFactory in = builder.createCityGMLInputFactory();
+        in.setProperty(CityGMLInputFactory.FEATURE_READ_MODE, FeatureReadMode.SPLIT_PER_COLLECTION_MEMBER);
+        in.setProperty(CityGMLInputFactory.SKIP_GENERIC_ADE_CONTENT, true);
+
+        CityGMLReader reader = inputEncoding == null ?
+                in.createCityGMLReader(inputFile.toFile()) :
+                in.createCityGMLReader(inputFile.toFile(), inputEncoding);
+
+        return in.createFilteredCityGMLReader(reader, filter);
+    }
+
+    private CityModelWriter createCityModelWriter(Path outputFile) throws CityGMLWriteException {
+        CityGMLOutputFactory out = builder.createCityGMLOutputFactory(targetVersion);
+        return out.createCityModelWriter(outputFile.toFile(), outputEncoding);
     }
 
     private synchronized String createAppearanceDir(Path outputDir, String appearanceDir) throws IOException {
