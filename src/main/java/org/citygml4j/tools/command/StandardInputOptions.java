@@ -25,6 +25,8 @@ import org.citygml4j.CityGMLContext;
 import org.citygml4j.builder.cityjson.CityJSONBuilder;
 import org.citygml4j.builder.cityjson.CityJSONBuilderException;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONInputFactory;
+import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReadException;
+import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReader;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.model.module.Modules;
@@ -75,8 +77,16 @@ public class StandardInputOptions {
                 || !Modules.isCityGMLModuleNamespace(name.getNamespaceURI());
     }
 
-    public CityJSONInputFactory createCityJSONInputFactory() throws CityJSONBuilderException {
+    public CityJSONInputFactory createCityJSONInputFactory(boolean processUnknownExtensions) throws CityJSONBuilderException {
         CityJSONBuilder builder = CityGMLContext.getInstance().createCityJSONBuilder();
-        return builder.createCityJSONInputFactory();
+        CityJSONInputFactory in = builder.createCityJSONInputFactory();
+        in.setProcessUnknownExtensions(processUnknownExtensions);
+
+        return in;
+    }
+
+    public CityJSONReader createCityJSONReader(Path inputFile, boolean processUnknownExtensions) throws CityJSONBuilderException, CityJSONReadException {
+        CityJSONInputFactory in = createCityJSONInputFactory(processUnknownExtensions);
+        return in.createCityJSONReader(inputFile.toFile());
     }
 }

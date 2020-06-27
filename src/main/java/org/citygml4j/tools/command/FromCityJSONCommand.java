@@ -22,8 +22,6 @@
 package org.citygml4j.tools.command;
 
 import com.google.gson.JsonSyntaxException;
-import org.citygml4j.builder.cityjson.CityJSONBuilderException;
-import org.citygml4j.builder.cityjson.json.io.reader.CityJSONInputFactory;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReadException;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReader;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
@@ -47,7 +45,7 @@ import java.util.List;
         mixinStandardHelpOptions = true)
 public class FromCityJSONCommand implements CityGMLTool {
     @CommandLine.Option(names = "--map-unknown-extensions", description = "Map unknown extensions to generic city objects and attributes.")
-    private boolean mapUnknwonExtensions;
+    private boolean mapUnknownExtensions;
 
     @CommandLine.Mixin
     private StandardCityGMLOutputOptions cityGMLOutput;
@@ -70,17 +68,8 @@ public class FromCityJSONCommand implements CityGMLTool {
             return 0;
         }
 
-        CityJSONInputFactory in;
-        try {
-            in = input.createCityJSONInputFactory();
-            if (mapUnknwonExtensions) {
-                log.debug("Mapping unknown extensions to generic city objects and attributes.");
-                in.setProcessUnknownExtensions(mapUnknwonExtensions);
-            }
-        } catch (CityJSONBuilderException e) {
-            log.error("Failed to create CityJSON input factory.", e);
-            return 1;
-        }
+        if (mapUnknownExtensions)
+            log.debug("Mapping unknown extensions to generic city objects and attributes.");
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
@@ -90,7 +79,7 @@ public class FromCityJSONCommand implements CityGMLTool {
             log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
 
             CityModel cityModel;
-            try (CityJSONReader reader = in.createCityJSONReader(inputFile.toFile())) {
+            try (CityJSONReader reader = input.createCityJSONReader(inputFile, mapUnknownExtensions)) {
                 log.debug("Reading CityJSON input file into main memory.");
                 cityModel = reader.read();
             } catch (CityJSONReadException e) {
