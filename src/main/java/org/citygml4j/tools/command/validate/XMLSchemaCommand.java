@@ -25,7 +25,7 @@ import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.command.CityGMLTool;
-import org.citygml4j.tools.command.StandardInputOptions;
+import org.citygml4j.tools.command.options.InputOptions;
 import org.citygml4j.tools.common.log.LogLevel;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.ObjectRegistry;
@@ -58,7 +58,7 @@ public class XMLSchemaCommand implements CityGMLTool {
     private List<String> schemas;
 
     @CommandLine.Mixin
-    private StandardInputOptions input;
+    private InputOptions input;
 
     @Override
     public Integer call() throws Exception {

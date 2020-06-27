@@ -33,6 +33,8 @@ import org.citygml4j.model.citygml.appearance.X3DMaterial;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.tools.CityGMLTools;
+import org.citygml4j.tools.command.options.CityGMLOutputOptions;
+import org.citygml4j.tools.command.options.InputOptions;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.ObjectRegistry;
@@ -75,10 +77,10 @@ public class RemoveAppsCommand implements CityGMLTool {
     private boolean overwriteInputFiles;
 
     @CommandLine.Mixin
-    private StandardCityGMLOutputOptions cityGMLOutput;
+    private CityGMLOutputOptions cityGMLOutput;
 
     @CommandLine.Mixin
-    private StandardInputOptions input;
+    private InputOptions input;
 
     @Override
     public Integer call() throws Exception {

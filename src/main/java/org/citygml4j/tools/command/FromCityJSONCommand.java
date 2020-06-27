@@ -27,6 +27,8 @@ import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReader;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.tools.CityGMLTools;
+import org.citygml4j.tools.command.options.CityGMLOutputOptions;
+import org.citygml4j.tools.command.options.InputOptions;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.tools.util.Util;
@@ -48,10 +50,10 @@ public class FromCityJSONCommand implements CityGMLTool {
     private boolean mapUnknownExtensions;
 
     @CommandLine.Mixin
-    private StandardCityGMLOutputOptions cityGMLOutput;
+    private CityGMLOutputOptions cityGMLOutput;
 
     @CommandLine.Mixin
-    private StandardInputOptions input;
+    private InputOptions input;
 
     @Override
     public Integer call() throws Exception {

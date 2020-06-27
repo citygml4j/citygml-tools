@@ -4,7 +4,7 @@
  *
  * citygml-tools is part of the citygml4j project
  *
- * Copyright 2018-2019 Claus Nagel <claus.nagel@gmail.com>
+ * Copyright 2018-2020 Claus Nagel <claus.nagel@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.command;
+package org.citygml4j.tools.command.options;
 
 import org.citygml4j.CityGMLContext;
 import org.citygml4j.builder.cityjson.CityJSONBuilder;
@@ -42,13 +42,19 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class StandardInputOptions {
-
+public class InputOptions {
     @CommandLine.Parameters(paramLabel = "<file>", description = "File(s) or directory to process (glob patterns allowed).")
     private String file;
 
+    @CommandLine.Option(names = "--input-encoding", description = "Encoding of input file(s).")
+    private String encoding;
+
     public String getFile() {
         return file;
+    }
+
+    public String getEncoding() {
+        return encoding;
     }
 
     public CityGMLInputFactory createCityGMLInputFactory(CityGMLBuilder builder, boolean useChunks) throws CityGMLBuilderException {
@@ -63,12 +69,18 @@ public class StandardInputOptions {
 
     public CityGMLReader createCityGMLReader(Path inputFile, CityGMLBuilder builder, boolean useChunks) throws CityGMLBuilderException, CityGMLReadException {
         CityGMLInputFactory in = createCityGMLInputFactory(builder, useChunks);
-        return in.createCityGMLReader(inputFile.toFile());
+        return encoding == null ?
+                in.createCityGMLReader(inputFile.toFile()) :
+                in.createCityGMLReader(inputFile.toFile(), encoding);
     }
 
     public CityGMLReader createCityGMLReader(Path inputFile, CityGMLBuilder builder, boolean useChunks, CityGMLInputFilter filter) throws CityGMLBuilderException, CityGMLReadException {
         CityGMLInputFactory in = createCityGMLInputFactory(builder, useChunks);
-        return in.createFilteredCityGMLReader(in.createCityGMLReader(inputFile.toFile()), filter);
+        CityGMLReader reader = encoding == null ?
+                in.createCityGMLReader(inputFile.toFile()) :
+                in.createCityGMLReader(inputFile.toFile(), encoding);
+
+        return in.createFilteredCityGMLReader(reader, filter);
     }
 
     public CityGMLInputFilter createSkipFilter(String... localNames) {
@@ -87,6 +99,8 @@ public class StandardInputOptions {
 
     public CityJSONReader createCityJSONReader(Path inputFile, boolean processUnknownExtensions) throws CityJSONBuilderException, CityJSONReadException {
         CityJSONInputFactory in = createCityJSONInputFactory(processUnknownExtensions);
-        return in.createCityJSONReader(inputFile.toFile());
+        return encoding == null ?
+                in.createCityJSONReader(inputFile.toFile()) :
+                in.createCityJSONReader(inputFile.toFile(), encoding);
     }
 }

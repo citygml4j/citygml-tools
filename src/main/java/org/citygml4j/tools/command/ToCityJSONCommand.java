@@ -38,6 +38,7 @@ import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.citygml.core.CityObjectMember;
 import org.citygml4j.tools.CityGMLTools;
+import org.citygml4j.tools.command.options.InputOptions;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.common.srs.SrsNameParser;
 import org.citygml4j.tools.common.srs.SrsParseException;
@@ -82,7 +83,7 @@ public class ToCityJSONCommand implements CityGMLTool {
     private boolean prettyPrint;
 
     @CommandLine.Mixin
-    private StandardInputOptions input;
+    private InputOptions input;
 
     @Override
     public Integer call() throws Exception {

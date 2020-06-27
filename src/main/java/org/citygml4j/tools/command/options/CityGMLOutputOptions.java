@@ -4,7 +4,7 @@
  *
  * citygml-tools is part of the citygml4j project
  *
- * Copyright 2018-2019 Claus Nagel <claus.nagel@gmail.com>
+ * Copyright 2018-2020 Claus Nagel <claus.nagel@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.command;
+package org.citygml4j.tools.command.options;
 
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.model.module.ModuleContext;
@@ -34,8 +34,7 @@ import picocli.CommandLine;
 
 import java.nio.file.Path;
 
-public class StandardCityGMLOutputOptions {
-
+public class CityGMLOutputOptions {
     @CommandLine.Option(names = "--citygml", description = "CityGML version used for output file: 2.0, 1.0 (default: ${DEFAULT-VALUE}).")
     private String version = "2.0";
 

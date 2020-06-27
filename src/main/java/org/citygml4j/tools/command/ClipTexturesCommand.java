@@ -24,6 +24,8 @@ package org.citygml4j.tools.command;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.model.module.citygml.CityGMLVersion;
 import org.citygml4j.tools.CityGMLTools;
+import org.citygml4j.tools.command.options.CityGMLOutputOptions;
+import org.citygml4j.tools.command.options.InputOptions;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.textureclipper.TextureClipper;
 import org.citygml4j.tools.textureclipper.TextureClippingException;
@@ -76,10 +78,10 @@ public class ClipTexturesCommand implements CityGMLTool {
     private String texturePrefix = "tex";
 
     @CommandLine.Mixin
-    private StandardCityGMLOutputOptions cityGMLOutput;
+    private CityGMLOutputOptions cityGMLOutput;
 
     @CommandLine.Mixin
-    private StandardInputOptions input;
+    private InputOptions input;
 
     @CommandLine.Spec
     private CommandLine.Model.CommandSpec spec;

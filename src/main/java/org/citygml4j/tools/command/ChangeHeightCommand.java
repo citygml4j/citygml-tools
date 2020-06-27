@@ -28,6 +28,8 @@ import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.appearance.Appearance;
 import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.tools.CityGMLTools;
+import org.citygml4j.tools.command.options.CityGMLOutputOptions;
+import org.citygml4j.tools.command.options.InputOptions;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.helper.ImplicitGeometryReader;
 import org.citygml4j.tools.common.log.Logger;
@@ -65,10 +67,10 @@ public class ChangeHeightCommand implements CityGMLTool {
     private boolean overwriteInputFiles;
 
     @CommandLine.Mixin
-    private StandardCityGMLOutputOptions cityGMLOutput;
+    private CityGMLOutputOptions cityGMLOutput;
 
     @CommandLine.Mixin
-    private StandardInputOptions input;
+    private InputOptions input;
 
     @Override
     public Integer call() throws Exception {
