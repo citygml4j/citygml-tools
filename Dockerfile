@@ -17,7 +17,7 @@ RUN ln -s /opt/citygml-tools/bin/citygml-tools /usr/local/bin/ && \
     chgrp -R 0 /data && \
     chmod -R g=u /data
 
-COPY --chown=1001:0 /code/resources/docker/docker_uid_entrypoint.sh /usr/local/bin/
+COPY --chown=1001:0 resources/docker/docker_uid_entrypoint.sh /usr/local/bin/
 
 WORKDIR /data
 
