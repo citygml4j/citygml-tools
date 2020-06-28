@@ -3,4 +3,5 @@
 *.sh 		eol=lf
 
 # Convert line endings for specific scripts
+Dockerfile	eol=lf
 gradlew		eol=lf

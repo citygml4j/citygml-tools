@@ -13,6 +13,6 @@ case "$@" in
     /*)
         exec "$@";;
     *)
-        citygml-tools $@;;
+        citygml-tools "$@";;
 esac
 
