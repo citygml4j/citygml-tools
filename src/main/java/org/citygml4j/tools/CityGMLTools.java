@@ -53,7 +53,7 @@ import java.util.ServiceLoader;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
-@CommandLine.Command(name = "citygml-tools",
+@CommandLine.Command(name = Constants.APP_NAME,
         description = "Collection of tools for processing CityGML files.",
         versionProvider = CityGMLTools.class,
         mixinStandardHelpOptions = true,
@@ -108,7 +108,7 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
             }
 
             // execute commands
-            cityGMLTools.commandLine = "citygml-tools " + String.join(" ", args);
+            cityGMLTools.commandLine = Constants.APP_NAME + " " + String.join(" ", args);
             cityGMLTools.subCommand = commandLines.get(1);
             exitCode = cmd.getExecutionStrategy().execute(parseResult);
 
@@ -117,11 +117,11 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
             int errors = log.getNumberOfErrors();
 
             if (exitCode == 1)
-                log.warn("citygml-tools execution failed.");
+                log.warn(Constants.APP_NAME + " execution failed.");
             else if (errors != 0 || warnings != 0)
-                log.info("citygml-tools finished with " + warnings + " warning(s) and " + errors + " error(s).");
+                log.info(Constants.APP_NAME + " finished with " + warnings + " warning(s) and " + errors + " error(s).");
             else
-                log.info("citygml-tools successfully completed.");
+                log.info(Constants.APP_NAME + " successfully completed.");
 
         } catch (CommandLine.ParameterException e) {
             cmd.getParameterExceptionHandler().handleParseException(e, args);
@@ -129,7 +129,7 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
         } catch (Throwable e) {
             log.error("The following unexpected error occurred during execution.");
             log.logStackTrace(e);
-            log.warn("citygml-tools execution failed.");
+            log.warn(Constants.APP_NAME + " execution failed.");
         } finally {
             log.close();
         }
@@ -147,7 +147,7 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
                 if (!Files.exists(logFile.getParent()))
                     Files.createDirectories(logFile);
                 else if (Files.isDirectory(logFile))
-                    logFile = logFile.resolve("citygml-tools.log");
+                    logFile = logFile.resolve(Constants.APP_NAME + ".log");
 
                 log.withLogFile(logFile);
                 log.logToFile("# " + commandLine);
@@ -157,7 +157,7 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
             }
         }
 
-        log.info("Starting citygml-tools.");
+        log.info("Starting " + Constants.APP_NAME + ".");
         CityGMLContext context = CityGMLContext.getInstance();
 
         // search for ADE extensions

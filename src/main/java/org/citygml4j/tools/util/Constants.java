@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class Constants {
+    public static final String APP_NAME = "citygml-tools";
     public static final Path APP_HOME;
     public static final Path WORKING_DIR;
 
