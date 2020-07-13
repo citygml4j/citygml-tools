@@ -34,8 +34,8 @@ import org.citygml4j.tools.command.RemoveAppsCommand;
 import org.citygml4j.tools.command.ReprojectCommand;
 import org.citygml4j.tools.command.ToCityJSONCommand;
 import org.citygml4j.tools.command.ValidateCommand;
-import org.citygml4j.tools.option.LoggingOptions;
 import org.citygml4j.tools.common.log.Logger;
+import org.citygml4j.tools.option.LoggingOptions;
 import org.citygml4j.tools.util.Constants;
 import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.tools.util.URLClassLoader;
@@ -73,7 +73,8 @@ import java.util.stream.Stream;
         })
 public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProvider {
     private static final Logger log = Logger.getInstance();
-    private CommandLine subcommand;
+    private String commandLine;
+    private CommandLine subCommand;
 
     @CommandLine.Mixin
     LoggingOptions logging;
@@ -107,7 +108,8 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
             }
 
             // execute commands
-            cityGMLTools.subcommand = commandLines.get(1);
+            cityGMLTools.commandLine = "citygml-tools " + String.join(" ", args);
+            cityGMLTools.subCommand = commandLines.get(1);
             exitCode = cmd.getExecutionStrategy().execute(parseResult);
 
             log.info("Total execution time: " + Util.formatElapsedTime(Duration.between(start, Instant.now()).toMillis()) + ".");
@@ -128,6 +130,8 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
             log.error("The following unexpected error occurred during execution.");
             log.logStackTrace(e);
             log.warn("citygml-tools execution failed.");
+        } finally {
+            log.close();
         }
 
         System.exit(exitCode);
@@ -136,8 +140,24 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
     @Override
     public Integer call() throws Exception {
         log.setLogLevel(logging.getLogLevel());
-        log.info("Starting citygml-tools.");
 
+        if (logging.getLogFile() != null) {
+            Path logFile = logging.getLogFile();
+            try {
+                if (!Files.exists(logFile.getParent()))
+                    Files.createDirectories(logFile);
+                else if (Files.isDirectory(logFile))
+                    logFile = logFile.resolve("citygml-tools.log");
+
+                log.withLogFile(logFile);
+                log.logToFile("# " + commandLine);
+            } catch (IOException e) {
+                log.error("Failed to create log file '" + logFile + "'.");
+                throw e;
+            }
+        }
+
+        log.info("Starting citygml-tools.");
         CityGMLContext context = CityGMLContext.getInstance();
 
         // search for ADE extensions
@@ -169,7 +189,7 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
         CityGMLBuilder cityGMLBuilder = context.createCityGMLBuilder(classLoader);
         ObjectRegistry.getInstance().put(cityGMLBuilder);
 
-        log.info("Executing command '" + subcommand.getCommandName() + "'.");
+        log.info("Executing command '" + subCommand.getCommandName() + "'.");
         return 0;
     }
 

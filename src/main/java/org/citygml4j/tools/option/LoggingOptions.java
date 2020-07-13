@@ -4,8 +4,11 @@ import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.log.LogLevel;
 import picocli.CommandLine;
 
+import java.nio.file.Path;
+
 public class LoggingOptions {
     private LogLevel logLevel = LogLevel.INFO;
+    private Path logFile;
 
     private @CommandLine.Spec(CommandLine.Spec.Target.MIXEE)
     CommandLine.Model.CommandSpec mixee;
@@ -21,5 +24,14 @@ public class LoggingOptions {
     @CommandLine.Option(names = "--log", paramLabel = "<level>", description = "Log level: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
     public void setLogLevel(LogLevel logLevel) {
         getRootLoggingOptions(mixee).logLevel = logLevel;
+    }
+
+    public Path getLogFile() {
+        return logFile;
+    }
+
+    @CommandLine.Option(names = "--log-file", paramLabel = "<file>", description = "Write log messages to the specified file.")
+    public void setLogFile(Path logFile) {
+        getRootLoggingOptions(mixee).logFile = logFile;
     }
 }

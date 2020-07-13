@@ -20,6 +20,11 @@
  */
 package org.citygml4j.tools.common.log;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,6 +35,7 @@ public class Logger {
 	private LogLevel level = LogLevel.INFO;
 	private AtomicInteger warnings = new AtomicInteger(0);
 	private AtomicInteger errors = new AtomicInteger(0);
+	private BufferedWriter writer;
 
 	private Logger() {
 		// just to thwart instantiation
@@ -57,8 +63,22 @@ public class Logger {
 
 	public void log(LogLevel level, String msg) {
 		count(level);
-		if (this.level.ordinal() >= level.ordinal())
-			System.out.println(getPrefix(level) + msg);
+		if (this.level.ordinal() >= level.ordinal()) {
+			msg = getPrefix(level) + msg;
+			System.out.println(msg);
+			logToFile(msg);
+		}
+	}
+
+	public void logToFile(String msg) {
+		if (writer != null) {
+			try {
+				writer.write(msg);
+				writer.newLine();
+			} catch (IOException e) {
+				//
+			}
+		}
 	}
 
 	private void log(LogLevel level, String msg, Throwable e) {
@@ -110,6 +130,20 @@ public class Logger {
 
 	public int getNumberOfWarnings() {
 		return warnings.get();
+	}
+
+	public void withLogFile(Path logFile) throws IOException {
+		writer = Files.newBufferedWriter(logFile, StandardCharsets.UTF_8);
+	}
+
+	public void close() {
+		if (writer != null) {
+			try {
+				writer.close();
+			} catch (IOException e) {
+				//
+			}
+		}
 	}
 
 	private void count(LogLevel level) {

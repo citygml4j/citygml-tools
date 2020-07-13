@@ -22,8 +22,8 @@
 package org.citygml4j.tools.command;
 
 import org.citygml4j.tools.CityGMLTools;
-import org.citygml4j.tools.option.LoggingOptions;
 import org.citygml4j.tools.command.validate.XMLSchemaCommand;
+import org.citygml4j.tools.option.LoggingOptions;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "validate",
