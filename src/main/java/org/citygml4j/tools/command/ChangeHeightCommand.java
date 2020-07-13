@@ -55,7 +55,8 @@ import java.util.UUID;
 @CommandLine.Command(name = "change-height",
         description = "Changes the height values of city objects by a given offset.",
         versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true)
+        mixinStandardHelpOptions = true,
+        showAtFileInUsageHelp = true)
 public class ChangeHeightCommand implements CityGMLTool {
     @CommandLine.Option(names = "--offset", paramLabel = "<double>", required =  true, description = "Offset to add to height values.")
     private double offset;

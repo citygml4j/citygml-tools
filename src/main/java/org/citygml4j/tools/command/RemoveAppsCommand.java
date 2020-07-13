@@ -57,7 +57,8 @@ import java.util.UUID;
 @CommandLine.Command(name = "remove-apps",
         description = "Removes appearances from city objects.",
         versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true)
+        mixinStandardHelpOptions = true,
+        showAtFileInUsageHelp = true)
 public class RemoveAppsCommand implements CityGMLTool {
     @CommandLine.Option(names = "--theme", paramLabel = "<name>", split = ",", description = "Only remove appearances of the given theme(s). Use 'null' as name for the null theme.")
     private List<String> theme;

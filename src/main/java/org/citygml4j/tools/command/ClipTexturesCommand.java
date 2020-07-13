@@ -48,7 +48,8 @@ import java.util.stream.Stream;
 @CommandLine.Command(name = "clip-textures",
         description = "Clips texture images to the extent of the target surface.",
         versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true)
+        mixinStandardHelpOptions = true,
+        showAtFileInUsageHelp = true)
 public class ClipTexturesCommand implements CityGMLTool {
     @CommandLine.Option(names = {"-o", "--output"}, required = true, paramLabel = "<dir>", description = "Output directory in which to write the result files.")
     private String output;

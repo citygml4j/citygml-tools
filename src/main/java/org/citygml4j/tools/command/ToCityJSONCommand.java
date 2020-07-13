@@ -51,7 +51,8 @@ import java.util.List;
 @CommandLine.Command(name = "to-cityjson",
         description = "Converts CityGML files into CityJSON.",
         versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true)
+        mixinStandardHelpOptions = true,
+        showAtFileInUsageHelp = true)
 public class ToCityJSONCommand implements CityGMLTool {
     @CommandLine.Option(names = "--epsg", paramLabel = "<code>", description = "EPSG code to be used as CRS metadata.")
     private int epsg = 0;

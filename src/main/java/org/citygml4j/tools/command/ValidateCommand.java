@@ -30,6 +30,7 @@ import picocli.CommandLine;
         versionProvider = CityGMLTools.class,
         mixinStandardHelpOptions = true,
         synopsisSubcommandLabel = "COMMAND",
+        showAtFileInUsageHelp = true,
         subcommands = {
                 CommandLine.HelpCommand.class,
                 XMLSchemaCommand.class

@@ -49,7 +49,8 @@ import java.util.List;
 @CommandLine.Command(name = "xml",
         description = "Performs XML validation against the CityGML schemas.",
         versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true)
+        mixinStandardHelpOptions = true,
+        showAtFileInUsageHelp = true)
 public class XMLSchemaCommand implements CityGMLTool {
     @CommandLine.Option(names = {"-s", "--suppress-validation-errors"}, description = "Do not show validation errors for a concise report.")
     private boolean suppressValidationErrors;

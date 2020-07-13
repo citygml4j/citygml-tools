@@ -57,7 +57,8 @@ import java.util.UUID;
 @CommandLine.Command(name = "filter-lods",
         description = "Filters the LoD representations of city objects.",
         versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true)
+        mixinStandardHelpOptions = true,
+        showAtFileInUsageHelp = true)
 public class FilterLodsCommand implements CityGMLTool {
     @CommandLine.Option(names = "--lod", paramLabel = "<lod>", required = true, split = ",", description = "LoD to filter: 0, 1, 2, 3, 4.")
     private List<Integer> lods;

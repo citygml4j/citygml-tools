@@ -53,7 +53,8 @@ import java.util.UUID;
 @CommandLine.Command(name = "move-global-apps",
         description = "Converts global appearances to local ones.",
         versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true)
+        mixinStandardHelpOptions = true,
+        showAtFileInUsageHelp = true)
 public class MoveGlobalAppsCommand implements CityGMLTool {
     @CommandLine.Option(names = "--feature", description = "Feature to assign the local appearance to: top-level, nested (default: ${DEFAULT-VALUE}).")
     private String target = "top-level";

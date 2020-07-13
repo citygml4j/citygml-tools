@@ -52,7 +52,8 @@ import java.util.UUID;
 @CommandLine.Command(name = "reproject",
         description = "Reprojects city objects to a new spatial reference system.",
         versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true)
+        mixinStandardHelpOptions = true,
+        showAtFileInUsageHelp = true)
 public class ReprojectCommand implements CityGMLTool {
     @CommandLine.Option(names = "--target-crs", paramLabel = "<crs>", required = true, description = "Target CRS for the reprojection given as EPSG code, as GML srsName or as OGC WKT with escaped quotes.")
     private String targetCRS;

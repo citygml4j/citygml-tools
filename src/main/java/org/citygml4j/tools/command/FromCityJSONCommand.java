@@ -44,7 +44,8 @@ import java.util.List;
 @CommandLine.Command(name = "from-cityjson",
         description = "Converts CityJSON files into CityGML.",
         versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true)
+        mixinStandardHelpOptions = true,
+        showAtFileInUsageHelp = true)
 public class FromCityJSONCommand implements CityGMLTool {
     @CommandLine.Option(names = "--map-unknown-extensions", description = "Map unknown extensions to generic city objects and attributes.")
     private boolean mapUnknownExtensions;
