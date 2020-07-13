@@ -58,6 +58,7 @@ import java.util.stream.Stream;
         versionProvider = CityGMLTools.class,
         mixinStandardHelpOptions = true,
         synopsisSubcommandLabel = "COMMAND",
+        showAtFileInUsageHelp = true,
         subcommands = {
                 CommandLine.HelpCommand.class,
                 ValidateCommand.class,
@@ -84,7 +85,9 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
 
         CommandLine cmd = new CommandLine(cityGMLTools)
                 .setCaseInsensitiveEnumValuesAllowed(true)
-                .setExecutionStrategy(new CommandLine.RunAll());
+                .setExecutionStrategy(new CommandLine.RunAll())
+                .setAbbreviatedOptionsAllowed(true)
+                .setAbbreviatedSubcommandsAllowed(true);
 
         try {
             CommandLine.ParseResult parseResult = cmd.parseArgs(args);
