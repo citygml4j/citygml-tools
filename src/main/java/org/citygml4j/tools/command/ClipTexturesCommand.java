@@ -171,7 +171,6 @@ public class ClipTexturesCommand implements CityGMLTool {
             Path path = Paths.get(appearanceDir);
             if (path.isAbsolute())
                 throw new CommandLine.ParameterException(spec.commandLine(), "The appearance directory must be given by a local path.");
-
         } catch (InvalidPathException e) {
             throw new CommandLine.ParameterException(spec.commandLine(), "The appearance directory '" + appearanceDir + "' is not a valid path.", e);
         }

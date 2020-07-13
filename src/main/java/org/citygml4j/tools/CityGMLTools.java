@@ -161,8 +161,8 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
                 }
             }
         } catch (IOException e) {
-            log.error("Failed to initialize ADE extensions.", e);
-            return 1;
+            log.error("Failed to initialize ADE extensions.");
+            throw e;
         }
 
         log.info("Initializing application environment.");
