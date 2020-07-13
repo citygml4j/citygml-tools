@@ -62,9 +62,8 @@ public class Logger {
 	}
 
 	private void log(LogLevel level, String msg, Throwable e) {
-		count(level);
-		if (this.level.ordinal() >= level.ordinal()) {
-			System.out.println(getPrefix(level) + msg);
+		log(level, msg);
+		if (e != null && this.level.ordinal() >= level.ordinal()) {
 			do {
 				if (e.getMessage() != null)
 					log(level, "Cause: " + e.getClass().getName() + ": " + e.getMessage());
