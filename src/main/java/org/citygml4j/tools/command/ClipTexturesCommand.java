@@ -86,7 +86,7 @@ public class ClipTexturesCommand implements CityGMLTool {
     private InputOptions input;
 
     @CommandLine.Mixin
-    LoggingOptions logging;
+    private LoggingOptions logging;
 
     @CommandLine.Spec
     private CommandLine.Model.CommandSpec spec;

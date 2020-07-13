@@ -77,7 +77,7 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
     private CommandLine subCommand;
 
     @CommandLine.Mixin
-    LoggingOptions logging;
+    private LoggingOptions logging;
 
     public static void main(String[] args) throws Exception {
         CityGMLTools cityGMLTools = new CityGMLTools();

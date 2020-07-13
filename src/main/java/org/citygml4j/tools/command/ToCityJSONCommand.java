@@ -86,7 +86,7 @@ public class ToCityJSONCommand implements CityGMLTool {
     private OutputOptions output;
 
     @CommandLine.Mixin
-    LoggingOptions logging;
+    private LoggingOptions logging;
 
     @Override
     public Integer call() throws Exception {

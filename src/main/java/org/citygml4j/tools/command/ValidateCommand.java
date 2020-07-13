@@ -38,7 +38,7 @@ import picocli.CommandLine;
         })
 public class ValidateCommand implements CityGMLTool {
     @CommandLine.Mixin
-    LoggingOptions logging;
+    private LoggingOptions logging;
 
     @CommandLine.Spec
     private CommandLine.Model.CommandSpec spec;

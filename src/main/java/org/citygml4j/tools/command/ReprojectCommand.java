@@ -84,7 +84,7 @@ public class ReprojectCommand implements CityGMLTool {
     private InputOptions input;
 
     @CommandLine.Mixin
-    LoggingOptions logging;
+    private LoggingOptions logging;
 
     @Override
     public Integer call() throws Exception {
