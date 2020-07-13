@@ -34,7 +34,7 @@ import org.citygml4j.tools.command.RemoveAppsCommand;
 import org.citygml4j.tools.command.ReprojectCommand;
 import org.citygml4j.tools.command.ToCityJSONCommand;
 import org.citygml4j.tools.command.ValidateCommand;
-import org.citygml4j.tools.command.options.LoggingOptions;
+import org.citygml4j.tools.option.LoggingOptions;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Constants;
 import org.citygml4j.tools.util.ObjectRegistry;

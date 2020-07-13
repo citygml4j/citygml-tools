@@ -1,4 +1,4 @@
-package org.citygml4j.tools.command.options;
+package org.citygml4j.tools.option;
 
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.log.LogLevel;

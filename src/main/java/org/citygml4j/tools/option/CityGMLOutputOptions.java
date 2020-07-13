@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.command.options;
+package org.citygml4j.tools.option;
 
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.model.module.ModuleContext;
