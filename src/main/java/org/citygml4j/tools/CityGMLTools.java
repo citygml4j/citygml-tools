@@ -34,7 +34,7 @@ import org.citygml4j.tools.command.RemoveAppsCommand;
 import org.citygml4j.tools.command.ReprojectCommand;
 import org.citygml4j.tools.command.ToCityJSONCommand;
 import org.citygml4j.tools.command.ValidateCommand;
-import org.citygml4j.tools.common.log.LogLevel;
+import org.citygml4j.tools.command.options.LoggingOptions;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Constants;
 import org.citygml4j.tools.util.ObjectRegistry;
@@ -75,8 +75,8 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
     private static final Logger log = Logger.getInstance();
     private CommandLine subcommand;
 
-    @CommandLine.Option(names = "--log", paramLabel = "<level>", description = "Log level: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
-    private LogLevel logLevel = LogLevel.INFO;
+    @CommandLine.Mixin
+    LoggingOptions logging;
 
     public static void main(String[] args) throws Exception {
         CityGMLTools cityGMLTools = new CityGMLTools();
@@ -135,7 +135,7 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
 
     @Override
     public Integer call() throws Exception {
-        log.setLogLevel(logLevel);
+        log.setLogLevel(logging.getLogLevel());
         log.info("Starting citygml-tools.");
 
         CityGMLContext context = CityGMLContext.getInstance();
@@ -180,5 +180,9 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
                         getClass().getPackage().getImplementationVersion() + "\n" +
                         "(c) 2018-" + LocalDate.now().getYear() + " Claus Nagel <claus.nagel@gmail.com>\n"
         };
+    }
+
+    public LoggingOptions getLoggingOptions() {
+        return logging;
     }
 }

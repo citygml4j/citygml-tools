@@ -22,6 +22,7 @@
 package org.citygml4j.tools.command;
 
 import org.citygml4j.tools.CityGMLTools;
+import org.citygml4j.tools.command.options.LoggingOptions;
 import org.citygml4j.tools.command.validate.XMLSchemaCommand;
 import picocli.CommandLine;
 
@@ -36,6 +37,9 @@ import picocli.CommandLine;
                 XMLSchemaCommand.class
         })
 public class ValidateCommand implements CityGMLTool {
+    @CommandLine.Mixin
+    LoggingOptions logging;
+
     @CommandLine.Spec
     private CommandLine.Model.CommandSpec spec;
 

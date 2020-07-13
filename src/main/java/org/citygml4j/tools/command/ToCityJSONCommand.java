@@ -34,6 +34,7 @@ import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.citygml.core.CityObjectMember;
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.command.options.InputOptions;
+import org.citygml4j.tools.command.options.LoggingOptions;
 import org.citygml4j.tools.command.options.OutputOptions;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.common.srs.SrsNameParser;
@@ -83,6 +84,9 @@ public class ToCityJSONCommand implements CityGMLTool {
 
     @CommandLine.Mixin
     private OutputOptions output;
+
+    @CommandLine.Mixin
+    LoggingOptions logging;
 
     @Override
     public Integer call() throws Exception {

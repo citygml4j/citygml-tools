@@ -29,6 +29,7 @@ import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.command.options.CityGMLOutputOptions;
 import org.citygml4j.tools.command.options.InputOptions;
+import org.citygml4j.tools.command.options.LoggingOptions;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.tools.util.Util;
@@ -55,6 +56,9 @@ public class FromCityJSONCommand implements CityGMLTool {
 
     @CommandLine.Mixin
     private InputOptions input;
+
+    @CommandLine.Mixin
+    LoggingOptions logging;
 
     @Override
     public Integer call() throws Exception {

@@ -31,6 +31,7 @@ import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.command.options.CityGMLOutputOptions;
 import org.citygml4j.tools.command.options.InputOptions;
+import org.citygml4j.tools.command.options.LoggingOptions;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.helper.GlobalAppReader;
 import org.citygml4j.tools.common.log.Logger;
@@ -77,6 +78,9 @@ public class FilterLodsCommand implements CityGMLTool {
 
     @CommandLine.Mixin
     private InputOptions input;
+
+    @CommandLine.Mixin
+    LoggingOptions logging;
 
     @Override
     public Integer call() throws Exception {

@@ -26,6 +26,7 @@ import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.command.CityGMLTool;
 import org.citygml4j.tools.command.options.InputOptions;
+import org.citygml4j.tools.command.options.LoggingOptions;
 import org.citygml4j.tools.common.log.LogLevel;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.ObjectRegistry;
@@ -60,6 +61,9 @@ public class XMLSchemaCommand implements CityGMLTool {
 
     @CommandLine.Mixin
     private InputOptions input;
+
+    @CommandLine.Mixin
+    LoggingOptions logging;
 
     @Override
     public Integer call() throws Exception {
