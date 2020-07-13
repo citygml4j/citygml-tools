@@ -21,7 +21,7 @@ public class LoggingOptions {
         return getRootLoggingOptions(mixee).logLevel;
     }
 
-    @CommandLine.Option(names = "--log", paramLabel = "<level>", description = "Log level: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
+    @CommandLine.Option(names = "--log-level", paramLabel = "<level>", defaultValue = "info", description = "Log level: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
     public void setLogLevel(LogLevel logLevel) {
         getRootLoggingOptions(mixee).logLevel = logLevel;
     }
