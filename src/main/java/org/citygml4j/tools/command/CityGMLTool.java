@@ -26,7 +26,5 @@ import picocli.CommandLine;
 import java.util.concurrent.Callable;
 
 public interface CityGMLTool extends Callable<Integer> {
-    default void validate() throws CommandLine.ParameterException {
-        // nothing to do
-    }
+    default void validate() throws CommandLine.ParameterException { }
 }
