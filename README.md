@@ -25,7 +25,7 @@ To show the help message and all available commands of citygml-tools, simply typ
 
 This will print the following usage information:
 
-```shell
+```
 Usage: citygml-tools [-hV] [--log-file=<file>] [--log-level=<level>]
                      [@<filename>...] COMMAND
 Collection of tools for processing CityGML files.
