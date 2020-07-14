@@ -56,20 +56,21 @@ CityGML files.
 5. How to use it
 ----------------
 
-Open a shell environment and execute the @name@ script from the "bin"
+Open a shell environment and run the @name@ script in the program
 folder to launch the program.
 
-Use the following command to list the available operations:
+To show the help message and all available commands of @name@, simply
+type the following:
 
     > @name@ --help
 
-To display information about how to use a specific operation, type the
-following:
+To get help about a specific command, enter the following and replace
+COMMAND with the name of the @name@ command:
 
-    > @name@ help [operation]
+    > @name@ help COMMAND
 
 On some UNIX/Linux distributions you will first have to set execution rights
-for the start script. Change to the "bin" folder and enter the following to
+for the start script. Change to the program folder and enter the following to
 make the start script executable for the owner of the file:
 
     > chmod u+x @name@

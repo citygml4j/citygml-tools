@@ -10,7 +10,7 @@ FROM openjdk:8-jre-alpine
 
 COPY --from=builder /code/build/install/ /opt/
 
-RUN ln -s /opt/citygml-tools/bin/citygml-tools /usr/local/bin/ && \
+RUN ln -s /opt/citygml-tools/citygml-tools /usr/local/bin/ && \
     adduser -D -S -h /data -s /sbin/nologin -G root --uid 1001 citygml-tools && \
     chgrp 0 /etc/passwd && \
     chmod g=u /etc/passwd && \
