@@ -87,7 +87,7 @@ Using citygml-tools via docker is simple:
 Use the `-u` parameter to pass the username or UID of your current host's user to set the correct file permissions on
 generated files in the mounted directory.
 
-#### Technical details
+### Technical details
 
 The citygml-tools image uses [OpenJDK](https://hub.docker.com/_/openjdk) Alpine Linux to keep the resulting images small.
 Additionally, it is written as multi-stage image, which means the "JDK image" is only used for building, while the final
