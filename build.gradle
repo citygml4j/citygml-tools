@@ -6,18 +6,15 @@ plugins {
     id 'distribution'
 }
 
-mainClassName = 'org.citygml4j.tools.CityGMLTools'
-
-sourceCompatibility = 1.8
-
-ext {
-    citygml4jVersion = '2.11.0'
-    date = new Date()
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
 }
 
 allprojects {
     group 'org.citygml4j.tools'
     version '1.4.0'
+    ext.citygml4jVersion = '2.11.0'
+    ext.date = new Date()
 
     repositories {
         maven {
@@ -30,13 +27,20 @@ allprojects {
 subprojects {
     apply plugin: 'java-library'
 
-    sourceCompatibility = 1.8
+    java {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+    }
 
     dependencies {
         implementation "org.citygml4j:citygml4j:$citygml4jVersion"
     }
 
     plugins.withType(MavenPublishPlugin) {
+        java {
+            withJavadocJar()
+            withSourcesJar()
+        }
+
         jar {
             manifest {
                 attributes('Implementation-Title': project.name,
@@ -60,7 +64,10 @@ subprojects {
                     Claus Nagel &lt;claus.nagel@gmail.com&gt;
                     """.replaceAll("[\r|\n]+", "")
                 addStringOption('doctitle', project.name + ' - ' + project.version)
-                addStringOption('Xdoclint:none', '-quiet')
+            }
+
+            if (JavaVersion.current().isJava9Compatible()) {
+                options.addBooleanOption('html5', true)
             }
 
             doFirst {
@@ -70,29 +77,16 @@ subprojects {
                     filter(ReplaceTokens, tokens: [
                             name: project.name,
                             version: project.version,
-                            citygmlTools: rootProject.name,
-                            copyright: date.format('yyyy')
+                            citygmlTools: rootProject.name
                     ])
                 }
             }
-        }
-
-        task sourcesJar(type: Jar, dependsOn: classes) {
-            archiveClassifier = 'sources'
-            from sourceSets.main.allSource
-        }
-
-        task javadocJar(type: Jar, dependsOn: javadoc) {
-            archiveClassifier = 'javadoc'
-            from javadoc.destinationDir
         }
 
         publishing {
             publications {
                 mavenJava(MavenPublication) {
                     from components.java
-                    artifact sourcesJar
-                    artifact javadocJar
                     pom {
                         name = project.name
                         description = project.description
@@ -143,13 +137,18 @@ jar {
     }
 }
 
-startScripts {
-    defaultJvmOpts = ['-Xms1G']
-    doLast {
-        def windowsScript = getWindowsScript()
-        def unixScript = getUnixScript()
-        windowsScript.text = windowsScript.text.replaceFirst('set APP_HOME=.*', '$0\r\nset WORKING_DIR=%CD%')
-        unixScript.text = unixScript.text.replaceFirst('APP_HOME=.*', '$0\nexport APP_HOME\nexport WORKING_DIR=\\$SAVED')
+application {
+    mainClass = 'org.citygml4j.tools.CityGMLTools'
+    applicationDefaultJvmArgs = ['-Xms1G']
+    executableDir = ''
+
+    startScripts {
+        doLast {
+            def windowsScript = getWindowsScript()
+            def unixScript = getUnixScript()
+            windowsScript.text = windowsScript.text.replaceFirst('set APP_HOME=.*', '$0\r\nset WORKING_DIR=%CD%')
+            unixScript.text = unixScript.text.replaceFirst('APP_HOME=.*', '$0\nexport APP_HOME\nexport WORKING_DIR=\\$SAVED')
+        }
     }
 }
 
@@ -160,7 +159,7 @@ distributions.main.contents {
                 version: project.version,
                 date: date.format('yyyy-MM-dd'),
                 copyright: date.format('yyyy'),
-                javaCompatibility: sourceCompatibility.toString()
+                javaCompatibility: java.sourceCompatibility.toString()
         ])
     }
     into('license') {
