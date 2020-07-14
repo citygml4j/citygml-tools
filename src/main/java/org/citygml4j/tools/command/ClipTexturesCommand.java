@@ -52,7 +52,7 @@ import java.util.stream.Stream;
         mixinStandardHelpOptions = true,
         showAtFileInUsageHelp = true)
 public class ClipTexturesCommand implements CityGMLTool {
-    @CommandLine.Option(names = {"-o", "--output"}, required = true, paramLabel = "<dir>", description = "Output directory in which to write the result files.")
+    @CommandLine.Option(names = {"-o", "--output"}, required = true, paramLabel = "<dir>", description = "Output directory where to write the result files.")
     private String output;
 
     @CommandLine.Option(names = "--clean-output", description = "Clean output directory before processing input files.")
