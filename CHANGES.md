@@ -1,6 +1,34 @@
 Change Log
 ==========
 
+### 1.4.0 - 2020-07-14
+
+##### Additions
+* citygml-tools is now available as Docker image. You can either build the image yourself using the provided `Dockerfile`
+or use a pre-built image from Docker Hub: https://hub.docker.com/r/clausnagel/citygml-tools. Thanks and kudos to [@kdeininger](https://github.com/kdeininger) for this great contribution. [#10](https://github.com/citygml4j/citygml-tools/pull/10)
+* Added the `validate` command to validate CityGML files. The command expects a subcommand. With this release, the only
+available subcommand is `xml` to perform an XML validation against the CityGML schemas, but more validation options are
+on the roadmap. [#11](https://github.com/citygml4j/citygml-tools/pull/11)
+* Added support for specifying the encoding of input and output files. [#15](https://github.com/citygml4j/citygml-tools/issues/15)
+* Added support for writing log messages to a file. [#12](https://github.com/citygml4j/citygml-tools/issues/12)
+* Added support for abbreviated options and subcommands. Users can now specify the initial letter(s) of the first component
+and optionally of one or more subsequent components of an option or subcommand name. "Components" are separated by the dash
+`-` character.
+* Logging options are now global and available from all commands.
+
+##### Breaking changes
+* The start scripts to run citygml-tools are now located in the root program folder and not in the `bin`
+subfolder anymore.
+* The `--log` option has been renamed to `--log-level`.
+
+##### Fixes
+* Fixed memory leak in `to-cityjson` command when running the command on multiple files. [#14](https://github.com/citygml4j/citygml-tools/issues/14)
+* Fixed a bug in `to-cityjson` command that led to linearly increasing file sized when running the command on multiple files. [#14](https://github.com/citygml4j/citygml-tools/issues/14)
+
+##### Miscellaneous
+* Updated to citygml4j version 2.11.0.
+* All subcommand JAR libraries now share the same version number.
+
 ### 1.3.2 - 2019-11-01
 
 ##### Additions
