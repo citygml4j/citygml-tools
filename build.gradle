@@ -6,7 +6,6 @@ plugins {
     id 'distribution'
 }
 
-version '1.4.0'
 mainClassName = 'org.citygml4j.tools.CityGMLTools'
 
 sourceCompatibility = 1.8
@@ -18,6 +17,7 @@ ext {
 
 allprojects {
     group 'org.citygml4j.tools'
+    version '1.4.0'
 
     repositories {
         maven {
