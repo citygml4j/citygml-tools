@@ -23,7 +23,7 @@ subfolder anymore.
 
 ##### Fixes
 * Fixed memory leak in `to-cityjson` command when running the command on multiple files. [#14](https://github.com/citygml4j/citygml-tools/issues/14)
-* Fixed a bug in `to-cityjson` command that led to linearly increasing file sized when running the command on multiple files. [#14](https://github.com/citygml4j/citygml-tools/issues/14)
+* Fixed a bug in `to-cityjson` command that led to linearly increasing file sizes when running the command on multiple files. [#14](https://github.com/citygml4j/citygml-tools/issues/14)
 
 ##### Miscellaneous
 * Updated to citygml4j version 2.11.0.
