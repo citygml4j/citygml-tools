@@ -12,7 +12,7 @@ java {
 
 allprojects {
     group 'org.citygml4j.tools'
-    version '1.4.0'
+    version '1.4.1'
     ext.citygml4jVersion = '2.11.1'
     ext.date = new Date()
 
@@ -126,7 +126,7 @@ dependencies {
     implementation project(':reproject')
     implementation project(':texture-clipper')
     implementation "org.citygml4j:citygml4j:$citygml4jVersion"
-    implementation 'info.picocli:picocli:4.4.0'
+    implementation 'info.picocli:picocli:4.5.1'
 }
 
 jar {
