@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+### 1.4.1 - 2020-09-04
+
+##### Fixes
+* Fixed missing geometry of PlantCover features when converting from CityJSON to CityGML using the `from-cityjson`
+command. [#17](https://github.com/citygml4j/citygml-tools/issues/17)
+
+##### Miscellaneous
+* Updated to citygml4j version 2.11.1.
+
 ### 1.4.0 - 2020-07-14
 
 ##### Additions
