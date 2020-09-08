@@ -28,6 +28,7 @@ public class ReprojectionBuilder {
     private boolean keepHeightValues;
     private String sourceCRS;
     private boolean sourceSwapXY;
+    private boolean lenientTransform;
 
     public static ReprojectionBuilder defaults() {
         return new ReprojectionBuilder();
@@ -73,6 +74,11 @@ public class ReprojectionBuilder {
         return this;
     }
 
+    public ReprojectionBuilder lenientTransform(boolean lenientTransform) {
+        this.lenientTransform = lenientTransform;
+        return this;
+    }
+
     public Reprojector build() throws ReprojectionBuilderException {
         if (targetCRS == null)
             throw new ReprojectionBuilderException("No target CRS defined." );
@@ -96,6 +102,7 @@ public class ReprojectionBuilder {
 
         reprojector.setKeepHeightValues(keepHeightValues);
         reprojector.setSourceSwapXY(sourceSwapXY);
+        reprojector.setLenientTransform(lenientTransform);
 
         return reprojector;
     }

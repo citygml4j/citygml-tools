@@ -77,6 +77,9 @@ public class ReprojectCommand implements CityGMLTool {
     @CommandLine.Option(names = "--overwrite-files", description = "Overwrite input file(s).")
     private boolean overwriteInputFiles;
 
+    @CommandLine.Option(names = "--lenient-transform", description = "Transform even when there is no information available for a datum shift.")
+    private boolean lenientTransform;
+
     @CommandLine.Mixin
     private CityGMLOutputOptions cityGMLOutput;
 
@@ -110,6 +113,7 @@ public class ReprojectCommand implements CityGMLTool {
                     .forceXYAxisOrderForTargetCRS(targetForceXY)
                     .keepHeightValues(keepHeightValues)
                     .swapXYAxisOrderForSourceGeometries(sourceSwapXY)
+                    .lenientTransform(lenientTransform)
                     .build();
 
             log.debug("Using the following target CRS definition:");

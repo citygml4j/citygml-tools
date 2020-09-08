@@ -106,7 +106,7 @@ public class CRSUtil {
         return crs;
     }
 
-    public MathTransform getTransformation(String sourceSRSName, String targetSRSName) throws ReprojectionException {
+    public MathTransform getTransformation(String sourceSRSName, String targetSRSName, boolean lenient) throws ReprojectionException {
         ConcurrentHashMap<String, MathTransform> mathTransforms = transformations.computeIfAbsent(sourceSRSName, v -> new ConcurrentHashMap<>());
         MathTransform mathTransform = mathTransforms.get(targetSRSName);
 
@@ -115,7 +115,7 @@ public class CRSUtil {
             CoordinateReferenceSystem targetCRS = getCoordinateReferenceSystem(targetSRSName);
 
             try {
-                mathTransform = CRS.findMathTransform(sourceCRS, targetCRS);
+                mathTransform = CRS.findMathTransform(sourceCRS, targetCRS, lenient);
             } catch (FactoryException e) {
                 throw new ReprojectionException("Failed to find a transformation.", e);
             }

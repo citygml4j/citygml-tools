@@ -58,19 +58,14 @@ import java.util.stream.IntStream;
 public class Reprojector {
     private final TransformationWalker transformationWalker = new TransformationWalker();
     private final CleanupWalker cleanupWalker = new CleanupWalker();
-
     private final CRSUtil crsUtil = new CRSUtil();
     private final SRSNameHelper srsNameHelper = new SRSNameHelper();
 
     private String targetCRS;
     private String targetSRSName;
     private boolean keepHeightValues;
-
     private boolean sourceSwapXY;
-
-    Reprojector() {
-
-    }
+    private boolean lenientTransform;
 
     void setTargetCRS(String crs, boolean forceXY) throws ReprojectionException {
         targetCRS = setCRS(crs, forceXY, true);
@@ -93,6 +88,10 @@ public class Reprojector {
 
     void setSourceSwapXY(boolean sourceSwapXY) {
         this.sourceSwapXY = sourceSwapXY;
+    }
+
+    void setLenientTransform(boolean lenientTransform) {
+        this.lenientTransform = lenientTransform;
     }
 
     public void setFallbackSRSName(String srsName) {
@@ -306,7 +305,7 @@ public class Reprojector {
             throw new RuntimeException("Missing CRS definition on " + gml.getGMLClass() + ".");
 
         try {
-            MathTransform transform = crsUtil.getTransformation(srsName, targetCRS);
+            MathTransform transform = crsUtil.getTransformation(srsName, targetCRS, lenientTransform);
             if (!transform.isIdentity()) {
                 double[] srsPts = new double[transform.getSourceDimensions()];
                 double[] dstPts = new double[transform.getTargetDimensions()];
