@@ -24,14 +24,12 @@ package org.citygml4j.tools.command;
 import com.google.gson.JsonSyntaxException;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReadException;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReader;
-import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.LoggingOptions;
-import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.xml.io.writer.CityGMLWriteException;
 import org.citygml4j.xml.io.writer.CityGMLWriter;
@@ -63,7 +61,6 @@ public class FromCityJSONCommand implements CityGMLTool {
     @Override
     public Integer call() throws Exception {
         Logger log = Logger.getInstance();
-        CityGMLBuilder cityGMLBuilder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
 
         log.debug("Searching for CityJSON input files.");
         List<Path> inputFiles;
