@@ -24,9 +24,9 @@ package org.citygml4j.tools.option;
 import org.citygml4j.CityGMLContext;
 import org.citygml4j.builder.cityjson.CityJSONBuilder;
 import org.citygml4j.builder.cityjson.CityJSONBuilderException;
+import org.citygml4j.builder.cityjson.json.io.reader.CityJSONChunkReader;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONInputFactory;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReadException;
-import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReader;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.model.module.Modules;
@@ -99,10 +99,10 @@ public class InputOptions {
         return in;
     }
 
-    public CityJSONReader createCityJSONReader(Path inputFile, boolean processUnknownExtensions) throws CityJSONBuilderException, CityJSONReadException {
+    public CityJSONChunkReader createCityJSONChunkReader(Path inputFile, boolean processUnknownExtensions) throws CityJSONBuilderException, CityJSONReadException {
         CityJSONInputFactory in = createCityJSONInputFactory(processUnknownExtensions);
         return encoding == null ?
-                in.createCityJSONReader(inputFile.toFile()) :
-                in.createCityJSONReader(inputFile.toFile(), encoding);
+                in.createCityJSONChunkReader(inputFile.toFile()) :
+                in.createCityJSONChunkReader(inputFile.toFile(), encoding);
     }
 }

@@ -22,17 +22,16 @@
 package org.citygml4j.tools.command;
 
 import com.google.gson.JsonSyntaxException;
+import org.citygml4j.builder.cityjson.json.io.reader.CityJSONChunkReader;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReadException;
-import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReader;
-import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.LoggingOptions;
 import org.citygml4j.tools.util.Util;
-import org.citygml4j.xml.io.writer.CityGMLWriteException;
-import org.citygml4j.xml.io.writer.CityGMLWriter;
+import org.citygml4j.xml.io.writer.CityModelInfo;
+import org.citygml4j.xml.io.writer.CityModelWriter;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -82,21 +81,18 @@ public class FromCityJSONCommand implements CityGMLTool {
             Path outputFile = Util.replaceFileExtension(inputFile, ".gml");
             log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
 
-            CityModel cityModel;
-            try (CityJSONReader reader = input.createCityJSONReader(inputFile, mapUnknownExtensions)) {
+            try (CityJSONChunkReader reader = input.createCityJSONChunkReader(inputFile, mapUnknownExtensions);
+                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile)) {
                 log.debug("Reading CityJSON input file into main memory.");
-                cityModel = reader.read();
+                writer.setCityModelInfo(new CityModelInfo(reader.getCityModelStub()));
+                reader.read(writer::writeFeatureMember);
             } catch (CityJSONReadException e) {
                 log.error("Failed to read CityJSON file.", e);
                 if (e.getCause() instanceof JsonSyntaxException)
                     log.error("Maybe an unsupported CityJSON version?");
 
                 return 1;
-            }
-
-            try (CityGMLWriter writer = cityGMLOutput.createCityGMLWriter(outputFile)) {
-                writer.write(cityModel);
-            } catch (CityGMLWriteException e) {
+            } catch (Exception e) {
                 log.error("Failed to write CityGML file.", e);
                 return 1;
             }
