@@ -34,8 +34,8 @@ import org.citygml4j.tools.command.RemoveAppsCommand;
 import org.citygml4j.tools.command.ReprojectCommand;
 import org.citygml4j.tools.command.ToCityJSONCommand;
 import org.citygml4j.tools.command.ValidateCommand;
+import org.citygml4j.tools.common.log.LogLevel;
 import org.citygml4j.tools.common.log.Logger;
-import org.citygml4j.tools.option.LoggingOptions;
 import org.citygml4j.tools.util.Constants;
 import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.tools.util.URLClassLoader;
@@ -55,10 +55,7 @@ import java.util.stream.Stream;
 
 @CommandLine.Command(name = Constants.APP_NAME,
         description = "Collection of tools for processing CityGML files.",
-        versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true,
         synopsisSubcommandLabel = "COMMAND",
-        showAtFileInUsageHelp = true,
         subcommands = {
                 CommandLine.HelpCommand.class,
                 ValidateCommand.class,
@@ -71,58 +68,79 @@ import java.util.stream.Stream;
                 FromCityJSONCommand.class,
                 ToCityJSONCommand.class
         })
-public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProvider {
-    private static final Logger log = Logger.getInstance();
+public class CityGMLTools extends CityGMLTool implements CommandLine.IVersionProvider {
+    @CommandLine.Option(names = "--log-level", scope = CommandLine.ScopeType.INHERIT, paramLabel = "<level>",
+            defaultValue = "info", description = "Log level: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
+    private LogLevel logLevel = LogLevel.INFO;
+
+    @CommandLine.Option(names = "--log-file", scope = CommandLine.ScopeType.INHERIT, paramLabel = "<file>",
+            description = "Write log messages to the specified file.")
+    private Path logFile;
+
+    private final Logger log = Logger.getInstance();
     private String commandLine;
-    private CommandLine subCommand;
+    private String subCommandName;
 
-    @CommandLine.Mixin
-    private LoggingOptions logging;
-
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         CityGMLTools cityGMLTools = new CityGMLTools();
+        try {
+            System.exit(cityGMLTools.process(args));
+        } catch (Exception e) {
+            cityGMLTools.logError(e);
+            System.exit(1);
+        }
+    }
+
+    private int process(String[] args) throws Exception {
         Instant start = Instant.now();
         int exitCode = 1;
 
-        CommandLine cmd = new CommandLine(cityGMLTools)
+        CommandLine cmd = new CommandLine(this)
                 .setCaseInsensitiveEnumValuesAllowed(true)
-                .setExecutionStrategy(new CommandLine.RunAll())
                 .setAbbreviatedOptionsAllowed(true)
-                .setAbbreviatedSubcommandsAllowed(true);
+                .setAbbreviatedSubcommandsAllowed(true)
+                .setExecutionStrategy(new CommandLine.RunAll());
 
         try {
             CommandLine.ParseResult parseResult = cmd.parseArgs(args);
-            if (CommandLine.printHelpIfRequested(parseResult))
-                return;
+            List<CommandLine> commandLines = parseResult.asCommandLineList();
+
+            // check for help options
+            for (CommandLine commandLine : commandLines) {
+                if (commandLine.isUsageHelpRequested() || commandLine.isVersionHelpRequested()) {
+                    return CommandLine.executeHelpRequest(parseResult);
+                }
+            }
 
             // check for required subcommand
-            List<CommandLine> commandLines = parseResult.asCommandLineList();
-            if (commandLines.size() == 1)
+            if (!parseResult.hasSubcommand()) {
                 throw new CommandLine.ParameterException(cmd, "Missing required subcommand.");
+            }
 
             // validate commands
             for (CommandLine commandLine : commandLines) {
                 Object command = commandLine.getCommand();
-                if (command instanceof CityGMLTool)
-                    ((CityGMLTool) command).validate();
+                if (command instanceof CityGMLTool) {
+                    ((CityGMLTool) command).preprocess();
+                }
             }
 
             // execute commands
-            cityGMLTools.commandLine = Constants.APP_NAME + " " + String.join(" ", args);
-            cityGMLTools.subCommand = commandLines.get(1);
+            commandLine = Constants.APP_NAME + " " + String.join(" ", args);
+            subCommandName = commandLines.get(1).getCommandName();
             exitCode = cmd.getExecutionStrategy().execute(parseResult);
 
             log.info("Total execution time: " + Util.formatElapsedTime(Duration.between(start, Instant.now()).toMillis()) + ".");
             int warnings = log.getNumberOfWarnings();
             int errors = log.getNumberOfErrors();
 
-            if (exitCode == 1)
+            if (exitCode == 1) {
                 log.warn(Constants.APP_NAME + " execution failed.");
-            else if (errors != 0 || warnings != 0)
+            } else if (errors != 0 || warnings != 0) {
                 log.info(Constants.APP_NAME + " finished with " + warnings + " warning(s) and " + errors + " error(s).");
-            else
+            } else {
                 log.info(Constants.APP_NAME + " successfully completed.");
-
+            }
         } catch (CommandLine.ParameterException e) {
             cmd.getParameterExceptionHandler().handleParseException(e, args);
             exitCode = 2;
@@ -134,20 +152,20 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
             log.close();
         }
 
-        System.exit(exitCode);
+        return exitCode;
     }
 
     @Override
     public Integer call() throws Exception {
-        log.setLogLevel(logging.getLogLevel());
+        log.setLogLevel(logLevel);
 
-        if (logging.getLogFile() != null) {
-            Path logFile = logging.getLogFile();
+        if (logFile != null) {
             try {
-                if (!Files.exists(logFile.getParent()))
+                if (logFile.getParent() != null && !Files.exists(logFile.getParent())) {
                     Files.createDirectories(logFile);
-                else if (Files.isDirectory(logFile))
+                } else if (Files.isDirectory(logFile)) {
                     logFile = logFile.resolve(Constants.APP_NAME + ".log");
+                }
 
                 log.withLogFile(logFile);
                 log.logToFile("# " + commandLine);
@@ -189,8 +207,14 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
         CityGMLBuilder cityGMLBuilder = context.createCityGMLBuilder(classLoader);
         ObjectRegistry.getInstance().put(cityGMLBuilder);
 
-        log.info("Executing command '" + subCommand.getCommandName() + "'.");
+        log.info("Executing command '" + subCommandName + "'.");
         return 0;
+    }
+
+    private void logError(Exception e) {
+        log.error("The following unexpected error occurred during execution.");
+        log.logStackTrace(e);
+        log.warn(Constants.APP_NAME + " execution failed.");
     }
 
     @Override
@@ -200,9 +224,5 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
                         getClass().getPackage().getImplementationVersion() + "\n" +
                         "(c) 2018-" + LocalDate.now().getYear() + " Claus Nagel <claus.nagel@gmail.com>\n"
         };
-    }
-
-    public LoggingOptions getLoggingOptions() {
-        return logging;
     }
 }

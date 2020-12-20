@@ -21,25 +21,17 @@
 
 package org.citygml4j.tools.command;
 
-import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.command.validate.XMLSchemaCommand;
-import org.citygml4j.tools.option.LoggingOptions;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "validate",
         description = "Validates CityGML files according to the given subcommand.",
-        versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true,
         synopsisSubcommandLabel = "COMMAND",
-        showAtFileInUsageHelp = true,
         subcommands = {
                 CommandLine.HelpCommand.class,
                 XMLSchemaCommand.class
         })
-public class ValidateCommand implements CityGMLTool {
-    @CommandLine.Mixin
-    private LoggingOptions logging;
-
+public class ValidateCommand extends CityGMLTool {
     @CommandLine.Spec
     private CommandLine.Model.CommandSpec spec;
 
@@ -49,7 +41,7 @@ public class ValidateCommand implements CityGMLTool {
     }
 
     @Override
-    public void validate() throws CommandLine.ParameterException {
+    public void preprocess() throws CommandLine.ParameterException {
         if (spec.commandLine().getParseResult().subcommands().isEmpty())
             throw new CommandLine.ParameterException(spec.commandLine(), "Missing required subcommand.");
     }

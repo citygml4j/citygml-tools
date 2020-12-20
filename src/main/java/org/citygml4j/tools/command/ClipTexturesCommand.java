@@ -23,11 +23,9 @@ package org.citygml4j.tools.command;
 
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.model.module.citygml.CityGMLVersion;
-import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.option.LoggingOptions;
 import org.citygml4j.tools.textureclipper.TextureClipper;
 import org.citygml4j.tools.textureclipper.TextureClippingException;
 import org.citygml4j.tools.util.Constants;
@@ -47,11 +45,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @CommandLine.Command(name = "clip-textures",
-        description = "Clips texture images to the extent of the target surface.",
-        versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true,
-        showAtFileInUsageHelp = true)
-public class ClipTexturesCommand implements CityGMLTool {
+        description = "Clips texture images to the extent of the target surface.")
+public class ClipTexturesCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-o", "--output"}, required = true, paramLabel = "<dir>", description = "Output directory where to write the result files.")
     private String output;
 
@@ -84,9 +79,6 @@ public class ClipTexturesCommand implements CityGMLTool {
 
     @CommandLine.Mixin
     private InputOptions input;
-
-    @CommandLine.Mixin
-    private LoggingOptions logging;
 
     @CommandLine.Spec
     private CommandLine.Model.CommandSpec spec;
@@ -160,7 +152,7 @@ public class ClipTexturesCommand implements CityGMLTool {
     }
 
     @Override
-    public void validate() throws CommandLine.ParameterException {
+    public void preprocess() throws CommandLine.ParameterException {
         try {
             Paths.get(output);
         } catch (InvalidPathException e) {

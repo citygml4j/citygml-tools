@@ -27,7 +27,6 @@ import org.citygml4j.geometry.BoundingBox;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.appearance.Appearance;
 import org.citygml4j.model.gml.feature.AbstractFeature;
-import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.helper.ImplicitGeometryReader;
 import org.citygml4j.tools.common.log.Logger;
@@ -36,7 +35,6 @@ import org.citygml4j.tools.heightchanger.HeightChanger;
 import org.citygml4j.tools.heightchanger.HeightMode;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.option.LoggingOptions;
 import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
@@ -54,11 +52,8 @@ import java.util.List;
 import java.util.UUID;
 
 @CommandLine.Command(name = "change-height",
-        description = "Changes the height values of city objects by a given offset.",
-        versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true,
-        showAtFileInUsageHelp = true)
-public class ChangeHeightCommand implements CityGMLTool {
+        description = "Changes the height values of city objects by a given offset.")
+public class ChangeHeightCommand extends CityGMLTool {
     @CommandLine.Option(names = "--offset", paramLabel = "<double>", required =  true, description = "Offset to add to height values.")
     private double offset;
 
@@ -73,9 +68,6 @@ public class ChangeHeightCommand implements CityGMLTool {
 
     @CommandLine.Mixin
     private InputOptions input;
-
-    @CommandLine.Mixin
-    private LoggingOptions logging;
 
     @Override
     public Integer call() throws Exception {

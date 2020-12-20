@@ -24,11 +24,9 @@ package org.citygml4j.tools.command;
 import com.google.gson.JsonSyntaxException;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONChunkReader;
 import org.citygml4j.builder.cityjson.json.io.reader.CityJSONReadException;
-import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.option.LoggingOptions;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.xml.io.writer.CityModelInfo;
 import org.citygml4j.xml.io.writer.CityModelWriter;
@@ -40,11 +38,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @CommandLine.Command(name = "from-cityjson",
-        description = "Converts CityJSON files into CityGML.",
-        versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true,
-        showAtFileInUsageHelp = true)
-public class FromCityJSONCommand implements CityGMLTool {
+        description = "Converts CityJSON files into CityGML.")
+public class FromCityJSONCommand extends CityGMLTool {
     @CommandLine.Option(names = "--map-unknown-extensions", description = "Map unknown extensions to generic city objects and attributes.")
     private boolean mapUnknownExtensions;
 
@@ -53,9 +48,6 @@ public class FromCityJSONCommand implements CityGMLTool {
 
     @CommandLine.Mixin
     private InputOptions input;
-
-    @CommandLine.Mixin
-    private LoggingOptions logging;
 
     @Override
     public Integer call() throws Exception {

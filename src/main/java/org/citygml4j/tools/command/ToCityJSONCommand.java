@@ -32,12 +32,10 @@ import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.CityModel;
 import org.citygml4j.model.citygml.core.CityObjectMember;
-import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.common.srs.SrsNameParser;
 import org.citygml4j.tools.common.srs.SrsParseException;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.option.LoggingOptions;
 import org.citygml4j.tools.option.OutputOptions;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
@@ -50,11 +48,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @CommandLine.Command(name = "to-cityjson",
-        description = "Converts CityGML files into CityJSON.",
-        versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true,
-        showAtFileInUsageHelp = true)
-public class ToCityJSONCommand implements CityGMLTool {
+        description = "Converts CityGML files into CityJSON.")
+public class ToCityJSONCommand extends CityGMLTool {
     @CommandLine.Option(names = "--epsg", paramLabel = "<code>", description = "EPSG code to be used as CRS metadata.")
     private int epsg = 0;
 
@@ -84,9 +79,6 @@ public class ToCityJSONCommand implements CityGMLTool {
 
     @CommandLine.Mixin
     private OutputOptions output;
-
-    @CommandLine.Mixin
-    private LoggingOptions logging;
 
     @Override
     public Integer call() throws Exception {

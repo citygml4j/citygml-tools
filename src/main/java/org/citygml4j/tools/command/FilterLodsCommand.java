@@ -28,7 +28,6 @@ import org.citygml4j.model.citygml.appearance.Appearance;
 import org.citygml4j.model.citygml.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.gml.feature.AbstractFeature;
-import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.helper.GlobalAppReader;
 import org.citygml4j.tools.common.log.Logger;
@@ -36,7 +35,6 @@ import org.citygml4j.tools.lodfilter.LodFilter;
 import org.citygml4j.tools.lodfilter.LodFilterMode;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.option.LoggingOptions;
 import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
@@ -56,11 +54,8 @@ import java.util.Set;
 import java.util.UUID;
 
 @CommandLine.Command(name = "filter-lods",
-        description = "Filters the LoD representations of city objects.",
-        versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true,
-        showAtFileInUsageHelp = true)
-public class FilterLodsCommand implements CityGMLTool {
+        description = "Filters the LoD representations of city objects.")
+public class FilterLodsCommand extends CityGMLTool {
     @CommandLine.Option(names = "--lod", paramLabel = "<lod>", required = true, split = ",", description = "LoD to filter: 0, 1, 2, 3, 4.")
     private List<Integer> lods;
 
@@ -78,9 +73,6 @@ public class FilterLodsCommand implements CityGMLTool {
 
     @CommandLine.Mixin
     private InputOptions input;
-
-    @CommandLine.Mixin
-    private LoggingOptions logging;
 
     @Override
     public Integer call() throws Exception {

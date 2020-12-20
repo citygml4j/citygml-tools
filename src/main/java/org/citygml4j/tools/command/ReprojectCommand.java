@@ -24,13 +24,11 @@ package org.citygml4j.tools.command;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.gml.feature.AbstractFeature;
-import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.log.LogLevel;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.option.LoggingOptions;
 import org.citygml4j.tools.reproject.ReprojectionBuilder;
 import org.citygml4j.tools.reproject.ReprojectionBuilderException;
 import org.citygml4j.tools.reproject.ReprojectionException;
@@ -51,11 +49,8 @@ import java.util.List;
 import java.util.UUID;
 
 @CommandLine.Command(name = "reproject",
-        description = "Reprojects city objects to a new spatial reference system.",
-        versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true,
-        showAtFileInUsageHelp = true)
-public class ReprojectCommand implements CityGMLTool {
+        description = "Reprojects city objects to a new spatial reference system.")
+public class ReprojectCommand extends CityGMLTool {
     @CommandLine.Option(names = "--target-crs", paramLabel = "<crs>", required = true, description = "Target CRS for the reprojection given as EPSG code, as GML srsName or as OGC WKT with escaped quotes.")
     private String targetCRS;
 
@@ -85,9 +80,6 @@ public class ReprojectCommand implements CityGMLTool {
 
     @CommandLine.Mixin
     private InputOptions input;
-
-    @CommandLine.Mixin
-    private LoggingOptions logging;
 
     @Override
     public Integer call() throws Exception {

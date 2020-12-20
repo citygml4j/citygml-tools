@@ -31,12 +31,10 @@ import org.citygml4j.model.citygml.appearance.SurfaceDataProperty;
 import org.citygml4j.model.citygml.appearance.X3DMaterial;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.gml.feature.AbstractFeature;
-import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.option.LoggingOptions;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.util.walker.FeatureWalker;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
@@ -56,11 +54,8 @@ import java.util.Map;
 import java.util.UUID;
 
 @CommandLine.Command(name = "remove-apps",
-        description = "Removes appearances from city objects.",
-        versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true,
-        showAtFileInUsageHelp = true)
-public class RemoveAppsCommand implements CityGMLTool {
+        description = "Removes appearances from city objects.")
+public class RemoveAppsCommand extends CityGMLTool {
     @CommandLine.Option(names = "--theme", paramLabel = "<name>", split = ",", description = "Only remove appearances of the given theme(s). Use 'null' as name for the null theme.")
     private List<String> theme;
 
@@ -81,9 +76,6 @@ public class RemoveAppsCommand implements CityGMLTool {
 
     @CommandLine.Mixin
     private InputOptions input;
-
-    @CommandLine.Mixin
-    private LoggingOptions logging;
 
     @Override
     public Integer call() throws Exception {

@@ -23,12 +23,10 @@ package org.citygml4j.tools.command.validate;
 
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
-import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.command.CityGMLTool;
 import org.citygml4j.tools.common.log.LogLevel;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.option.LoggingOptions;
 import org.citygml4j.tools.util.ObjectRegistry;
 import org.citygml4j.tools.util.Util;
 import org.citygml4j.xml.schema.SchemaHandler;
@@ -48,11 +46,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @CommandLine.Command(name = "xml",
-        description = "Performs XML validation against the CityGML schemas.",
-        versionProvider = CityGMLTools.class,
-        mixinStandardHelpOptions = true,
-        showAtFileInUsageHelp = true)
-public class XMLSchemaCommand implements CityGMLTool {
+        description = "Performs XML validation against the CityGML schemas.")
+public class XMLSchemaCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-s", "--suppress-validation-errors"}, description = "Do not show validation errors for a concise report.")
     private boolean suppressValidationErrors;
 
@@ -61,9 +56,6 @@ public class XMLSchemaCommand implements CityGMLTool {
 
     @CommandLine.Mixin
     private InputOptions input;
-
-    @CommandLine.Mixin
-    private LoggingOptions logging;
 
     @Override
     public Integer call() throws Exception {
