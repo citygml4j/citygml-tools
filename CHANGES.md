@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+### 1.4.2 - 2020-12-21
+
+##### Additions
+* Added the `--lenient-transform` option to the `reproject` command to transform coordinates even when there is no
+information available for a datum shift.
+
+##### Fixes
+* Reworked the `from-cityjson` command to use less main memory. It now uses the new chunking CityJSON reader introduced
+with citygml4j 2.11.2. [#18](https://github.com/citygml4j/citygml-tools/issues/18)
+* Fixed a NPE when the log file should be created in the current working directory.
+
 ### 1.4.1 - 2020-09-04
 
 ##### Fixes

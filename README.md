@@ -5,9 +5,9 @@ citygml-tools is a command line utility that bundles several operations for proc
 citygml-tools is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0). See the `LICENSE` file for more details.
 
 ## Latest release
-The latest stable release of citygml-tools is 1.4.1.
+The latest stable release of citygml-tools is 1.4.2.
 
-Download the citygml-tools 1.4.1 release binaries [here](https://github.com/citygml4j/citygml-tools/releases/download/v1.4.1/citygml-tools-1.4.1.zip). Previous releases are available from the [releases section](https://github.com/citygml4j/citygml-tools/releases).
+Download the citygml-tools 1.4.2 release binaries [here](https://github.com/citygml4j/citygml-tools/releases/download/v1.4.2/citygml-tools-1.4.2.zip). Previous releases are available from the [releases section](https://github.com/citygml4j/citygml-tools/releases).
 
 ## Contributing
 * To file bugs found in the software create a GitHub issue.
@@ -111,7 +111,7 @@ the `global-app-mover` version number.
 <dependency>
   <groupId>org.citygml4j.tools</groupId>
   <artifactId>global-app-mover</artifactId>
-  <version>1.4.1</version>
+  <version>1.4.2</version>
 </dependency>
 ```
 
@@ -123,7 +123,7 @@ repositories {
 }
 
 dependencies {
-  compile 'org.citygml4j.tools:global-app-mover:1.4.1'
+  compile 'org.citygml4j.tools:global-app-mover:1.4.2'
 }
 ```
 
