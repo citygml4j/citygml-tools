@@ -4,6 +4,7 @@ plugins {
     id 'java'
     id 'application'
     id 'distribution'
+    id 'io.github.gradle-nexus.publish-plugin' version '1.0.0'
 }
 
 java {
@@ -12,20 +13,22 @@ java {
 
 allprojects {
     group 'org.citygml4j.tools'
-    version '1.4.2'
-    ext.citygml4jVersion = '2.11.2'
+    version '1.4.3'
+    ext.citygml4jVersion = '2.11.3'
     ext.date = new Date()
 
     repositories {
         maven {
             url 'https://repo.osgeo.org/repository/release'
         }
-        jcenter()
+        mavenCentral()
     }
 }
 
 subprojects {
     apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
+    apply plugin: 'signing'
 
     java {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -115,6 +118,10 @@ subprojects {
                 }
             }
         }
+
+        signing {
+            sign publishing.publications.mavenJava
+        }
     }
 }
 
@@ -167,5 +174,11 @@ distributions.main.contents {
     }
     from(file("$buildDir/tmp/dir")) {
         mkdir "$buildDir/tmp/dir/ade-extensions"
+    }
+}
+
+nexusPublishing {
+    repositories {
+        sonatype()
     }
 }
