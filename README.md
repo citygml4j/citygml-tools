@@ -63,7 +63,7 @@ citygml-tools can be run on any platform providing appropriate Java support.
 ## Docker image
 
 citygml-tools is also available as Docker image. You can either build the image yourself using the provided `Dockerfile`
-or use a pre-built image from Docker Hub: https://hub.docker.com/r/clausnagel/citygml-tools.
+or use a pre-built image from Docker Hub: https://hub.docker.com/r/citygml4j/citygml-tools.
 
 To build the image, clone the repository to your local machine and run the following command from the root of the
 repository:
