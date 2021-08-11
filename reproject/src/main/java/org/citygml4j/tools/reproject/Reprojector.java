@@ -44,6 +44,7 @@ import org.citygml4j.model.gml.geometry.primitives.PointProperty;
 import org.citygml4j.model.gml.geometry.primitives.Polygon;
 import org.citygml4j.tools.reproject.util.CRSUtil;
 import org.citygml4j.tools.reproject.util.SRSNameHelper;
+import org.citygml4j.util.child.ChildInfo;
 import org.citygml4j.util.walker.GMLWalker;
 import org.citygml4j.util.walker.GeometryWalker;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -115,7 +116,9 @@ public class Reprojector {
             feature.accept(transformationWalker);
             feature.accept(cleanupWalker);
         } catch (RuntimeException e) {
-            throw new ReprojectionException("Failed to reproject feature with gml:id '" + feature.getId() + "'.", e);
+            throw feature.getId() != null ?
+                    new ReprojectionException("Failed to reproject feature with gml:id '" + feature.getId() + "'.", e.getCause()) :
+                    new ReprojectionException(e.getCause());
         }
     }
 
@@ -126,14 +129,21 @@ public class Reprojector {
 
             BoundingBox bbox = envelope.toBoundingBox();
             if (bbox != null) {
-                List<Double> coords = transform(bbox.getLowerCorner().toList(), srsName, envelope);
-                bbox.setLowerCorner(coords.get(0), coords.get(1), coords.get(2));
+                try {
+                    List<Double> coords = transform(bbox.getLowerCorner().toList(), srsName, envelope);
+                    bbox.setLowerCorner(coords.get(0), coords.get(1), coords.get(2));
 
-                coords = transform(bbox.getUpperCorner().toList(), srsName, envelope);
-                bbox.setUpperCorner(coords.get(0), coords.get(1), coords.get(2));
+                    coords = transform(bbox.getUpperCorner().toList(), srsName, envelope);
+                    bbox.setUpperCorner(coords.get(0), coords.get(1), coords.get(2));
 
-                boundingShape.setEnvelope(bbox);
-                boundingShape.getEnvelope().setSrsName(targetSRSName);
+                    boundingShape.setEnvelope(bbox);
+                    boundingShape.getEnvelope().setSrsName(targetSRSName);
+                } catch (RuntimeException e) {
+                    AbstractFeature parent = new ChildInfo().getParentFeature(boundingShape);
+                    throw parent != null && parent.getId() != null ?
+                            new ReprojectionException("Failed to reproject feature with gml:id '" + parent.getId() + "'.", e.getCause()) :
+                            new ReprojectionException(e.getCause());
+                }
             }
         }
     }
