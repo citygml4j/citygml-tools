@@ -8,7 +8,12 @@ plugins {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+    compileJava {
+        options.release = 8
+    }
 }
 
 allprojects {
@@ -34,7 +39,12 @@ subprojects {
     apply plugin: 'signing'
 
     java {
-        sourceCompatibility = JavaVersion.VERSION_1_8
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(11)
+        }
+        compileJava {
+            options.release = 8
+        }
     }
 
     dependencies {
