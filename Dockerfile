@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-alpine as builder
+FROM openjdk:11-jdk-slim as builder
 
 WORKDIR /code
 
