@@ -4,7 +4,7 @@ plugins {
     id 'java'
     id 'application'
     id 'distribution'
-    id 'io.github.gradle-nexus.publish-plugin' version '1.0.0'
+    id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
 }
 
 java {
@@ -19,7 +19,7 @@ java {
 allprojects {
     group 'org.citygml4j.tools'
     version '1.4.3'
-    ext.citygml4jVersion = '2.11.4-SNAPSHOT'
+    ext.citygml4jVersion = '2.11.4'
     ext.date = new Date()
 
     repositories {
@@ -179,7 +179,7 @@ distributions.main.contents {
                 version: project.version,
                 date: date.format('yyyy-MM-dd'),
                 copyright: date.format('yyyy'),
-                javaCompatibility: java.sourceCompatibility.toString()
+                javaCompatibility: compileJava.options.release.get().toString()
         ])
     }
     into('license') {
