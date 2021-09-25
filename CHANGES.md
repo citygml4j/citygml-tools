@@ -1,6 +1,22 @@
 Change Log
 ==========
 
+### 1.4.3 - 2021-09-25
+
+##### Additions
+* Added support for CityJSON 1.0.3.
+
+  Note that the changes to the `"metadata"` property introduced with CityJSON 1.0.3 *break backwards compatability*
+with previous minor versions. For this reason, this version of **citygml-tools** only supports metadata based on
+CityJSON 1.0.3 but no previous versions anymore.
+
+##### Fixes
+* Fixed NPE in the `to-cityjson` command when converting an `ImplicitGeometry` that lacks a `relativeGMLGeometry`
+representation. [#20](https://github.com/citygml4j/citygml-tools/issues/20)
+
+##### Miscellaneous
+* Updated to citygml4j version 2.11.4.
+
 ### 1.4.2 - 2020-12-21
 
 ##### Additions
