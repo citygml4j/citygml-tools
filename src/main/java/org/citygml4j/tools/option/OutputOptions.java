@@ -39,15 +39,25 @@ public class OutputOptions {
         return encoding;
     }
 
-    public CityJSONOutputFactory createCityJSONOutputFactory(boolean removeDuplicateChildGeometries) throws CityJSONBuilderException {
+    public CityJSONOutputFactory createCityJSONOutputFactory(
+            boolean removeDuplicateChildGeometries,
+            boolean useMaterialDefaults,
+            String fallbackTheme) throws CityJSONBuilderException {
         CityJSONBuilder builder = CityGMLContext.getInstance().createCityJSONBuilder();
         CityJSONOutputFactory out = builder.createCityJSONOutputFactory();
         out.setRemoveDuplicateChildGeometries(removeDuplicateChildGeometries);
+        out.setUseMaterialDefaults(useMaterialDefaults);
+        out.setFallbackTheme(fallbackTheme);
 
         return out;
     }
 
-    public CityJSONWriter createCityJSONWriter(Path outputFile, boolean removeDuplicateChildGeometries) throws CityJSONBuilderException, CityJSONWriteException {
-        return createCityJSONOutputFactory(removeDuplicateChildGeometries).createCityJSONWriter(outputFile.toFile(), encoding);
+    public CityJSONWriter createCityJSONWriter(
+            Path outputFile,
+            boolean removeDuplicateChildGeometries,
+            boolean useMaterialDefaults,
+            String fallbackTheme) throws CityJSONBuilderException, CityJSONWriteException {
+        return createCityJSONOutputFactory(removeDuplicateChildGeometries, useMaterialDefaults, fallbackTheme)
+                .createCityJSONWriter(outputFile.toFile(), encoding);
     }
 }

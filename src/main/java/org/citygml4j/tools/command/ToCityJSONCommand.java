@@ -68,6 +68,12 @@ public class ToCityJSONCommand extends CityGMLTool {
     @CommandLine.Option(names = "--compress-digits", paramLabel = "<digits>", description = "Number of digits to keep in compression (default: ${DEFAULT-VALUE}).")
     private int compressDigits = 3;
 
+    @CommandLine.Option(names = "--no-material-defaults", negatable = true, description = "Use CityGML default values for X3D material properties (default: ${DEFAULT-VALUE}).")
+    private boolean useMaterialDefaults = true;
+
+    @CommandLine.Option(names = "--fallback-theme", paramLabel = "<theme>", description = "Theme to use for materials and textures if not defined in the input file(s) (default: ${DEFAULT-VALUE}).")
+    private String fallbackTheme = "unnamed";
+
     @CommandLine.Option(names = {"--remove-duplicate-child-geometries"}, description = "Remove child geometries if they are duplicate. If no child geometries remain, the child object is skipped.")
     private boolean removeDuplicateChildGeometries;
 
@@ -111,7 +117,10 @@ public class ToCityJSONCommand extends CityGMLTool {
             }
 
             if (cityGML instanceof CityModel) {
-                try (CityJSONWriter writer = output.createCityJSONWriter(outputFile, removeDuplicateChildGeometries)) {
+                try (CityJSONWriter writer = output.createCityJSONWriter(outputFile,
+                        removeDuplicateChildGeometries,
+                        useMaterialDefaults,
+                        fallbackTheme)) {
                     CityModel cityModel = (CityModel) cityGML;
 
                     // set builder for geometry, template and texture vertices
