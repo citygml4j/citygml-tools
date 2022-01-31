@@ -21,13 +21,7 @@
 
 package org.citygml4j.tools.lodfilter;
 
-import org.citygml4j.model.citygml.appearance.AbstractSurfaceData;
-import org.citygml4j.model.citygml.appearance.Appearance;
-import org.citygml4j.model.citygml.appearance.AppearanceMember;
-import org.citygml4j.model.citygml.appearance.AppearanceProperty;
-import org.citygml4j.model.citygml.appearance.GeoreferencedTexture;
-import org.citygml4j.model.citygml.appearance.ParameterizedTexture;
-import org.citygml4j.model.citygml.appearance.X3DMaterial;
+import org.citygml4j.model.citygml.appearance.*;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.common.base.ModelObject;
 import org.citygml4j.model.gml.base.AbstractGML;

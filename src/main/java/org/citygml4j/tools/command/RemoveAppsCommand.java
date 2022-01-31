@@ -23,12 +23,7 @@ package org.citygml4j.tools.command;
 
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.model.citygml.CityGML;
-import org.citygml4j.model.citygml.appearance.AbstractTexture;
-import org.citygml4j.model.citygml.appearance.Appearance;
-import org.citygml4j.model.citygml.appearance.GeoreferencedTexture;
-import org.citygml4j.model.citygml.appearance.ParameterizedTexture;
-import org.citygml4j.model.citygml.appearance.SurfaceDataProperty;
-import org.citygml4j.model.citygml.appearance.X3DMaterial;
+import org.citygml4j.model.citygml.appearance.*;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.tools.common.helper.CityModelInfoHelper;
@@ -46,12 +41,7 @@ import picocli.CommandLine;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @CommandLine.Command(name = "remove-apps",
         description = "Removes appearances from city objects.")

@@ -32,11 +32,7 @@ import org.citygml4j.model.gml.base.AssociationByRepOrRef;
 import org.citygml4j.util.child.ChildInfo;
 import org.citygml4j.util.walker.FeatureWalker;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class LodFilter {

@@ -24,16 +24,7 @@ package org.citygml4j.tools;
 import org.citygml4j.CityGMLContext;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.model.citygml.ade.binding.ADEContext;
-import org.citygml4j.tools.command.ChangeHeightCommand;
-import org.citygml4j.tools.command.CityGMLTool;
-import org.citygml4j.tools.command.ClipTexturesCommand;
-import org.citygml4j.tools.command.FilterLodsCommand;
-import org.citygml4j.tools.command.FromCityJSONCommand;
-import org.citygml4j.tools.command.MoveGlobalAppsCommand;
-import org.citygml4j.tools.command.RemoveAppsCommand;
-import org.citygml4j.tools.command.ReprojectCommand;
-import org.citygml4j.tools.command.ToCityJSONCommand;
-import org.citygml4j.tools.command.ValidateCommand;
+import org.citygml4j.tools.command.*;
 import org.citygml4j.tools.common.log.LogLevel;
 import org.citygml4j.tools.common.log.Logger;
 import org.citygml4j.tools.util.Constants;
@@ -50,7 +41,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ServiceLoader;
-import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
 @CommandLine.Command(name = Constants.APP_NAME,
