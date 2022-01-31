@@ -146,7 +146,7 @@ dependencies {
     implementation project(':reproject')
     implementation project(':texture-clipper')
     implementation "org.citygml4j:citygml4j:$citygml4jVersion"
-    implementation 'info.picocli:picocli:4.6.1'
+    implementation 'info.picocli:picocli:4.6.2'
 }
 
 jar {

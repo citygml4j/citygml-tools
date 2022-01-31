@@ -54,8 +54,13 @@ import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
 @CommandLine.Command(name = Constants.APP_NAME,
+        scope = CommandLine.ScopeType.INHERIT,
         description = "Collection of tools for processing CityGML files.",
         synopsisSubcommandLabel = "COMMAND",
+        mixinStandardHelpOptions = true,
+        versionProvider = CityGMLTools.class,
+        showAtFileInUsageHelp = true,
+        sortOptions = false,
         subcommands = {
                 CommandLine.HelpCommand.class,
                 ValidateCommand.class,

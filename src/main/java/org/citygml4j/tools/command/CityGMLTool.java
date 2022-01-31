@@ -21,17 +21,10 @@
 
 package org.citygml4j.tools.command;
 
-import org.citygml4j.tools.CityGMLTools;
 import picocli.CommandLine;
 
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(
-        mixinStandardHelpOptions = true,
-        showAtFileInUsageHelp = true,
-        sortOptions = false,
-        versionProvider = CityGMLTools.class
-)
 public abstract class CityGMLTool implements Callable<Integer> {
     public void preprocess() throws CommandLine.ParameterException { }
 }
