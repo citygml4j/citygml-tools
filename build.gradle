@@ -18,7 +18,7 @@ java {
 
 allprojects {
     group 'org.citygml4j.tools'
-    version '1.4.5'
+    version '1.4.4'
     ext.citygml4jVersion = '2.12.0'
     ext.date = new Date()
 
