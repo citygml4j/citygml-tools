@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+### 1.4.4 - 2022-01-31
+
+##### Additions
+* Added new `--[no-]material-defaults` option to the `to-cityjson` command to control whether CityGML default
+values for X3D materials should be used in the CityJSON output. [#24](https://github.com/citygml4j/citygml-tools/issues/24)
+
+##### Fixes
+* Fixed bug in `to-cityjson` command when collecting the boundary surfaces for the `"semantics"` property.
+* Fixed `to-cityjson` command to avoid duplicate `"materials"`.
+* The `from-cityjson` command now avoids creating empty CityGML boundary surfaces for unreferenced semantic surfaces.
+* Changed the `from-cityjson` command to only consider semantic surfaces for geometries with LoD > 1.
+
+##### Miscellaneous
+* Updated to citygml4j version 2.12.0.
+
 ### 1.4.3 - 2021-09-25
 
 ##### Additions
