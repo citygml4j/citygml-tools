@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+### 1.4.5 - 2022-06-14
+
+##### Fixes
+* Fixed [XXE vulnerabilities](https://owasp.org/www-project-top-ten/2017/A4_2017-XML_External_Entities_(XXE).html)
+  when parsing CityGML input files.
+* Generic attributes of boundary surfaces having the name _type_ are skipped in `to-cityjson` command to avoid
+  name clashes with the predefined CityJSON `"type"` property. [#27](https://github.com/citygml4j/citygml-tools/issues/27)
+
+##### Miscellaneous
+* Updated to citygml4j version 2.12.1.
+
 ### 1.4.4 - 2022-01-31
 
 ##### Additions
