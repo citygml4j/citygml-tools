@@ -22,6 +22,8 @@
 package org.citygml4j.tools.textureclipper;
 
 import org.apache.commons.imaging.*;
+import org.apache.commons.imaging.formats.tiff.TiffImageParser;
+import org.apache.commons.imaging.formats.tiff.TiffImagingParameters;
 import org.apache.commons.imaging.formats.tiff.constants.TiffConstants;
 import org.citygml4j.builder.copy.CopyBuilder;
 import org.citygml4j.builder.copy.ShallowCopyBuilder;
@@ -53,6 +55,7 @@ import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.*;
@@ -409,9 +412,12 @@ public class TextureClipper {
                             fileName += ".tiff";
                             imageURI = targetURI.append("/").append(fileName).toString();
 
-                            Map<String, Object> params = new HashMap<>();
-                            params.put(ImagingConstants.PARAM_KEY_COMPRESSION, TiffConstants.TIFF_COMPRESSION_UNCOMPRESSED);
-                            Imaging.writeImage(clippedImage, targetDir.resolve(fileName).toFile(), ImageFormats.TIFF, params);
+                            TiffImagingParameters params = new TiffImagingParameters();
+                            params.setCompression(TiffConstants.TIFF_COMPRESSION_UNCOMPRESSED);
+
+                            try (OutputStream stream = Files.newOutputStream(targetDir.resolve(fileName))) {
+                                new TiffImageParser().writeImage(clippedImage, stream, params);
+                            }
                         }
 
                         else {

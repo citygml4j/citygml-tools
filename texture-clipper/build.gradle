@@ -1,4 +1,4 @@
 dependencies {
     implementation project(':citygml-tools-common')
-    implementation 'org.apache.commons:commons-imaging:1.0-alpha2'
+    implementation 'org.apache.commons:commons-imaging:1.0-alpha3'
 }
