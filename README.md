@@ -6,10 +6,10 @@ citygml-tools is licensed under the [Apache License, Version 2.0](http://www.apa
 See the `LICENSE` file for more details.
 
 ## Latest release
-The latest stable release of citygml-tools is 1.4.4.
+The latest stable release of citygml-tools is 1.4.5.
 
-Download the citygml-tools 1.4.4 release binaries
-[here](https://github.com/citygml4j/citygml-tools/releases/download/v1.4.4/citygml-tools-1.4.4.zip). Previous releases
+Download the citygml-tools 1.4.5 release binaries
+[here](https://github.com/citygml4j/citygml-tools/releases/download/v1.4.5/citygml-tools-1.4.5.zip). Previous releases
 are available from the [releases section](https://github.com/citygml4j/citygml-tools/releases).
 
 ## Contributing
@@ -115,7 +115,7 @@ The libraries are also available as [Maven](http://maven.apache.org/) artifacts 
 <dependency>
   <groupId>org.citygml4j.tools</groupId>
   <artifactId>global-app-mover</artifactId>
-  <version>1.4.4</version>
+  <version>1.4.5</version>
 </dependency>
 ```
 
@@ -127,7 +127,7 @@ repositories {
 }
 
 dependencies {
-  compile 'org.citygml4j.tools:global-app-mover:1.4.4'
+  compile 'org.citygml4j.tools:global-app-mover:1.4.5'
 }
 ```
 
