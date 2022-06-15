@@ -1,0 +1,60 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'org.citygml4j.tools'
+version '2.0.0-SNAPSHOT'
+description 'Collection of tools for processing CityGML files'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+}
+
+repositories {
+    maven {
+        url 'https://oss.sonatype.org/content/repositories/snapshots'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.citygml4j:citygml4j-xml:3.0.0-SNAPSHOT'
+    implementation 'org.citygml4j:citygml4j-cityjson:3.0.0-SNAPSHOT'
+    implementation 'info.picocli:picocli:4.6.3'
+}
+
+jar {
+    manifest {
+        attributes('Implementation-Title': project.name,
+                'Implementation-Version': project.version
+        )
+    }
+}
+
+application {
+    mainModule = 'org.citygml4j.tools'
+    mainClass = 'org.citygml4j.tools.CityGMLTools'
+    applicationDefaultJvmArgs = ['-Xms1G']
+    executableDir = ''
+
+    startScripts {
+        doLast {
+            def windowsScript = getWindowsScript()
+            def unixScript = getUnixScript()
+            windowsScript.text = windowsScript.text.replaceFirst('set APP_HOME=.*', '$0\r\nset WORKING_DIR=%CD%')
+            unixScript.text = unixScript.text.replaceFirst('APP_HOME=.*', '$0\nexport APP_HOME\nexport WORKING_DIR=\\$SAVED')
+        }
+    }
+}
+
+distributions.main.contents {
+    into('license') {
+        from 'LICENSE'
+    }
+    from(file("$buildDir/tmp/dir")) {
+        mkdir "$buildDir/tmp/dir/ade-extensions"
+    }
+}
