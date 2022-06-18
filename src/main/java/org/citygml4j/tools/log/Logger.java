@@ -102,9 +102,11 @@ public class Logger {
     }
 
     public void logStackTrace(Throwable e) {
-		StringWriter writer = new StringWriter();
-		e.printStackTrace(new PrintWriter(writer, true));
-		log(LogLevel.ERROR, writer.toString());
+        if (e != null) {
+            StringWriter writer = new StringWriter();
+            e.printStackTrace(new PrintWriter(writer, true));
+            log(LogLevel.ERROR, "Cause: " + writer.toString());
+        }
     }
 
     public void print(LogLevel level, String msg) {

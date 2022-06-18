@@ -25,6 +25,7 @@ import org.citygml4j.cityjson.ExtensionLoader;
 import org.citygml4j.core.ade.ADEException;
 import org.citygml4j.core.ade.ADERegistry;
 import org.citygml4j.tools.cli.CliCommand;
+import org.citygml4j.tools.cli.ExecutionException;
 import org.citygml4j.tools.log.LogLevel;
 import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.util.PidFile;
@@ -40,7 +41,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
 @CommandLine.Command(
@@ -55,7 +55,7 @@ import java.util.stream.Stream;
                 CommandLine.HelpCommand.class
         }
 )
-public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProvider {
+public class CityGMLTools implements CliCommand, CommandLine.IVersionProvider {
     @CommandLine.Option(names = "--log-level", scope = CommandLine.ScopeType.INHERIT, paramLabel = "<level>",
             defaultValue = "info", description = "Log level: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
     private LogLevel logLevel;
@@ -161,6 +161,8 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
         } catch (CommandLine.ParameterException e) {
             cmd.getParameterExceptionHandler().handleParseException(e, args);
             exitCode = CommandLine.ExitCode.USAGE;
+        } catch (CommandLine.ExecutionException e) {
+            logException(e.getCause());
         } catch (Exception e) {
             logException(e);
         } finally {
@@ -171,18 +173,18 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
     }
 
     @Override
-    public Integer call() throws Exception {
+    public Integer call() throws ExecutionException {
         initializeLogging();
 
         log.info("Starting " + APP_NAME + ".");
         loadADEExtensions(extensionsDir);
         createPidFile();
 
-        log.info("Executing command '" + subCommandName + "'.");
+        log.info("Executing '" + subCommandName + "' command.");
         return 0;
     }
 
-    private void initializeLogging() throws IOException {
+    private void initializeLogging() throws ExecutionException {
         log.setLogLevel(logLevel);
 
         if (logFile != null) {
@@ -196,13 +198,12 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
                 log.debug("Writing log messages to " + logFile.toAbsolutePath() + ".");
                 log.setLogFile(logFile).writeToFile("# " + commandLine);
             } catch (IOException e) {
-                log.error("Failed to create log file " + logFile.toAbsolutePath() + ".");
-                throw e;
+                throw new ExecutionException("Failed to create log file " + logFile.toAbsolutePath() + ".", e);
             }
         }
     }
 
-    private void loadADEExtensions(Path extensionsDir) throws ADEException, IOException {
+    private void loadADEExtensions(Path extensionsDir) throws ExecutionException {
         extensionsDir = extensionsDir != null ?
                 WORKING_DIR.resolve(extensionsDir) :
                 APP_HOME.resolve(EXTENSIONS_DIR);
@@ -229,29 +230,37 @@ public class CityGMLTools implements Callable<Integer>, CommandLine.IVersionProv
                                     " for CityJSON version " + extension.getCityJSONVersion() + "."));
                 }
             } catch (ADEException | IOException e) {
-                log.error("Failed to load ADE extensions.");
-                throw e;
+                throw new ExecutionException("Failed to load ADE extensions.", e);
             }
         } else if (this.extensionsDir != null) {
             log.warn("The ADE extensions folder " + extensionsDir.toAbsolutePath() + " does not exist.");
         }
     }
 
-    private void createPidFile() throws IOException {
+    private void createPidFile() throws ExecutionException {
         if (pidFile != null) {
             try {
                 log.debug("Creating PID file at " + pidFile.toAbsolutePath() + ".");
                 PidFile.create(pidFile, true);
             } catch (IOException e) {
-                log.error("Failed to create PID file.");
-                throw e;
+                throw new ExecutionException("Failed to create PID file.", e);
             }
         }
     }
 
-    private void logException(Exception e) {
-        log.error("The following unexpected error occurred during execution.");
-        log.logStackTrace(e);
+    private void logException(Throwable e) {
+        if (e instanceof ExecutionException) {
+            if (log.getLogLevel() == LogLevel.DEBUG) {
+                log.error(e.getMessage());
+                log.logStackTrace(e.getCause());
+            } else {
+                log.error(e.getMessage(), e.getCause());
+            }
+        } else {
+            log.error("An unexpected error occurred during execution.");
+            log.logStackTrace(e);
+        }
+
         log.warn(APP_NAME + " execution failed.");
     }
 
