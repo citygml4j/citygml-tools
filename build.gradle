@@ -55,6 +55,6 @@ distributions.main.contents {
         from 'LICENSE'
     }
     from(file("$buildDir/tmp/dir")) {
-        mkdir "$buildDir/tmp/dir/ade-extensions"
+        mkdir "$buildDir/tmp/dir/extensions"
     }
 }
