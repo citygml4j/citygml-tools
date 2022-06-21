@@ -21,12 +21,24 @@
 
 package org.citygml4j.tools.cli;
 
+import org.citygml4j.core.model.CityGMLVersion;
 import picocli.CommandLine;
 
-import java.util.concurrent.Callable;
+public class CityGMLOutputVersion {
+    @CommandLine.Option(names = {"-v", "--citygml-version"}, defaultValue = "3.0",
+            description = "CityGML version to use for output file(s): 3.0, 2.0, 1.0 (default: ${DEFAULT-VALUE}).")
+    private String version;
 
-public interface CliCommand extends Callable<Integer> {
-    @Override
-    Integer call() throws ExecutionException;
-    default void preprocess(CommandLine commandLine) throws Exception {}
+    public CityGMLVersion getVersion() {
+        switch (version) {
+            case "1.0":
+            case "1":
+                return org.citygml4j.core.model.CityGMLVersion.v1_0;
+            case "2.0":
+            case "2":
+                return org.citygml4j.core.model.CityGMLVersion.v2_0;
+            default:
+                return org.citygml4j.core.model.CityGMLVersion.v3_0;
+        }
+    }
 }

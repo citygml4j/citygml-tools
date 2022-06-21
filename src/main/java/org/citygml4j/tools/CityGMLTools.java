@@ -24,16 +24,18 @@ package org.citygml4j.tools;
 import org.citygml4j.cityjson.ExtensionLoader;
 import org.citygml4j.core.ade.ADEException;
 import org.citygml4j.core.ade.ADERegistry;
-import org.citygml4j.tools.cli.CliCommand;
+import org.citygml4j.tools.cli.Command;
 import org.citygml4j.tools.cli.ExecutionException;
 import org.citygml4j.tools.log.LogLevel;
 import org.citygml4j.tools.log.Logger;
+import org.citygml4j.tools.upgrade.UpgradeCommand;
 import org.citygml4j.tools.util.PidFile;
 import org.citygml4j.tools.util.URLClassLoader;
 import org.citygml4j.xml.CityGMLADELoader;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,6 +43,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Stream;
 
 @CommandLine.Command(
@@ -52,10 +55,11 @@ import java.util.stream.Stream;
         showAtFileInUsageHelp = true,
         sortOptions = false,
         subcommands = {
-                CommandLine.HelpCommand.class
+                CommandLine.HelpCommand.class,
+                UpgradeCommand.class
         }
 )
-public class CityGMLTools implements CliCommand, CommandLine.IVersionProvider {
+public class CityGMLTools implements Command, CommandLine.IVersionProvider {
     @CommandLine.Option(names = "--log-level", scope = CommandLine.ScopeType.INHERIT, paramLabel = "<level>",
             defaultValue = "info", description = "Log level: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
     private LogLevel logLevel;
@@ -65,7 +69,7 @@ public class CityGMLTools implements CliCommand, CommandLine.IVersionProvider {
     private Path logFile;
 
     @CommandLine.Option(names = "--pid-file", scope = CommandLine.ScopeType.INHERIT, paramLabel = "<file>",
-            description = "Create a file containing the current process ID.")
+            description = "Create a file containing the process ID.")
     private Path pidFile;
 
     @CommandLine.Option(names = "--extensions", scope = CommandLine.ScopeType.INHERIT, paramLabel = "<folder>",
@@ -137,8 +141,8 @@ public class CityGMLTools implements CliCommand, CommandLine.IVersionProvider {
             // preprocess commands
             for (CommandLine commandLine : commandLines) {
                 Object command = commandLine.getCommand();
-                if (command instanceof CliCommand) {
-                    ((CliCommand) command).preprocess(commandLine);
+                if (command instanceof Command) {
+                    ((Command) command).preprocess(commandLine);
                 }
             }
 
@@ -283,10 +287,15 @@ public class CityGMLTools implements CliCommand, CommandLine.IVersionProvider {
 
     @Override
     public String[] getVersion() {
-        return new String[]{
-                getClass().getPackage().getImplementationTitle() +
-                        ", version " + getClass().getPackage().getImplementationVersion(),
-                "(C) 2018-" + LocalDate.now().getYear() + " Claus Nagel <claus.nagel@gmail.com>"
-        };
+        try (InputStream stream = getClass().getResourceAsStream("/org/citygml4j/tools/application.properties")) {
+            Properties properties = new Properties();
+            properties.load(stream);
+            return new String[]{
+                    properties.getProperty("name") + ", version " + properties.getProperty("version"),
+                    "(C) 2018-" + LocalDate.now().getYear() + " Claus Nagel <claus.nagel@gmail.com>"
+            };
+        } catch (IOException e) {
+            return new String[]{};
+        }
     }
 }

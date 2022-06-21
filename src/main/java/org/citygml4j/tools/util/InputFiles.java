@@ -22,6 +22,7 @@
 package org.citygml4j.tools.util;
 
 import org.citygml4j.tools.CityGMLTools;
+import org.citygml4j.tools.cli.ExecutionException;
 import org.citygml4j.tools.log.Logger;
 
 import java.io.File;
@@ -34,20 +35,20 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public class FileList {
+public class InputFiles {
     private final String[] files;
     private String defaultGlob = "**.{gml,xml}";
     private Predicate<Path> filter;
 
-    private FileList(String[] files) {
+    private InputFiles(String[] files) {
         this.files = files;
     }
 
-    public static FileList of(String... files) {
-        return new FileList(files);
+    public static InputFiles of(String... files) {
+        return new InputFiles(files);
     }
 
-    public FileList withDefaultGlob(String defaultGlob) {
+    public InputFiles withDefaultGlob(String defaultGlob) {
         if (defaultGlob != null) {
             this.defaultGlob = defaultGlob;
         }
@@ -55,39 +56,45 @@ public class FileList {
         return this;
     }
 
-    public FileList withFilter(Predicate<Path> filter) {
+    public InputFiles withFilter(Predicate<Path> filter) {
         this.filter = filter;
         return this;
     }
 
-    public List<Path> build() throws IOException {
+    public List<Path> find() throws ExecutionException {
         if (files != null) {
             List<Path> inputFiles = new ArrayList<>();
 
             for (String file : files) {
-                LinkedList<String> elements = parseInputFile(file);
+                LinkedList<String> elements = parse(file);
                 Path path = Paths.get(elements.pop());
 
-                // construct a glob pattern from the path and the truncated elements
-                String glob = "glob:" + path.toAbsolutePath().normalize();
-                if (!elements.isEmpty()) {
-                    glob += File.separator + String.join(File.separator, elements);
-                } else if (Files.isDirectory(path) && defaultGlob != null) {
-                    glob += File.separator + defaultGlob;
-                }
+                if (elements.isEmpty() && Files.isRegularFile(path)) {
+                    inputFiles.add(path);
+                } else {
+                    // construct a glob pattern from the path and the truncated elements
+                    String glob = "glob:" + path.toAbsolutePath().normalize();
+                    if (!elements.isEmpty()) {
+                        glob += File.separator + String.join(File.separator, elements);
+                    } else if (Files.isDirectory(path) && defaultGlob != null) {
+                        glob += File.separator + defaultGlob;
+                    }
 
-                // find files matching the glob pattern
-                PathMatcher matcher = FileSystems.getDefault().getPathMatcher(glob.replace("\\", "\\\\"));
-                try (Stream<Path> stream = Files.walk(path)) {
-                    stream.filter(Files::isRegularFile).forEach(p -> {
-                        if (matcher.matches(p.toAbsolutePath().normalize())) {
-                            if (filter != null && filter.test(p)) {
-                                Logger.getInstance().debug("Skipping file " + p.toAbsolutePath() + ".");
-                            } else {
-                                inputFiles.add(p);
+                    // find files matching the glob pattern
+                    PathMatcher matcher = FileSystems.getDefault().getPathMatcher(glob.replace("\\", "\\\\"));
+                    try (Stream<Path> stream = Files.walk(path)) {
+                        stream.filter(Files::isRegularFile).forEach(p -> {
+                            if (matcher.matches(p.toAbsolutePath().normalize())) {
+                                if (filter != null && !filter.test(p)) {
+                                    Logger.getInstance().debug("Skipping file " + p.toAbsolutePath() + ".");
+                                } else {
+                                    inputFiles.add(p);
+                                }
                             }
-                        }
-                    });
+                        });
+                    } catch (IOException e) {
+                        throw new ExecutionException("Failed to create list of input files.", e);
+                    }
                 }
             }
 
@@ -97,7 +104,7 @@ public class FileList {
         return Collections.emptyList();
     }
 
-    private LinkedList<String> parseInputFile(String file) {
+    private LinkedList<String> parse(String file) {
         LinkedList<String> elements = new LinkedList<>();
         Path path = null;
 

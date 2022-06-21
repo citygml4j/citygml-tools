@@ -105,7 +105,7 @@ public class Logger {
         if (e != null) {
             StringWriter writer = new StringWriter();
             e.printStackTrace(new PrintWriter(writer, true));
-            log(LogLevel.ERROR, "Cause: " + writer.toString());
+            log(LogLevel.ERROR, writer.toString());
         }
     }
 
@@ -141,7 +141,7 @@ public class Logger {
 		if (e != null && this.level.ordinal() >= level.ordinal()) {
 			do {
 				if (e.getMessage() != null) {
-					log(level, "Cause: " + e.getClass().getName() + ": " + e.getMessage());
+					log(level, e.getClass().getName() + ": " + e.getMessage());
 				}
 			} while ((e = e.getCause()) != null);
 		}

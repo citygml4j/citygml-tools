@@ -19,20 +19,24 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.util;
+package org.citygml4j.tools.cli;
 
-import java.nio.file.Path;
+import picocli.CommandLine;
 
-public class FileUtil {
+public class CityGMLOutputOptions {
+    @CommandLine.Option(names = "--output-encoding", defaultValue = "UTF-8",
+            description = "Encoding to use for output file(s) (default: ${DEFAULT-VALUE}).")
+    private String encoding;
 
-    private FileUtil() {
+    @CommandLine.Option(names = "--no-pretty-print", negatable = true, defaultValue = "true",
+            description = "Format and indent output file(s) (default: true).")
+    private boolean prettyPrint;
+
+    public String getEncoding() {
+        return encoding;
     }
 
-    public static String stripFileExtension(String fileName) {
-        return fileName.replaceAll("(?<!^)[.][^.]*$", "");
-    }
-
-    public static String stripFileExtension(Path file) {
-        return stripFileExtension(file.getFileName().toString());
+    public boolean isPrettyPrint() {
+        return prettyPrint;
     }
 }
