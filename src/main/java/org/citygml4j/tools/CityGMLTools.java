@@ -26,6 +26,7 @@ import org.citygml4j.core.ade.ADEException;
 import org.citygml4j.core.ade.ADERegistry;
 import org.citygml4j.tools.cli.Command;
 import org.citygml4j.tools.cli.ExecutionException;
+import org.citygml4j.tools.lodfilter.FilterLodsCommand;
 import org.citygml4j.tools.log.LogLevel;
 import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.upgrade.UpgradeCommand;
@@ -56,6 +57,7 @@ import java.util.stream.Stream;
         sortOptions = false,
         subcommands = {
                 CommandLine.HelpCommand.class,
+                FilterLodsCommand.class,
                 UpgradeCommand.class
         }
 )

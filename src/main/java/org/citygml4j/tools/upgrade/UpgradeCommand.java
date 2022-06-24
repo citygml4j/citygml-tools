@@ -42,13 +42,9 @@ import java.util.List;
 
 @CommandLine.Command(
         name = "upgrade",
-        description = "Upgrades CityGML files to version 3.0"
+        description = "Upgrades CityGML files to version 3.0."
 )
 public class UpgradeCommand extends CityGMLTool {
-    @CommandLine.Parameters(paramLabel = "<file>", arity = "1",
-            description = "Files or directories to upgrade (glob patterns allowed).")
-    private String[] files;
-
     @CommandLine.Mixin
     CityGMLInputOptions inputOptions;
 
@@ -61,16 +57,16 @@ public class UpgradeCommand extends CityGMLTool {
     @Override
     public Integer call() throws ExecutionException {
         log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles = InputFiles.of(files)
+        List<Path> inputFiles = InputFiles.of(inputOptions.getFiles())
                 .withFilter(path -> !stripFileExtension(path).endsWith(suffix))
                 .find();
 
         if (inputFiles.isEmpty()) {
-            log.warn("No files found at " + String.join(", ", files) + ".");
+            log.warn("No files found at " + inputOptions.joinFiles() + ".");
             return 0;
         }
 
-        log.info("Found " + inputFiles.size() + " file(s) at " + String.join(", ", files) + ".");
+        log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
 
         CityGMLInputFactory in = createCityGMLInputFactory()
                 .withChunking(ChunkOptions.defaults())
@@ -80,9 +76,9 @@ public class UpgradeCommand extends CityGMLTool {
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
-            Path outputFile = inputFile.resolveSibling(appendFileNameSuffix(inputFile, suffix));
+            Path outputFile = getOutputFile(inputFile, suffix, outputOptions);
 
-            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file '" + inputFile.toAbsolutePath() + "'.");
+            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
             try (CityGMLReader reader = createCityGMLReader(in, inputFile, inputOptions)) {
                 FeatureInfo info = null;
@@ -99,8 +95,15 @@ public class UpgradeCommand extends CityGMLTool {
                     info = reader.getParentInfo();
                 }
 
+                if (outputOptions.isOverwriteInputFile()) {
+                    log.debug("Writing temporary output file " + outputFile.toAbsolutePath() + ".");
+                } else {
+                    log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
+                }
+
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(info)) {
+                    log.debug("Reading city objects and upgrading them to CityGML 3.0.");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
                         writer.writeMember(feature);
@@ -110,6 +113,11 @@ public class UpgradeCommand extends CityGMLTool {
                 throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
             } catch (CityGMLWriteException e) {
                 throw new ExecutionException("Failed to write file " + outputFile.toAbsolutePath() + ".", e);
+            }
+
+            if (outputOptions.isOverwriteInputFile()) {
+                log.debug("Replacing input file with temporary output file.");
+                replaceInputFile(inputFile, outputFile);
             }
         }
 

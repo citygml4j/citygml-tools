@@ -1,17 +1,10 @@
 /*
- * 3D City Database - The Open Source CityGML Database
- * https://www.3dcitydb.org/
+ * citygml-tools - Collection of tools for processing CityGML files
+ * https://github.com/citygml4j/citygml-tools
  *
- * Copyright 2013 - 2021
- * Chair of Geoinformatics
- * Technical University of Munich, Germany
- * https://www.lrg.tum.de/gis/
+ * citygml-tools is part of the citygml4j project
  *
- * The 3D City Database is jointly developed with the following
- * cooperation partners:
- *
- * Virtual City Systems, Berlin <https://vc.systems/>
- * M.O.S.S. Computer Grafik Systeme GmbH, Taufkirchen <http://www.moss.de/>
+ * Copyright 2018-2022 Claus Nagel <claus.nagel@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

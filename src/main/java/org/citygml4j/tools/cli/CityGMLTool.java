@@ -34,15 +34,42 @@ import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.UUID;
 
 public abstract class CityGMLTool implements Command {
     private CityGMLContext cityGMLContext;
     private CityJSONContext cityJSONContext;
 
+    protected CityGMLContext getCityGMLContext() throws ExecutionException {
+        if (cityGMLContext == null) {
+            try {
+                cityGMLContext = CityGMLContext.newInstance();
+            } catch (CityGMLContextException e) {
+                throw new ExecutionException("Failed to create CityGML context.", e);
+            }
+        }
+
+        return cityGMLContext;
+    }
+
+    protected CityJSONContext getCityJSONContext() throws ExecutionException {
+        if (cityJSONContext == null) {
+            try {
+                cityJSONContext = CityJSONContext.newInstance();
+            } catch (CityJSONContextException e) {
+                throw new ExecutionException("Failed to create CityJSON context.", e);
+            }
+        }
+
+        return cityJSONContext;
+    }
+
     protected CityGMLInputFactory createCityGMLInputFactory() throws ExecutionException {
         try {
-            return getOrCreateCityGMLContext().createCityGMLInputFactory();
+            return getCityGMLContext().createCityGMLInputFactory();
         } catch (CityGMLReadException e) {
             throw new ExecutionException("Failed to create CityGML input factory.", e);
         }
@@ -57,7 +84,7 @@ public abstract class CityGMLTool implements Command {
     }
 
     protected CityGMLOutputFactory createCityGMLOutputFactory(CityGMLVersion version) throws ExecutionException {
-        return getOrCreateCityGMLContext().createCityGMLOutputFactory(version);
+        return getCityGMLContext().createCityGMLOutputFactory(version);
     }
 
     protected CityGMLChunkWriter createCityGMLChunkWriter(CityGMLOutputFactory factory, Path file, CityGMLOutputOptions options) throws ExecutionException {
@@ -69,6 +96,21 @@ public abstract class CityGMLTool implements Command {
                     .withIndent(options.isPrettyPrint() ? "  " : null);
         } catch (CityGMLWriteException e) {
             throw new ExecutionException("Failed to create CityGML writer.", e);
+        }
+    }
+
+    protected Path getOutputFile(Path file, String suffix, CityGMLOutputOptions options) {
+        return file.resolveSibling(options.isOverwriteInputFile() ?
+                ".tmp_" + UUID.randomUUID() :
+                appendFileNameSuffix(file, suffix));
+    }
+
+    protected void replaceInputFile(Path inputFile, Path tempFile) throws ExecutionException {
+        try {
+            Files.delete(inputFile);
+            Files.move(tempFile, tempFile.resolveSibling(inputFile.getFileName()));
+        } catch (IOException e) {
+            throw new ExecutionException("Failed to replace input file.", e);
         }
     }
 
@@ -96,29 +138,5 @@ public abstract class CityGMLTool implements Command {
         return index > 0 ?
                 new String[]{fileName.substring(0, index), fileName.substring(index + 1)} :
                 new String[]{fileName, ""};
-    }
-
-    private CityGMLContext getOrCreateCityGMLContext() throws ExecutionException {
-        if (cityGMLContext == null) {
-            try {
-                cityGMLContext = CityGMLContext.newInstance();
-            } catch (CityGMLContextException e) {
-                throw new ExecutionException("Failed to create CityGML context.", e);
-            }
-        }
-
-        return cityGMLContext;
-    }
-
-    private CityJSONContext getOrCreateCityJSONContext() throws ExecutionException {
-        if (cityJSONContext == null) {
-            try {
-                cityJSONContext = CityJSONContext.newInstance();
-            } catch (CityJSONContextException e) {
-                throw new ExecutionException("Failed to create CityJSON context.", e);
-            }
-        }
-
-        return cityJSONContext;
     }
 }
