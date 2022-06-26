@@ -42,13 +42,17 @@ public class LodFilter {
     private LodFilterMode mode = LodFilterMode.KEEP;
     private Collection<Appearance> globalAppearances;
     private boolean keepEmptyObjects;
+    private boolean collectRemovedFeatureIds = true;
+
+    private LodFilter() {
+    }
 
     private LodFilter(int[] lods) {
-        for (int lod : lods) {
-            if (lod >= 0 && lod < this.lods.length) {
-                this.lods[lod] = true;
-            }
-        }
+        withLods(lods);
+    }
+
+    public static LodFilter newInstance() {
+        return new LodFilter();
     }
 
     public static LodFilter of(int... lods) {
@@ -59,9 +63,24 @@ public class LodFilter {
         return removedFeatureIds;
     }
 
+    public LodFilter withLods(int... lods) {
+        Arrays.fill(this.lods, false);
+        for (int lod : lods) {
+            if (lod >= 0 && lod < this.lods.length) {
+                this.lods[lod] = true;
+            }
+        }
+
+        return this;
+    }
+
     public LodFilter withMode(LodFilterMode mode) {
         this.mode = mode != null ? mode : LodFilterMode.KEEP;
         return this;
+    }
+
+    public Collection<Appearance> getGlobalAppearances() {
+        return globalAppearances != null ? globalAppearances : Collections.emptyList();
     }
 
     public LodFilter withGlobalAppearances(Collection<Appearance> globalAppearances) {
@@ -71,6 +90,11 @@ public class LodFilter {
 
     public LodFilter keepEmptyObjects(boolean keepEmptyObjects) {
         this.keepEmptyObjects = keepEmptyObjects;
+        return this;
+    }
+
+    public LodFilter collectRemovedFeatureIds(boolean collectRemovedFeatureIds) {
+        this.collectRemovedFeatureIds = collectRemovedFeatureIds;
         return this;
     }
 
@@ -96,7 +120,9 @@ public class LodFilter {
             removeAppearances(geometries, remove, feature);
             removeFeatureProperties(removedFeatureIds, remove, feature);
 
-            this.removedFeatureIds.addAll(removedFeatureIds);
+            if (collectRemovedFeatureIds) {
+                this.removedFeatureIds.addAll(removedFeatureIds);
+            }
         }
 
         return !remove;
@@ -109,8 +135,10 @@ public class LodFilter {
                 ((GMLObject) child).unsetProperty(geometry, true);
             }
 
-            if (!keepEmptyObjects && child instanceof AbstractFeature) {
-                featureInfo.add((AbstractFeature) child);
+            if (!keepEmptyObjects) {
+                featureInfo.add(child instanceof AbstractFeature ?
+                        (AbstractFeature) child :
+                        geometry.getParent(AbstractFeature.class));
             }
         }
     }
@@ -185,6 +213,8 @@ public class LodFilter {
                             ((GMLObject) child).unsetProperty(property, true);
                         }
                     }
+
+                    super.visit(property);
                 }
             });
         }
@@ -250,6 +280,7 @@ public class LodFilter {
         @Override
         public void visit(AbstractSurface surface) {
             addTarget(surface);
+            super.visit(surface);
         }
 
         @Override
