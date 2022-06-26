@@ -36,7 +36,7 @@ public class Logger {
 
     private final AtomicInteger warnings = new AtomicInteger(0);
     private final AtomicInteger errors = new AtomicInteger(0);
-	private LogLevel level = LogLevel.INFO;
+    private LogLevel level = LogLevel.INFO;
     private BufferedWriter writer;
 
     private Logger() {
@@ -46,27 +46,27 @@ public class Logger {
         return instance;
     }
 
-	public int getNumberOfErrors() {
-		return errors.get();
-	}
+    public int getNumberOfErrors() {
+        return errors.get();
+    }
 
-	public int getNumberOfWarnings() {
-		return warnings.get();
-	}
+    public int getNumberOfWarnings() {
+        return warnings.get();
+    }
 
     public Logger setLogLevel(LogLevel level) {
         this.level = level;
-		return this;
+        return this;
     }
 
     public LogLevel getLogLevel() {
         return level;
     }
 
-	public Logger setLogFile(Path logFile) throws IOException {
-		writer = Files.newBufferedWriter(logFile, StandardCharsets.UTF_8);
-		return this;
-	}
+    public Logger setLogFile(Path logFile) throws IOException {
+        writer = Files.newBufferedWriter(logFile, StandardCharsets.UTF_8);
+        return this;
+    }
 
     public void log(LogLevel level, String msg) {
         count(level);
@@ -111,20 +111,20 @@ public class Logger {
 
     public void print(LogLevel level, String msg) {
         if (this.level.ordinal() >= level.ordinal()) {
-			System.out.println(msg);
-		}
+            System.out.println(msg);
+        }
     }
 
-	public void writeToFile(String msg) {
-		if (writer != null) {
-			try {
-				writer.write(msg);
-				writer.newLine();
-			} catch (IOException e) {
-				//
-			}
-		}
-	}
+    public void writeToFile(String msg) {
+        if (writer != null) {
+            try {
+                writer.write(msg);
+                writer.newLine();
+            } catch (IOException e) {
+                //
+            }
+        }
+    }
 
     public void close() {
         if (writer != null) {
@@ -136,16 +136,16 @@ public class Logger {
         }
     }
 
-	private void log(LogLevel level, String msg, Throwable e) {
-		log(level, msg);
-		if (e != null && this.level.ordinal() >= level.ordinal()) {
-			do {
-				if (e.getMessage() != null) {
-					log(level, e.getClass().getName() + ": " + e.getMessage());
-				}
-			} while ((e = e.getCause()) != null);
-		}
-	}
+    private void log(LogLevel level, String msg, Throwable e) {
+        log(level, msg);
+        if (e != null && this.level.ordinal() >= level.ordinal()) {
+            do {
+                if (e.getMessage() != null) {
+                    log(level, e.getClass().getName() + ": " + e.getMessage());
+                }
+            } while ((e = e.getCause()) != null);
+        }
+    }
 
     private void count(LogLevel level) {
         switch (level) {
@@ -158,11 +158,11 @@ public class Logger {
         }
     }
 
-	private String getPrefix(LogLevel level) {
-		return "[" +
-				LocalDateTime.now().withNano(0).format(DateTimeFormatter.ISO_LOCAL_TIME) +
-				" " +
-				level.name() +
-				"] ";
-	}
+    private String getPrefix(LogLevel level) {
+        return "[" +
+                LocalDateTime.now().withNano(0).format(DateTimeFormatter.ISO_LOCAL_TIME) +
+                " " +
+                level.name() +
+                "] ";
+    }
 }

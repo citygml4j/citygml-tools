@@ -19,13 +19,13 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.log;
+package org.citygml4j.tools.lodfilter;
 
-public enum LogLevel {
-    ERROR,
-    WARN,
-    INFO,
-    DEBUG;
+public enum LodFilterMode {
+    KEEP,
+    REMOVE,
+    MINIMUM,
+    MAXIMUM;
 
     @Override
     public String toString() {

@@ -6,5 +6,5 @@ module org.citygml4j.tools {
 
     opens org.citygml4j.tools to info.picocli;
     opens org.citygml4j.tools.cli to info.picocli;
-    opens org.citygml4j.tools.upgrade to info.picocli;
+    opens org.citygml4j.tools.command to info.picocli;
 }

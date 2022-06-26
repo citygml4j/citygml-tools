@@ -26,6 +26,7 @@ import org.citygml4j.cityjson.CityJSONContextException;
 import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.CityGMLContextException;
+import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.module.citygml.CoreModule;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
 import org.citygml4j.xml.reader.CityGMLReadException;
@@ -37,6 +38,9 @@ import org.citygml4j.xml.writer.CityGMLWriteException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public abstract class CityGMLTool implements Command {
@@ -78,6 +82,18 @@ public abstract class CityGMLTool implements Command {
     protected CityGMLReader createCityGMLReader(CityGMLInputFactory factory, Path file, CityGMLInputOptions options) throws ExecutionException {
         try {
             return factory.createCityGMLReader(file, options.getEncoding());
+        } catch (CityGMLReadException e) {
+            throw new ExecutionException("Failed to create CityGML reader.", e);
+        }
+    }
+
+    protected CityGMLReader createFilteredCityGMLReader(CityGMLInputFactory factory, Path file, CityGMLInputOptions options, String... localNames) throws ExecutionException {
+        try {
+            Set<String> names = new HashSet<>(Arrays.asList(localNames));
+            return factory.createFilteredCityGMLReader(factory.createCityGMLReader(file, options.getEncoding()),
+                    name -> !names.contains(name.getLocalPart())
+                            || !CityGMLModules.isCityGMLNamespace(name.getNamespaceURI())
+            );
         } catch (CityGMLReadException e) {
             throw new ExecutionException("Failed to create CityGML reader.", e);
         }

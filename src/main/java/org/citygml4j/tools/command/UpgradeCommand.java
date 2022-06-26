@@ -19,11 +19,10 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.upgrade;
+package org.citygml4j.tools.command;
 
 import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.core.model.core.AbstractFeature;
-import org.citygml4j.core.util.reference.DefaultReferenceResolver;
 import org.citygml4j.tools.cli.CityGMLInputOptions;
 import org.citygml4j.tools.cli.CityGMLOutputOptions;
 import org.citygml4j.tools.cli.CityGMLTool;
@@ -68,10 +67,7 @@ public class UpgradeCommand extends CityGMLTool {
 
         log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
 
-        CityGMLInputFactory in = createCityGMLInputFactory()
-                .withChunking(ChunkOptions.defaults())
-                .withReferenceResolver(DefaultReferenceResolver.newInstance());
-
+        CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
         CityGMLOutputFactory out = createCityGMLOutputFactory(CityGMLVersion.v3_0);
 
         for (int i = 0; i < inputFiles.size(); i++) {

@@ -24,21 +24,44 @@ package org.citygml4j.tools.cli;
 import org.citygml4j.core.model.CityGMLVersion;
 import picocli.CommandLine;
 
-public class CityGMLOutputVersion {
-    @CommandLine.Option(names = {"-v", "--citygml-version"}, defaultValue = "3.0",
-            description = "CityGML version to use for output file(s): 3.0, 2.0, 1.0 (default: ${DEFAULT-VALUE}).")
+public class CityGMLOutputVersion implements Option {
+    @CommandLine.Option(names = {"-v", "--citygml-version"},
+            description = "CityGML version to use for output file(s): 3.0, 2.0, 1.0. " +
+                    "The default is to use the CityGML version of the input file.")
     private String version;
 
+    public boolean isSetVersion() {
+        return version != null;
+    }
+
     public CityGMLVersion getVersion() {
-        switch (version) {
-            case "1.0":
-            case "1":
-                return org.citygml4j.core.model.CityGMLVersion.v1_0;
-            case "2.0":
-            case "2":
-                return org.citygml4j.core.model.CityGMLVersion.v2_0;
-            default:
-                return org.citygml4j.core.model.CityGMLVersion.v3_0;
+        if (version != null) {
+            switch (version) {
+                case "1.0":
+                case "1":
+                    return CityGMLVersion.v1_0;
+                case "2.0":
+                case "2":
+                    return CityGMLVersion.v2_0;
+            }
+        }
+
+        return CityGMLVersion.v3_0;
+    }
+
+    @Override
+    public void preprocess(CommandLine commandLine) {
+        if (version != null) {
+            switch (version) {
+                case "1.0":
+                case "1":
+                case "2.0":
+                case "2":
+                    break;
+                default:
+                    throw new CommandLine.ParameterException(commandLine,
+                            "Error: The CityGML version must be 3.0, 2.0 or 1.0 but was '" + version + "'");
+            }
         }
     }
 }

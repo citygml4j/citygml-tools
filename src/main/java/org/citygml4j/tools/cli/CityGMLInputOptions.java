@@ -23,7 +23,7 @@ package org.citygml4j.tools.cli;
 
 import picocli.CommandLine;
 
-public class CityGMLInputOptions {
+public class CityGMLInputOptions implements Option {
     @CommandLine.Parameters(paramLabel = "<file>", arity = "1",
             description = "One or more files and directories to process (glob patterns allowed).")
     private String[] files;

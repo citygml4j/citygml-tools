@@ -26,10 +26,11 @@ import org.citygml4j.core.ade.ADEException;
 import org.citygml4j.core.ade.ADERegistry;
 import org.citygml4j.tools.cli.Command;
 import org.citygml4j.tools.cli.ExecutionException;
-import org.citygml4j.tools.lodfilter.FilterLodsCommand;
+import org.citygml4j.tools.cli.Option;
+import org.citygml4j.tools.command.FilterLodsCommand;
+import org.citygml4j.tools.command.UpgradeCommand;
 import org.citygml4j.tools.log.LogLevel;
 import org.citygml4j.tools.log.Logger;
-import org.citygml4j.tools.upgrade.UpgradeCommand;
 import org.citygml4j.tools.util.PidFile;
 import org.citygml4j.tools.util.URLClassLoader;
 import org.citygml4j.xml.CityGMLADELoader;
@@ -37,6 +38,7 @@ import picocli.CommandLine;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -140,9 +142,21 @@ public class CityGMLTools implements Command, CommandLine.IVersionProvider {
                 throw new CommandLine.ParameterException(cmd, "Missing required subcommand.");
             }
 
-            // preprocess commands
             for (CommandLine commandLine : commandLines) {
                 Object command = commandLine.getCommand();
+
+                // preprocess options
+                for (Field field : command.getClass().getDeclaredFields()) {
+                    if (Option.class.isAssignableFrom(field.getType())) {
+                        field.setAccessible(true);
+                        Option option = (Option) field.get(command);
+                        if (option != null) {
+                            option.preprocess(commandLine);
+                        }
+                    }
+                }
+
+                // preprocess commands
                 if (command instanceof Command) {
                     ((Command) command).preprocess(commandLine);
                 }
