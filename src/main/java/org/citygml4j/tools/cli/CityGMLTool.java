@@ -88,14 +88,13 @@ public abstract class CityGMLTool implements Command {
     }
 
     protected CityGMLReader createFilteredCityGMLReader(CityGMLInputFactory factory, Path file, CityGMLInputOptions options, String... localNames) throws ExecutionException {
-        try {
+        CityGMLReader reader = createCityGMLReader(factory, file, options);
+        if (localNames != null) {
             Set<String> names = new HashSet<>(Arrays.asList(localNames));
-            return factory.createFilteredCityGMLReader(factory.createCityGMLReader(file, options.getEncoding()),
-                    name -> !names.contains(name.getLocalPart())
-                            || !CityGMLModules.isCityGMLNamespace(name.getNamespaceURI())
-            );
-        } catch (CityGMLReadException e) {
-            throw new ExecutionException("Failed to create CityGML reader.", e);
+            return factory.createFilteredCityGMLReader(reader, name -> !names.contains(name.getLocalPart())
+                            || !CityGMLModules.isCityGMLNamespace(name.getNamespaceURI()));
+        } else {
+            return reader;
         }
     }
 
