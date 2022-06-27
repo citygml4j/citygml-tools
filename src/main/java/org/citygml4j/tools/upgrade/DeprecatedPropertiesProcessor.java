@@ -53,6 +53,9 @@ import org.citygml4j.core.model.deprecated.vegetation.DeprecatedPropertiesOfPlan
 import org.citygml4j.core.model.deprecated.vegetation.DeprecatedPropertiesOfSolitaryVegetationObject;
 import org.citygml4j.core.model.deprecated.waterbody.DeprecatedPropertiesOfWaterBody;
 import org.citygml4j.core.model.generics.GenericOccupiedSpace;
+import org.citygml4j.core.model.relief.AbstractReliefComponent;
+import org.citygml4j.core.model.relief.AbstractReliefComponentProperty;
+import org.citygml4j.core.model.relief.ReliefFeature;
 import org.citygml4j.core.model.transportation.AbstractTransportationSpace;
 import org.citygml4j.core.model.tunnel.AbstractTunnel;
 import org.citygml4j.core.model.tunnel.HollowSpace;
@@ -519,6 +522,24 @@ public class DeprecatedPropertiesProcessor {
             }
 
             super.visit(plantCover);
+        }
+
+        @Override
+        public void visit(ReliefFeature reliefFeature) {
+            int lod = reliefFeature.getLod();
+            for (AbstractReliefComponentProperty property : reliefFeature.getReliefComponents()) {
+                if (property.getObject() != null) {
+                    AbstractReliefComponent reliefComponent = property.getObject();
+                    if (upgradeOptions.isUseLod4AsLod3() && reliefComponent.getLod() >= 4) {
+                        reliefComponent.setLod(3);
+                    }
+
+                    lod = Math.max(lod, reliefComponent.getLod());
+                }
+            }
+
+            reliefFeature.setLod(Math.min(lod, 3));
+            super.visit(reliefFeature);
         }
 
         @Override
