@@ -30,8 +30,10 @@ import org.citygml4j.core.model.building.BuildingRoom;
 import org.citygml4j.core.model.cityfurniture.CityFurniture;
 import org.citygml4j.core.model.common.GeometryInfo;
 import org.citygml4j.core.model.construction.AbstractFillingSurface;
+import org.citygml4j.core.model.construction.RoofSurface;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.model.core.AbstractSpace;
+import org.citygml4j.core.model.core.AbstractSpaceBoundaryProperty;
 import org.citygml4j.core.model.core.AbstractThematicSurface;
 import org.citygml4j.core.model.deprecated.bridge.*;
 import org.citygml4j.core.model.deprecated.building.DeprecatedPropertiesOfAbstractBuilding;
@@ -75,19 +77,21 @@ import org.xmlobjects.util.copy.CopyBuilder;
 
 import java.util.Collection;
 
-public class LodProcessor {
+public class DeprecatedPropertiesProcessor {
+    private final UpgradeOptions upgradeOptions;
     private final LodFilter lodFilter;
-    private final LodMover lodMover;
+    private final DeprecatedPropertiesWalker deprecatedPropertiesWalker;
     private final ReferenceResolver referenceResolver;
 
-    private LodProcessor(LodFilter lodFilter) {
+    private DeprecatedPropertiesProcessor(UpgradeOptions upgradeOptions, LodFilter lodFilter) {
+        this.upgradeOptions = upgradeOptions;
         this.lodFilter = lodFilter;
-        lodMover = new LodMover();
+        deprecatedPropertiesWalker = new DeprecatedPropertiesWalker();
         referenceResolver = DefaultReferenceResolver.newInstance();
     }
 
-    public static LodProcessor newInstance() {
-        return new LodProcessor(LodFilter.newInstance()
+    public static DeprecatedPropertiesProcessor newInstance(UpgradeOptions upgradeOptions) {
+        return new DeprecatedPropertiesProcessor(upgradeOptions, LodFilter.newInstance()
                 .withMode(LodFilterMode.REMOVE)
                 .keepEmptyObjects(false)
                 .collectRemovedFeatureIds(false));
@@ -97,28 +101,27 @@ public class LodProcessor {
         return lodFilter.getGlobalAppearances();
     }
 
-    public LodProcessor withGlobalAppearances(Collection<Appearance> globalAppearances) {
+    public DeprecatedPropertiesProcessor withGlobalAppearances(Collection<Appearance> globalAppearances) {
         lodFilter.withGlobalAppearances(globalAppearances);
         return this;
     }
 
     public void process(AbstractFeature feature) {
-        GeometryInfo geometryInfo = feature.getGeometryInfo(true);
-        if (geometryInfo.hasGeometries(4) || geometryInfo.hasImplicitGeometries(4)) {
-            if (geometryInfo.hasGeometries(3) || geometryInfo.hasImplicitGeometries(3)) {
-                lodFilter.withLods(3).apply(feature);
+        if (upgradeOptions.isUseLod4AsLod3()) {
+            GeometryInfo geometryInfo = feature.getGeometryInfo(true);
+            if (geometryInfo.hasGeometries(4) || geometryInfo.hasImplicitGeometries(4)) {
+                if (geometryInfo.hasGeometries(3) || geometryInfo.hasImplicitGeometries(3)) {
+                    lodFilter.withLods(3).apply(feature);
+                }
             }
-
-            referenceResolver.resolveReferences(feature);
-            feature.accept(lodMover);
         }
-    }
 
-    public void postprocess(AbstractFeature feature) {
+        referenceResolver.resolveReferences(feature);
+        feature.accept(deprecatedPropertiesWalker);
         lodFilter.withLods(4).apply(feature);
     }
 
-    private static class LodMover extends ObjectWalker {
+    private class DeprecatedPropertiesWalker extends ObjectWalker {
         private final Logger log = Logger.getInstance();
         private final CopyBuilder copyBuilder = new CopyBuilder().failOnError(true);
 
@@ -127,24 +130,26 @@ public class LodProcessor {
             if (bridge.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfAbstractBridge properties = bridge.getDeprecatedProperties();
 
-                if (properties.getLod4MultiCurve() != null) {
-                    bridge.setLod3MultiCurve(properties.getLod4MultiCurve());
-                    properties.setLod4MultiCurve(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4MultiCurve() != null) {
+                        bridge.setLod3MultiCurve(properties.getLod4MultiCurve());
+                        properties.setLod4MultiCurve(null);
+                    }
 
-                if (properties.getLod4MultiSurface() != null) {
-                    bridge.setLod3MultiSurface(properties.getLod4MultiSurface());
-                    properties.setLod4MultiSurface(null);
-                }
+                    if (properties.getLod4MultiSurface() != null) {
+                        bridge.setLod3MultiSurface(properties.getLod4MultiSurface());
+                        properties.setLod4MultiSurface(null);
+                    }
 
-                if (properties.getLod4Solid() != null) {
-                    bridge.setLod3Solid(properties.getLod4Solid());
-                    properties.setLod4Solid(null);
-                }
+                    if (properties.getLod4Solid() != null) {
+                        bridge.setLod3Solid(properties.getLod4Solid());
+                        properties.setLod4Solid(null);
+                    }
 
-                if (properties.getLod4TerrainIntersectionCurve() != null) {
-                    bridge.setLod3TerrainIntersectionCurve(properties.getLod4TerrainIntersectionCurve());
-                    properties.setLod4TerrainIntersectionCurve(null);
+                    if (properties.getLod4TerrainIntersectionCurve() != null) {
+                        bridge.setLod3TerrainIntersectionCurve(properties.getLod4TerrainIntersectionCurve());
+                        properties.setLod4TerrainIntersectionCurve(null);
+                    }
                 }
             }
 
@@ -156,24 +161,32 @@ public class LodProcessor {
             if (building.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfAbstractBuilding properties = building.getDeprecatedProperties();
 
-                if (properties.getLod4MultiCurve() != null) {
-                    building.setLod3MultiCurve(properties.getLod4MultiCurve());
-                    properties.setLod4MultiCurve(null);
+                if (properties.getLod0RoofEdge() != null) {
+                    RoofSurface roofSurface = new RoofSurface();
+                    roofSurface.setLod0MultiSurface(properties.getLod0RoofEdge());
+                    building.addBoundary(new AbstractSpaceBoundaryProperty(roofSurface));
                 }
 
-                if (properties.getLod4MultiSurface() != null) {
-                    building.setLod3MultiSurface(properties.getLod4MultiSurface());
-                    properties.setLod4MultiSurface(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4MultiCurve() != null) {
+                        building.setLod3MultiCurve(properties.getLod4MultiCurve());
+                        properties.setLod4MultiCurve(null);
+                    }
 
-                if (properties.getLod4Solid() != null) {
-                    building.setLod3Solid(properties.getLod4Solid());
-                    properties.setLod4Solid(null);
-                }
+                    if (properties.getLod4MultiSurface() != null) {
+                        building.setLod3MultiSurface(properties.getLod4MultiSurface());
+                        properties.setLod4MultiSurface(null);
+                    }
 
-                if (properties.getLod4TerrainIntersectionCurve() != null) {
-                    building.setLod3TerrainIntersectionCurve(properties.getLod4TerrainIntersectionCurve());
-                    properties.setLod4TerrainIntersectionCurve(null);
+                    if (properties.getLod4Solid() != null) {
+                        building.setLod3Solid(properties.getLod4Solid());
+                        properties.setLod4Solid(null);
+                    }
+
+                    if (properties.getLod4TerrainIntersectionCurve() != null) {
+                        building.setLod3TerrainIntersectionCurve(properties.getLod4TerrainIntersectionCurve());
+                        properties.setLod4TerrainIntersectionCurve(null);
+                    }
                 }
             }
 
@@ -185,7 +198,8 @@ public class LodProcessor {
             if (fillingSurface.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfAbstractFillingSurface properties = fillingSurface.getDeprecatedProperties();
 
-                if (properties.getLod4ImplicitRepresentation() != null) {
+                if (upgradeOptions.isUseLod4AsLod3()
+                        && properties.getLod4ImplicitRepresentation() != null) {
                     log.warn(CityObjects.getObjectSignature(fillingSurface) + ": " +
                             "Skipping unsupported LoD4 implicit geometry representation.");
                 }
@@ -199,7 +213,8 @@ public class LodProcessor {
             if (thematicSurface.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfAbstractThematicSurface properties = thematicSurface.getDeprecatedProperties();
 
-                if (properties.getLod4MultiSurface() != null) {
+                if (upgradeOptions.isUseLod4AsLod3()
+                        && properties.getLod4MultiSurface() != null) {
                     thematicSurface.setLod3MultiSurface(properties.getLod4MultiSurface());
                     properties.setLod4MultiSurface(null);
                 }
@@ -213,7 +228,8 @@ public class LodProcessor {
             if (transportationSpace.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfAbstractTransportationSpace properties = transportationSpace.getDeprecatedProperties();
 
-                if (properties.getLod4MultiSurface() != null) {
+                if (upgradeOptions.isUseLod4AsLod3()
+                        && properties.getLod4MultiSurface() != null) {
                     transportationSpace.setLod3MultiSurface(properties.getLod4MultiSurface());
                     properties.setLod4MultiSurface(null);
                 }
@@ -227,24 +243,26 @@ public class LodProcessor {
             if (tunnel.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfAbstractTunnel properties = tunnel.getDeprecatedProperties();
 
-                if (properties.getLod4MultiCurve() != null) {
-                    tunnel.setLod3MultiCurve(properties.getLod4MultiCurve());
-                    properties.setLod4MultiCurve(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4MultiCurve() != null) {
+                        tunnel.setLod3MultiCurve(properties.getLod4MultiCurve());
+                        properties.setLod4MultiCurve(null);
+                    }
 
-                if (properties.getLod4MultiSurface() != null) {
-                    tunnel.setLod3MultiSurface(properties.getLod4MultiSurface());
-                    properties.setLod4MultiSurface(null);
-                }
+                    if (properties.getLod4MultiSurface() != null) {
+                        tunnel.setLod3MultiSurface(properties.getLod4MultiSurface());
+                        properties.setLod4MultiSurface(null);
+                    }
 
-                if (properties.getLod4Solid() != null) {
-                    tunnel.setLod3Solid(properties.getLod4Solid());
-                    properties.setLod4Solid(null);
-                }
+                    if (properties.getLod4Solid() != null) {
+                        tunnel.setLod3Solid(properties.getLod4Solid());
+                        properties.setLod4Solid(null);
+                    }
 
-                if (properties.getLod4TerrainIntersectionCurve() != null) {
-                    tunnel.setLod3TerrainIntersectionCurve(properties.getLod4TerrainIntersectionCurve());
-                    properties.setLod4TerrainIntersectionCurve(null);
+                    if (properties.getLod4TerrainIntersectionCurve() != null) {
+                        tunnel.setLod3TerrainIntersectionCurve(properties.getLod4TerrainIntersectionCurve());
+                        properties.setLod4TerrainIntersectionCurve(null);
+                    }
                 }
             }
 
@@ -256,19 +274,21 @@ public class LodProcessor {
             if (bridgeConstructiveElement.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfBridgeConstructiveElement properties = bridgeConstructiveElement.getDeprecatedProperties();
 
-                if (properties.getLod4Geometry() != null) {
-                    moveAbstractGeometry(properties.getLod4Geometry(), bridgeConstructiveElement);
-                    properties.setLod4Geometry(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4Geometry() != null) {
+                        moveAbstractGeometry(properties.getLod4Geometry(), bridgeConstructiveElement);
+                        properties.setLod4Geometry(null);
+                    }
 
-                if (properties.getLod4TerrainIntersectionCurve() != null) {
-                    bridgeConstructiveElement.setLod3TerrainIntersectionCurve(properties.getLod4TerrainIntersectionCurve());
-                    properties.setLod4TerrainIntersectionCurve(null);
-                }
+                    if (properties.getLod4TerrainIntersectionCurve() != null) {
+                        bridgeConstructiveElement.setLod3TerrainIntersectionCurve(properties.getLod4TerrainIntersectionCurve());
+                        properties.setLod4TerrainIntersectionCurve(null);
+                    }
 
-                if (properties.getLod4ImplicitRepresentation() != null) {
-                    bridgeConstructiveElement.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
-                    properties.setLod4ImplicitRepresentation(null);
+                    if (properties.getLod4ImplicitRepresentation() != null) {
+                        bridgeConstructiveElement.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
+                        properties.setLod4ImplicitRepresentation(null);
+                    }
                 }
             }
 
@@ -280,14 +300,16 @@ public class LodProcessor {
             if (bridgeFurniture.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfBridgeFurniture properties = bridgeFurniture.getDeprecatedProperties();
 
-                if (properties.getLod4Geometry() != null) {
-                    moveAbstractGeometry(properties.getLod4Geometry(), bridgeFurniture);
-                    properties.setLod4Geometry(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4Geometry() != null) {
+                        moveAbstractGeometry(properties.getLod4Geometry(), bridgeFurniture);
+                        properties.setLod4Geometry(null);
+                    }
 
-                if (properties.getLod4ImplicitRepresentation() != null) {
-                    bridgeFurniture.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
-                    properties.setLod4ImplicitRepresentation(null);
+                    if (properties.getLod4ImplicitRepresentation() != null) {
+                        bridgeFurniture.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
+                        properties.setLod4ImplicitRepresentation(null);
+                    }
                 }
             }
 
@@ -299,14 +321,16 @@ public class LodProcessor {
             if (bridgeInstallation.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfBridgeInstallation properties = bridgeInstallation.getDeprecatedProperties();
 
-                if (properties.getLod4Geometry() != null) {
-                    moveAbstractGeometry(properties.getLod4Geometry(), bridgeInstallation);
-                    properties.setLod4Geometry(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4Geometry() != null) {
+                        moveAbstractGeometry(properties.getLod4Geometry(), bridgeInstallation);
+                        properties.setLod4Geometry(null);
+                    }
 
-                if (properties.getLod4ImplicitRepresentation() != null) {
-                    bridgeInstallation.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
-                    properties.setLod4ImplicitRepresentation(null);
+                    if (properties.getLod4ImplicitRepresentation() != null) {
+                        bridgeInstallation.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
+                        properties.setLod4ImplicitRepresentation(null);
+                    }
                 }
             }
 
@@ -318,14 +342,16 @@ public class LodProcessor {
             if (bridgeRoom.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfBridgeRoom properties = bridgeRoom.getDeprecatedProperties();
 
-                if (properties.getLod4Solid() != null) {
-                    bridgeRoom.setLod3Solid(properties.getLod4Solid());
-                    properties.setLod4Solid(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4Solid() != null) {
+                        bridgeRoom.setLod3Solid(properties.getLod4Solid());
+                        properties.setLod4Solid(null);
+                    }
 
-                if (properties.getLod4MultiSurface() != null) {
-                    bridgeRoom.setLod3MultiSurface(properties.getLod4MultiSurface());
-                    properties.setLod4MultiSurface(null);
+                    if (properties.getLod4MultiSurface() != null) {
+                        bridgeRoom.setLod3MultiSurface(properties.getLod4MultiSurface());
+                        properties.setLod4MultiSurface(null);
+                    }
                 }
             }
 
@@ -337,14 +363,16 @@ public class LodProcessor {
             if (buildingFurniture.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfBuildingFurniture properties = buildingFurniture.getDeprecatedProperties();
 
-                if (properties.getLod4Geometry() != null) {
-                    moveAbstractGeometry(properties.getLod4Geometry(), buildingFurniture);
-                    properties.setLod4Geometry(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4Geometry() != null) {
+                        moveAbstractGeometry(properties.getLod4Geometry(), buildingFurniture);
+                        properties.setLod4Geometry(null);
+                    }
 
-                if (properties.getLod4ImplicitRepresentation() != null) {
-                    buildingFurniture.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
-                    properties.setLod4ImplicitRepresentation(null);
+                    if (properties.getLod4ImplicitRepresentation() != null) {
+                        buildingFurniture.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
+                        properties.setLod4ImplicitRepresentation(null);
+                    }
                 }
             }
 
@@ -356,14 +384,16 @@ public class LodProcessor {
             if (buildingInstallation.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfBuildingInstallation properties = buildingInstallation.getDeprecatedProperties();
 
-                if (properties.getLod4Geometry() != null) {
-                    moveAbstractGeometry(properties.getLod4Geometry(), buildingInstallation);
-                    properties.setLod4Geometry(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4Geometry() != null) {
+                        moveAbstractGeometry(properties.getLod4Geometry(), buildingInstallation);
+                        properties.setLod4Geometry(null);
+                    }
 
-                if (properties.getLod4ImplicitRepresentation() != null) {
-                    buildingInstallation.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
-                    properties.setLod4ImplicitRepresentation(null);
+                    if (properties.getLod4ImplicitRepresentation() != null) {
+                        buildingInstallation.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
+                        properties.setLod4ImplicitRepresentation(null);
+                    }
                 }
             }
 
@@ -375,14 +405,16 @@ public class LodProcessor {
             if (buildingRoom.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfBuildingRoom properties = buildingRoom.getDeprecatedProperties();
 
-                if (properties.getLod4Solid() != null) {
-                    buildingRoom.setLod3Solid(properties.getLod4Solid());
-                    properties.setLod4Solid(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4Solid() != null) {
+                        buildingRoom.setLod3Solid(properties.getLod4Solid());
+                        properties.setLod4Solid(null);
+                    }
 
-                if (properties.getLod4MultiSurface() != null) {
-                    buildingRoom.setLod3MultiSurface(properties.getLod4MultiSurface());
-                    properties.setLod4MultiSurface(null);
+                    if (properties.getLod4MultiSurface() != null) {
+                        buildingRoom.setLod3MultiSurface(properties.getLod4MultiSurface());
+                        properties.setLod4MultiSurface(null);
+                    }
                 }
             }
 
@@ -394,19 +426,21 @@ public class LodProcessor {
             if (cityFurniture.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfCityFurniture properties = cityFurniture.getDeprecatedProperties();
 
-                if (properties.getLod4Geometry() != null) {
-                    moveAbstractGeometry(properties.getLod4Geometry(), cityFurniture);
-                    properties.setLod4Geometry(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4Geometry() != null) {
+                        moveAbstractGeometry(properties.getLod4Geometry(), cityFurniture);
+                        properties.setLod4Geometry(null);
+                    }
 
-                if (properties.getLod4TerrainIntersectionCurve() != null) {
-                    cityFurniture.setLod3TerrainIntersectionCurve(properties.getLod4TerrainIntersectionCurve());
-                    properties.setLod4TerrainIntersectionCurve(null);
-                }
+                    if (properties.getLod4TerrainIntersectionCurve() != null) {
+                        cityFurniture.setLod3TerrainIntersectionCurve(properties.getLod4TerrainIntersectionCurve());
+                        properties.setLod4TerrainIntersectionCurve(null);
+                    }
 
-                if (properties.getLod4ImplicitRepresentation() != null) {
-                    cityFurniture.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
-                    properties.setLod4ImplicitRepresentation(null);
+                    if (properties.getLod4ImplicitRepresentation() != null) {
+                        cityFurniture.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
+                        properties.setLod4ImplicitRepresentation(null);
+                    }
                 }
             }
 
@@ -418,19 +452,21 @@ public class LodProcessor {
             if (genericOccupiedSpace.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfGenericOccupiedSpace properties = genericOccupiedSpace.getDeprecatedProperties();
 
-                if (properties.getLod4Geometry() != null) {
-                    moveAbstractGeometry(properties.getLod4Geometry(), genericOccupiedSpace);
-                    properties.setLod4Geometry(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4Geometry() != null) {
+                        moveAbstractGeometry(properties.getLod4Geometry(), genericOccupiedSpace);
+                        properties.setLod4Geometry(null);
+                    }
 
-                if (properties.getLod4TerrainIntersectionCurve() != null) {
-                    genericOccupiedSpace.setLod3TerrainIntersectionCurve(properties.getLod4TerrainIntersectionCurve());
-                    properties.setLod4TerrainIntersectionCurve(null);
-                }
+                    if (properties.getLod4TerrainIntersectionCurve() != null) {
+                        genericOccupiedSpace.setLod3TerrainIntersectionCurve(properties.getLod4TerrainIntersectionCurve());
+                        properties.setLod4TerrainIntersectionCurve(null);
+                    }
 
-                if (properties.getLod4ImplicitRepresentation() != null) {
-                    genericOccupiedSpace.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
-                    properties.setLod4ImplicitRepresentation(null);
+                    if (properties.getLod4ImplicitRepresentation() != null) {
+                        genericOccupiedSpace.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
+                        properties.setLod4ImplicitRepresentation(null);
+                    }
                 }
             }
 
@@ -442,14 +478,16 @@ public class LodProcessor {
             if (hollowSpace.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfHollowSpace properties = hollowSpace.getDeprecatedProperties();
 
-                if (properties.getLod4Solid() != null) {
-                    hollowSpace.setLod3Solid(properties.getLod4Solid());
-                    properties.setLod4Solid(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4Solid() != null) {
+                        hollowSpace.setLod3Solid(properties.getLod4Solid());
+                        properties.setLod4Solid(null);
+                    }
 
-                if (properties.getLod4MultiSurface() != null) {
-                    hollowSpace.setLod3MultiSurface(properties.getLod4MultiSurface());
-                    properties.setLod4MultiSurface(null);
+                    if (properties.getLod4MultiSurface() != null) {
+                        hollowSpace.setLod3MultiSurface(properties.getLod4MultiSurface());
+                        properties.setLod4MultiSurface(null);
+                    }
                 }
             }
 
@@ -461,20 +499,22 @@ public class LodProcessor {
             if (plantCover.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfPlantCover properties = plantCover.getDeprecatedProperties();
 
-                if (properties.getLod4MultiSurface() != null) {
-                    plantCover.setLod3MultiSurface(properties.getLod4MultiSurface());
-                    properties.setLod4MultiSurface(null);
-                }
-
-                if (properties.getLod4MultiSolid() != null) {
-                    MultiSolidProperty property = properties.getLod4MultiSolid();
-                    if (property.getObject() != null && property.getObject().getSolidMember().size() == 1) {
-                        plantCover.setLod3Solid(property.getObject().getSolidMember().get(0));
-                    } else {
-                        moveAbstractGeometry(property, plantCover);
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4MultiSurface() != null) {
+                        plantCover.setLod3MultiSurface(properties.getLod4MultiSurface());
+                        properties.setLod4MultiSurface(null);
                     }
 
-                    properties.setLod4MultiSolid(null);
+                    if (properties.getLod4MultiSolid() != null) {
+                        MultiSolidProperty property = properties.getLod4MultiSolid();
+                        if (property.getObject() != null && property.getObject().getSolidMember().size() == 1) {
+                            plantCover.setLod3Solid(property.getObject().getSolidMember().get(0));
+                        } else {
+                            moveAbstractGeometry(property, plantCover);
+                        }
+
+                        properties.setLod4MultiSolid(null);
+                    }
                 }
             }
 
@@ -486,14 +526,16 @@ public class LodProcessor {
             if (solitaryVegetationObject.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfSolitaryVegetationObject properties = solitaryVegetationObject.getDeprecatedProperties();
 
-                if (properties.getLod4Geometry() != null) {
-                    moveAbstractGeometry(properties.getLod4Geometry(), solitaryVegetationObject);
-                    properties.setLod4Geometry(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4Geometry() != null) {
+                        moveAbstractGeometry(properties.getLod4Geometry(), solitaryVegetationObject);
+                        properties.setLod4Geometry(null);
+                    }
 
-                if (properties.getLod4ImplicitRepresentation() != null) {
-                    solitaryVegetationObject.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
-                    properties.setLod4ImplicitRepresentation(null);
+                    if (properties.getLod4ImplicitRepresentation() != null) {
+                        solitaryVegetationObject.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
+                        properties.setLod4ImplicitRepresentation(null);
+                    }
                 }
             }
 
@@ -505,14 +547,16 @@ public class LodProcessor {
             if (tunnelFurniture.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfTunnelFurniture properties = tunnelFurniture.getDeprecatedProperties();
 
-                if (properties.getLod4Geometry() != null) {
-                    moveAbstractGeometry(properties.getLod4Geometry(), tunnelFurniture);
-                    properties.setLod4Geometry(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4Geometry() != null) {
+                        moveAbstractGeometry(properties.getLod4Geometry(), tunnelFurniture);
+                        properties.setLod4Geometry(null);
+                    }
 
-                if (properties.getLod4ImplicitRepresentation() != null) {
-                    tunnelFurniture.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
-                    properties.setLod4ImplicitRepresentation(null);
+                    if (properties.getLod4ImplicitRepresentation() != null) {
+                        tunnelFurniture.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
+                        properties.setLod4ImplicitRepresentation(null);
+                    }
                 }
             }
 
@@ -524,14 +568,16 @@ public class LodProcessor {
             if (tunnelInstallation.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfTunnelInstallation properties = tunnelInstallation.getDeprecatedProperties();
 
-                if (properties.getLod4Geometry() != null) {
-                    moveAbstractGeometry(properties.getLod4Geometry(), tunnelInstallation);
-                    properties.setLod4Geometry(null);
-                }
+                if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (properties.getLod4Geometry() != null) {
+                        moveAbstractGeometry(properties.getLod4Geometry(), tunnelInstallation);
+                        properties.setLod4Geometry(null);
+                    }
 
-                if (properties.getLod4ImplicitRepresentation() != null) {
-                    tunnelInstallation.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
-                    properties.setLod4ImplicitRepresentation(null);
+                    if (properties.getLod4ImplicitRepresentation() != null) {
+                        tunnelInstallation.setLod3ImplicitRepresentation(properties.getLod4ImplicitRepresentation());
+                        properties.setLod4ImplicitRepresentation(null);
+                    }
                 }
             }
 
@@ -543,7 +589,8 @@ public class LodProcessor {
             if (waterBody.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfWaterBody properties = waterBody.getDeprecatedProperties();
 
-                if (properties.getLod4Solid() != null) {
+                if (upgradeOptions.isUseLod4AsLod3()
+                        && properties.getLod4Solid() != null) {
                     waterBody.setLod3Solid(properties.getLod4Solid());
                     properties.setLod4Solid(null);
                 }

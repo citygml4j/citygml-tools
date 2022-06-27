@@ -24,7 +24,7 @@ package org.citygml4j.tools.upgrade;
 import org.citygml4j.tools.cli.Option;
 import picocli.CommandLine;
 
-public class LodOptions implements Option {
+public class UpgradeOptions implements Option {
     @CommandLine.Option(names = {"-l", "--use-lod4-as-lod3"},
             description = "Use the LoD4 representation of city objects as LoD3, replacing an existing LoD3.")
     private boolean useLod4AsLod3;
