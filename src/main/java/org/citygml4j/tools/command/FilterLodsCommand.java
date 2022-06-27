@@ -29,7 +29,8 @@ import org.citygml4j.tools.cli.*;
 import org.citygml4j.tools.lodfilter.LodFilter;
 import org.citygml4j.tools.lodfilter.LodFilterMode;
 import org.citygml4j.tools.log.Logger;
-import org.citygml4j.tools.util.GlobalAppearanceReader;
+import org.citygml4j.tools.util.CityObjects;
+import org.citygml4j.tools.util.GlobalObjectsReader;
 import org.citygml4j.tools.util.InputFiles;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.reader.*;
@@ -100,8 +101,9 @@ public class FilterLodsCommand extends CityGMLTool {
 
             log.debug("Reading global appearances from input file.");
             List<CityObjectGroup> groups = new ArrayList<>();
-            List<Appearance> appearances = GlobalAppearanceReader.newInstance()
-                    .read(inputFile, getCityGMLContext());
+            List<Appearance> appearances = GlobalObjectsReader.onlyAppearances()
+                    .read(inputFile, getCityGMLContext())
+                    .getAppearances();
 
             LodFilter lodFilter = LodFilter.of(lods)
                     .withMode(mode)
@@ -143,7 +145,7 @@ public class FilterLodsCommand extends CityGMLTool {
                     }
 
                     if (!groups.isEmpty()) {
-                        postprocess(groups, lodFilter.getRemovedFeatureIds(), lodFilter);
+                        postprocess(groups, lodFilter.getRemovedFeatureIds());
                         for (CityObjectGroup group : groups) {
                             writer.writeMember(group);
                         }
@@ -170,20 +172,20 @@ public class FilterLodsCommand extends CityGMLTool {
         return 0;
     }
 
-    private void postprocess(List<CityObjectGroup> groups, Set<String> removedFeatureIds, LodFilter lodFilter) {
+    private void postprocess(List<CityObjectGroup> groups, Set<String> removedFeatureIds) {
         if (!removedFeatureIds.isEmpty()) {
             for (CityObjectGroup group : groups) {
                 if (group.isSetGroupMembers()) {
                     group.getGroupMembers().removeIf(property -> property.getObject() != null
                             && property.getObject().getGroupMember() != null
                             && property.getObject().getGroupMember().getHref() != null
-                            && removedFeatureIds.contains(lodFilter.getIdFromReference(
+                            && removedFeatureIds.contains(CityObjects.getIdFromReference(
                                     property.getObject().getGroupMember().getHref())));
                 }
 
                 if (group.getGroupParent() != null
                         && group.getGroupParent().getHref() != null
-                        && removedFeatureIds.contains(lodFilter.getIdFromReference(
+                        && removedFeatureIds.contains(CityObjects.getIdFromReference(
                                 group.getGroupParent().getHref()))) {
                     group.setGroupParent(null);
                 }
@@ -199,7 +201,7 @@ public class FilterLodsCommand extends CityGMLTool {
                     postprocess(groups, emptyGroups.stream()
                             .map(CityObjectGroup::getId)
                             .filter(Objects::nonNull)
-                            .collect(Collectors.toSet()), lodFilter);
+                            .collect(Collectors.toSet()));
                 }
             }
         }
