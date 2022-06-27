@@ -22,12 +22,16 @@
 package org.citygml4j.tools.command;
 
 import org.citygml4j.core.model.CityGMLVersion;
+import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.tools.cli.CityGMLInputOptions;
 import org.citygml4j.tools.cli.CityGMLOutputOptions;
 import org.citygml4j.tools.cli.CityGMLTool;
 import org.citygml4j.tools.cli.ExecutionException;
 import org.citygml4j.tools.log.Logger;
+import org.citygml4j.tools.upgrade.LodOptions;
+import org.citygml4j.tools.upgrade.LodProcessor;
+import org.citygml4j.tools.util.GlobalObjectsReader;
 import org.citygml4j.tools.util.InputFiles;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.reader.*;
@@ -44,6 +48,9 @@ import java.util.List;
         description = "Upgrades CityGML files to version 3.0."
 )
 public class UpgradeCommand extends CityGMLTool {
+    @CommandLine.Mixin
+    LodOptions lodOptions;
+
     @CommandLine.Mixin
     CityGMLInputOptions inputOptions;
 
@@ -70,13 +77,16 @@ public class UpgradeCommand extends CityGMLTool {
         CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
         CityGMLOutputFactory out = createCityGMLOutputFactory(CityGMLVersion.v3_0);
 
+        LodProcessor lodProcessor = LodProcessor.newInstance();
+
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
             Path outputFile = getOutputFile(inputFile, suffix, outputOptions);
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            try (CityGMLReader reader = createCityGMLReader(in, inputFile, inputOptions)) {
+            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions,
+                    lodOptions.isUseLod4AsLod3() ? new String[]{"Appearance"} : null)) {
                 FeatureInfo info = null;
                 if (reader.hasNext()) {
                     CityGMLVersion version = CityGMLModules.getCityGMLVersion(reader.getName().getNamespaceURI());
@@ -91,6 +101,13 @@ public class UpgradeCommand extends CityGMLTool {
                     info = reader.getParentInfo();
                 }
 
+                if (lodOptions.isUseLod4AsLod3()) {
+                    log.debug("Reading global appearances from input file.");
+                    lodProcessor.withGlobalAppearances(GlobalObjectsReader.onlyAppearances()
+                            .read(inputFile, getCityGMLContext())
+                            .getAppearances());
+                }
+
                 if (outputOptions.isOverwriteInputFile()) {
                     log.debug("Writing temporary output file " + outputFile.toAbsolutePath() + ".");
                 } else {
@@ -102,7 +119,19 @@ public class UpgradeCommand extends CityGMLTool {
                     log.debug("Reading city objects and upgrading them to CityGML 3.0.");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
+
+                        if (lodOptions.isUseLod4AsLod3()) {
+                            lodProcessor.process(feature);
+                        }
+
+                        lodProcessor.postprocess(feature);
                         writer.writeMember(feature);
+                    }
+
+                    if (lodOptions.isUseLod4AsLod3()) {
+                        for (Appearance appearance : lodProcessor.getGlobalAppearances()) {
+                            writer.writeMember(appearance);
+                        }
                     }
                 }
             } catch (CityGMLReadException e) {

@@ -25,6 +25,7 @@ import org.citygml4j.core.model.appearance.*;
 import org.citygml4j.core.model.common.GeometryInfo;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.visitor.ObjectWalker;
+import org.citygml4j.tools.util.CityObjects;
 import org.xmlobjects.gml.model.GMLObject;
 import org.xmlobjects.gml.model.base.AbstractProperty;
 import org.xmlobjects.gml.model.feature.FeatureProperty;
@@ -207,7 +208,7 @@ public class LodFilter {
                 @Override
                 public void visit(FeatureProperty<?> property) {
                     if (property.getHref() != null
-                            && removedIds.contains(getIdFromReference(property.getHref()))) {
+                            && removedIds.contains(CityObjects.getIdFromReference(property.getHref()))) {
                         Child child = property.getParent();
                         if (child instanceof GMLObject) {
                             ((GMLObject) child).unsetProperty(property, true);
@@ -243,11 +244,6 @@ public class LodFilter {
 
             return lods;
         }
-    }
-
-    public String getIdFromReference(String reference) {
-        int index = reference.lastIndexOf("#");
-        return index != -1 ? reference.substring(index + 1) : reference;
     }
 
     private static class FeatureInfo {
