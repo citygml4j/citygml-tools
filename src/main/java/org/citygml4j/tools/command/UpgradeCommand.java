@@ -52,7 +52,7 @@ public class UpgradeCommand extends CityGMLTool {
     private boolean useLod4AsLod3;
 
     @CommandLine.Option(names = {"-m", "--map-lod1-multi-surfaces"},
-            description = "Map LoD1 multi-surface representations of city objects onto generic thematic surfaces.")
+            description = "Map the LoD1 multi-surface representation of city objects onto generic thematic surfaces.")
     private boolean mapLod1MultiSurfaces;
 
     @CommandLine.Mixin
