@@ -22,6 +22,7 @@
 package org.citygml4j.tools.util;
 
 import org.citygml4j.core.model.appearance.Appearance;
+import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.citygml4j.tools.cli.ExecutionException;
 import org.citygml4j.xml.CityGMLContext;
@@ -33,32 +34,42 @@ import org.xmlobjects.stream.XMLReaderFactory;
 
 import javax.xml.namespace.QName;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
 
 public class GlobalObjectsReader {
-    private final boolean appearances;
-    private final boolean implicitGeometries;
+    private final EnumSet<GlobalObjects.Type> types;
     private final ChunkOptions chunkOptions;
 
-    private GlobalObjectsReader(boolean appearances, boolean implicitGeometries) {
-        this.appearances = appearances;
-        this.implicitGeometries = implicitGeometries;
+    private GlobalObjectsReader(EnumSet<GlobalObjects.Type> types) {
+        this.types = types;
         chunkOptions = ChunkOptions.empty().addCityModelMemberProperties();
     }
 
     public static GlobalObjectsReader defaults() {
-        return new GlobalObjectsReader(true, true);
+        return new GlobalObjectsReader(EnumSet.allOf(GlobalObjects.Type.class));
+    }
+
+    public static GlobalObjectsReader of(GlobalObjects.Type... types) {
+        return new GlobalObjectsReader(EnumSet.copyOf(Arrays.asList(types)));
     }
 
     public static GlobalObjectsReader onlyAppearances() {
-        return new GlobalObjectsReader(true, false);
+        return new GlobalObjectsReader(EnumSet.of(GlobalObjects.Type.APPEARANCE));
+    }
+
+    public static GlobalObjectsReader onlyCityObjectGroups() {
+        return new GlobalObjectsReader(EnumSet.of(GlobalObjects.Type.CITY_OBJECT_GROUP));
     }
 
     public static GlobalObjectsReader onlyImplicitGeometries() {
-        return new GlobalObjectsReader(false, true);
+        return new GlobalObjectsReader(EnumSet.of(GlobalObjects.Type.IMPLICIT_GEOMETRY));
     }
 
     public GlobalObjects read(Path file, CityGMLContext context) throws ExecutionException {
         GlobalObjects globalObjects = new GlobalObjects();
+        boolean checkForTopLevel = !Collections.disjoint(types, GlobalObjects.Type.TOP_LEVEL_TYPES);
         boolean isTopLevel = false;
 
         try (XMLReader reader = XMLReaderFactory.newInstance(context.getXMLObjects()).createReader(file)) {
@@ -66,17 +77,22 @@ public class GlobalObjectsReader {
                 EventType eventType = reader.nextTag();
                 if (eventType == EventType.START_ELEMENT) {
                     QName name = reader.getName();
-                    if (appearances
+                    if (checkForTopLevel
                             && !isTopLevel
                             && chunkOptions.containsProperty(name)) {
                         isTopLevel = true;
                     } else if (isTopLevel) {
-                        if ("Appearance".equals(name.getLocalPart())
+                        if (types.contains(GlobalObjects.Type.APPEARANCE)
+                                && "Appearance".equals(name.getLocalPart())
                                 && CityGMLModules.isCityGMLNamespace(name.getNamespaceURI())) {
                             globalObjects.add(reader.getObject(Appearance.class));
+                        } else if (types.contains(GlobalObjects.Type.CITY_OBJECT_GROUP)
+                                && "CityObjectGroup".equals(name.getLocalPart())
+                                && CityGMLModules.isCityGMLNamespace(name.getNamespaceURI())) {
+                            globalObjects.add(reader.getObject(CityObjectGroup.class));
                         }
                         isTopLevel = false;
-                    } else if (implicitGeometries
+                    } else if (types.contains(GlobalObjects.Type.IMPLICIT_GEOMETRY)
                             && "ImplicitGeometry".equals(name.getLocalPart())
                             && CityGMLModules.isCityGMLNamespace(name.getNamespaceURI())) {
                         ImplicitGeometry implicitGeometry = reader.getObject(ImplicitGeometry.class);

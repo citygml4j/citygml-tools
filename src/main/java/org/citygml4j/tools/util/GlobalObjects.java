@@ -22,13 +22,28 @@
 package org.citygml4j.tools.util;
 
 import org.citygml4j.core.model.appearance.Appearance;
+import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.ImplicitGeometry;
+import org.xmlobjects.gml.model.geometry.AbstractGeometry;
+import org.xmlobjects.gml.model.geometry.GeometryProperty;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class GlobalObjects {
+    public enum Type {
+        APPEARANCE,
+        CITY_OBJECT_GROUP,
+        IMPLICIT_GEOMETRY;
+
+        static final EnumSet<Type> TOP_LEVEL_TYPES = EnumSet.of(APPEARANCE, CITY_OBJECT_GROUP);
+    }
+
     private final List<Appearance> appearances = new ArrayList<>();
+    private final List<CityObjectGroup> cityObjectGroups = new ArrayList<>();
     private final List<ImplicitGeometry> implicitGeometries = new ArrayList<>();
 
     GlobalObjects() {
@@ -38,12 +53,29 @@ public class GlobalObjects {
         return appearances;
     }
 
+    public List<CityObjectGroup> getCityObjectGroups() {
+        return cityObjectGroups;
+    }
+
     public List<ImplicitGeometry> getImplicitGeometries() {
         return implicitGeometries;
     }
 
+    public List<AbstractGeometry> getTemplateGeometries() {
+        return implicitGeometries.stream()
+                .map(ImplicitGeometry::getRelativeGeometry)
+                .filter(Objects::nonNull)
+                .map(GeometryProperty::getObject)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
     void add(Appearance appearance) {
         appearances.add(appearance);
+    }
+
+    void add(CityObjectGroup cityObjectGroup) {
+        cityObjectGroups.add(cityObjectGroup);
     }
 
     void add(ImplicitGeometry implicitGeometry) {
