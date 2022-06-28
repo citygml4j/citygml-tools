@@ -24,10 +24,6 @@ package org.citygml4j.tools.cli;
 import picocli.CommandLine;
 
 public class CityGMLOutputOptions implements Option {
-    @CommandLine.Option(names = {"-O", "--overwrite-input-file"},
-            description = "Overwrite input file(s).")
-    private boolean overwriteInputFile;
-
     @CommandLine.Option(names = "--output-encoding", defaultValue = "UTF-8",
             description = "Encoding to use for output file(s) (default: ${DEFAULT-VALUE}).")
     private String encoding;
@@ -35,10 +31,6 @@ public class CityGMLOutputOptions implements Option {
     @CommandLine.Option(names = "--no-pretty-print", negatable = true, defaultValue = "true",
             description = "Format and indent output file(s) (default: true).")
     private boolean prettyPrint;
-
-    public boolean isOverwriteInputFile() {
-        return overwriteInputFile;
-    }
 
     public String getEncoding() {
         return encoding;

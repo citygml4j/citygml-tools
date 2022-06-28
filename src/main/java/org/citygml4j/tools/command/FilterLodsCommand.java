@@ -64,6 +64,10 @@ public class FilterLodsCommand extends CityGMLTool {
             description = "Keep city objects even if all their LoD representations have been filtered.")
     private boolean keepEmptyObjects;
 
+    @CommandLine.Option(names = {"-O", "--overwrite-input-file"},
+            description = "Overwrite input file(s).")
+    private boolean overwrite;
+
     @CommandLine.Mixin
     CityGMLInputOptions inputOptions;
 
@@ -95,7 +99,7 @@ public class FilterLodsCommand extends CityGMLTool {
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
-            Path outputFile = getOutputFile(inputFile, suffix, outputOptions);
+            Path outputFile = getOutputFile(inputFile, suffix, overwrite);
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
@@ -124,7 +128,7 @@ public class FilterLodsCommand extends CityGMLTool {
                     info = reader.getParentInfo();
                 }
 
-                if (outputOptions.isOverwriteInputFile()) {
+                if (overwrite) {
                     log.debug("Writing temporary output file " + outputFile.toAbsolutePath() + ".");
                 } else {
                     log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
@@ -163,7 +167,7 @@ public class FilterLodsCommand extends CityGMLTool {
                 throw new ExecutionException("Failed to write file " + outputFile.toAbsolutePath() + ".", e);
             }
 
-            if (outputOptions.isOverwriteInputFile()) {
+            if (overwrite) {
                 log.debug("Replacing input file with temporary output file.");
                 replaceInputFile(inputFile, outputFile);
             }

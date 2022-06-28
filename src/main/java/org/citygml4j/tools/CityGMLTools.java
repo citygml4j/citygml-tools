@@ -56,7 +56,6 @@ import java.util.stream.Stream;
         mixinStandardHelpOptions = true,
         versionProvider = CityGMLTools.class,
         showAtFileInUsageHelp = true,
-        sortOptions = false,
         subcommands = {
                 CommandLine.HelpCommand.class,
                 FilterLodsCommand.class,

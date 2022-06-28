@@ -114,8 +114,8 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    protected Path getOutputFile(Path file, String suffix, CityGMLOutputOptions options) {
-        return file.resolveSibling(options.isOverwriteInputFile() ?
+    protected Path getOutputFile(Path file, String suffix, boolean overwrite) {
+        return file.resolveSibling(overwrite ?
                 ".tmp_" + UUID.randomUUID() :
                 appendFileNameSuffix(file, suffix));
     }
