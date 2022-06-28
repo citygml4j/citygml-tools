@@ -23,6 +23,10 @@ package org.citygml4j.tools.cli;
 
 import org.citygml4j.cityjson.CityJSONContext;
 import org.citygml4j.cityjson.CityJSONContextException;
+import org.citygml4j.cityjson.model.CityJSONVersion;
+import org.citygml4j.cityjson.writer.CityJSONOutputFactory;
+import org.citygml4j.cityjson.writer.CityJSONWriteException;
+import org.citygml4j.cityjson.writer.CityJSONWriter;
 import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.CityGMLContextException;
@@ -79,20 +83,20 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    protected CityGMLReader createCityGMLReader(CityGMLInputFactory factory, Path file, CityGMLInputOptions options) throws ExecutionException {
+    protected CityGMLReader createCityGMLReader(CityGMLInputFactory in, Path file, CityGMLInputOptions options) throws ExecutionException {
         try {
-            return factory.createCityGMLReader(file, options.getEncoding());
+            return in.createCityGMLReader(file, options.getEncoding());
         } catch (CityGMLReadException e) {
             throw new ExecutionException("Failed to create CityGML reader.", e);
         }
     }
 
-    protected CityGMLReader createFilteredCityGMLReader(CityGMLInputFactory factory, Path file, CityGMLInputOptions options, String... localNames) throws ExecutionException {
-        CityGMLReader reader = createCityGMLReader(factory, file, options);
+    protected CityGMLReader createFilteredCityGMLReader(CityGMLInputFactory in, Path file, CityGMLInputOptions options, String... localNames) throws ExecutionException {
+        CityGMLReader reader = createCityGMLReader(in, file, options);
         if (localNames != null) {
             Set<String> names = new HashSet<>(Arrays.asList(localNames));
-            return factory.createFilteredCityGMLReader(reader, name -> !names.contains(name.getLocalPart())
-                            || !CityGMLModules.isCityGMLNamespace(name.getNamespaceURI()));
+            return in.createFilteredCityGMLReader(reader, name -> !names.contains(name.getLocalPart())
+                    || !CityGMLModules.isCityGMLNamespace(name.getNamespaceURI()));
         } else {
             return reader;
         }
@@ -102,15 +106,27 @@ public abstract class CityGMLTool implements Command {
         return getCityGMLContext().createCityGMLOutputFactory(version);
     }
 
-    protected CityGMLChunkWriter createCityGMLChunkWriter(CityGMLOutputFactory factory, Path file, CityGMLOutputOptions options) throws ExecutionException {
+    protected CityGMLChunkWriter createCityGMLChunkWriter(CityGMLOutputFactory out, Path file, CityGMLOutputOptions options) throws ExecutionException {
         try {
-            return factory.createCityGMLChunkWriter(file, options.getEncoding())
+            return out.createCityGMLChunkWriter(file, options.getEncoding())
                     .withDefaultPrefixes()
                     .withDefaultSchemaLocations()
-                    .withDefaultNamespace(CoreModule.of(factory.getVersion()).getNamespaceURI())
+                    .withDefaultNamespace(CoreModule.of(out.getVersion()).getNamespaceURI())
                     .withIndent(options.isPrettyPrint() ? "  " : null);
         } catch (CityGMLWriteException e) {
             throw new ExecutionException("Failed to create CityGML writer.", e);
+        }
+    }
+
+    protected CityJSONOutputFactory createCityJSONOutputFactory(CityJSONVersion version) throws ExecutionException {
+        return getCityJSONContext().createCityJSONOutputFactory(version);
+    }
+
+    protected CityJSONWriter createCityJSONWriter(CityJSONOutputFactory out, Path file) throws ExecutionException {
+        try {
+            return out.createCityJSONWriter(file);
+        } catch (CityJSONWriteException e) {
+            throw new ExecutionException("Failed to create CityJSON writer.", e);
         }
     }
 
