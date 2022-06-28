@@ -30,7 +30,6 @@ import org.citygml4j.tools.cli.CityGMLTool;
 import org.citygml4j.tools.cli.ExecutionException;
 import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.upgrade.DeprecatedPropertiesProcessor;
-import org.citygml4j.tools.upgrade.UpgradeOptions;
 import org.citygml4j.tools.util.GlobalObjectsReader;
 import org.citygml4j.tools.util.InputFiles;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
@@ -48,8 +47,13 @@ import java.util.List;
         description = "Upgrades CityGML files to version 3.0."
 )
 public class UpgradeCommand extends CityGMLTool {
-    @CommandLine.Mixin
-    UpgradeOptions upgradeOptions;
+    @CommandLine.Option(names = {"-u", "--use-lod4-as-lod3"},
+            description = "Use the LoD4 representation of city objects as LoD3, replacing an existing LoD3.")
+    private boolean useLod4AsLod3;
+
+    @CommandLine.Option(names = {"-m", "--map-lod1-multi-surfaces"},
+            description = "Map LoD1 multi-surface representations of city objects onto generic thematic surfaces.")
+    private boolean mapLod1MultiSurfaces;
 
     @CommandLine.Mixin
     CityGMLInputOptions inputOptions;
@@ -77,7 +81,9 @@ public class UpgradeCommand extends CityGMLTool {
         CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
         CityGMLOutputFactory out = createCityGMLOutputFactory(CityGMLVersion.v3_0);
 
-        DeprecatedPropertiesProcessor processor = DeprecatedPropertiesProcessor.newInstance(upgradeOptions);
+        DeprecatedPropertiesProcessor processor = DeprecatedPropertiesProcessor.newInstance()
+                .useLod4AsLod3(useLod4AsLod3)
+                .mapLod1MultiSurfaces(mapLod1MultiSurfaces);
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
@@ -86,7 +92,7 @@ public class UpgradeCommand extends CityGMLTool {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
             try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions,
-                    upgradeOptions.isUseLod4AsLod3() ? new String[]{"Appearance"} : null)) {
+                    useLod4AsLod3 ? new String[]{"Appearance"} : null)) {
                 FeatureInfo info = null;
                 if (reader.hasNext()) {
                     CityGMLVersion version = CityGMLModules.getCityGMLVersion(reader.getName().getNamespaceURI());
@@ -101,7 +107,7 @@ public class UpgradeCommand extends CityGMLTool {
                     info = reader.getParentInfo();
                 }
 
-                if (upgradeOptions.isUseLod4AsLod3()) {
+                if (useLod4AsLod3) {
                     log.debug("Reading global appearances from input file.");
                     processor.withGlobalAppearances(GlobalObjectsReader.onlyAppearances()
                             .read(inputFile, getCityGMLContext())
@@ -123,7 +129,7 @@ public class UpgradeCommand extends CityGMLTool {
                         writer.writeMember(feature);
                     }
 
-                    if (upgradeOptions.isUseLod4AsLod3()) {
+                    if (useLod4AsLod3) {
                         for (Appearance appearance : processor.getGlobalAppearances()) {
                             writer.writeMember(appearance);
                         }
