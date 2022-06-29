@@ -24,9 +24,9 @@ package org.citygml4j.tools.cli;
 import org.citygml4j.cityjson.CityJSONContext;
 import org.citygml4j.cityjson.CityJSONContextException;
 import org.citygml4j.cityjson.model.CityJSONVersion;
+import org.citygml4j.cityjson.writer.AbstractCityJSONWriter;
 import org.citygml4j.cityjson.writer.CityJSONOutputFactory;
 import org.citygml4j.cityjson.writer.CityJSONWriteException;
-import org.citygml4j.cityjson.writer.CityJSONWriter;
 import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.CityGMLContextException;
@@ -122,9 +122,14 @@ public abstract class CityGMLTool implements Command {
         return getCityJSONContext().createCityJSONOutputFactory(version);
     }
 
-    protected CityJSONWriter createCityJSONWriter(CityJSONOutputFactory out, Path file) throws ExecutionException {
+    protected AbstractCityJSONWriter<?> createCityJSONWriter(CityJSONOutputFactory out, Path file, CityJSONOutputOptions options) throws ExecutionException {
         try {
-            return out.createCityJSONWriter(file);
+            AbstractCityJSONWriter<?> writer = options.isWriteCityJSONFeatures() ?
+                    out.createCityJSONFeatureWriter(file, options.getEncoding()) :
+                    out.createCityJSONWriter(file, options.getEncoding())
+                        .withIndent(options.isPrettyPrint() ? "  " : null);
+
+            return writer.setHtmlSafe(options.isHtmlSafe());
         } catch (CityJSONWriteException e) {
             throw new ExecutionException("Failed to create CityJSON writer.", e);
         }

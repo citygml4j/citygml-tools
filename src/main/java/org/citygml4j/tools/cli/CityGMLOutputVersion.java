@@ -60,7 +60,8 @@ public class CityGMLOutputVersion implements Option {
                     break;
                 default:
                     throw new CommandLine.ParameterException(commandLine,
-                            "Error: The CityGML version must be 3.0, 2.0 or 1.0 but was '" + version + "'");
+                            "Invalid value for option '--citygml-version': expected one of [3.0, 2.0, 1.0] " +
+                                    "but was '" + version + "'");
             }
         }
     }

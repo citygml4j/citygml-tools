@@ -28,6 +28,7 @@ import org.citygml4j.tools.cli.Command;
 import org.citygml4j.tools.cli.ExecutionException;
 import org.citygml4j.tools.cli.Option;
 import org.citygml4j.tools.command.FilterLodsCommand;
+import org.citygml4j.tools.command.ToCityJSONCommand;
 import org.citygml4j.tools.command.UpgradeCommand;
 import org.citygml4j.tools.log.LogLevel;
 import org.citygml4j.tools.log.Logger;
@@ -56,9 +57,11 @@ import java.util.stream.Stream;
         mixinStandardHelpOptions = true,
         versionProvider = CityGMLTools.class,
         showAtFileInUsageHelp = true,
+        sortOptions = false,
         subcommands = {
                 CommandLine.HelpCommand.class,
                 FilterLodsCommand.class,
+                ToCityJSONCommand.class,
                 UpgradeCommand.class
         }
 )

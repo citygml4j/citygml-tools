@@ -29,7 +29,7 @@ public class CityGMLOutputOptions implements Option {
     private String encoding;
 
     @CommandLine.Option(names = "--no-pretty-print", negatable = true, defaultValue = "true",
-            description = "Format and indent output file(s) (default: true).")
+            description = "Format and indent output file(s) (default: ${DEFAULT-VALUE}).")
     private boolean prettyPrint;
 
     public String getEncoding() {

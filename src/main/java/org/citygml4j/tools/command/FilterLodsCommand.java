@@ -64,18 +64,18 @@ public class FilterLodsCommand extends CityGMLTool {
             description = "Keep city objects even if all their LoD representations have been filtered.")
     private boolean keepEmptyObjects;
 
-    @CommandLine.Option(names = {"-O", "--overwrite-input-file"},
+    @CommandLine.Mixin
+    private CityGMLOutputVersion version;
+
+    @CommandLine.Mixin
+    private CityGMLOutputOptions outputOptions;
+
+    @CommandLine.Option(names = {"-O", "--overwrite"},
             description = "Overwrite input file(s).")
     private boolean overwrite;
 
     @CommandLine.Mixin
-    CityGMLInputOptions inputOptions;
-
-    @CommandLine.Mixin
-    CityGMLOutputOptions outputOptions;
-
-    @CommandLine.Mixin
-    CityGMLOutputVersion version;
+    private CityGMLInputOptions inputOptions;
 
     private final Logger log = Logger.getInstance();
     private final String suffix = "__filtered_lods";

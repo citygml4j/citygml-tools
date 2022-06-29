@@ -55,15 +55,15 @@ public class UpgradeCommand extends CityGMLTool {
             description = "Map the LoD1 multi-surface representation of city objects onto generic thematic surfaces.")
     private boolean mapLod1MultiSurfaces;
 
-    @CommandLine.Option(names = {"-O", "--overwrite-input-file"},
+    @CommandLine.Mixin
+    private CityGMLOutputOptions outputOptions;
+
+    @CommandLine.Option(names = {"-O", "--overwrite"},
             description = "Overwrite input file(s).")
     private boolean overwrite;
 
     @CommandLine.Mixin
-    CityGMLInputOptions inputOptions;
-
-    @CommandLine.Mixin
-    CityGMLOutputOptions outputOptions;
+    private CityGMLInputOptions inputOptions;
 
     private final Logger log = Logger.getInstance();
     private final String suffix = "__v3";
