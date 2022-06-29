@@ -23,7 +23,7 @@ package org.citygml4j.tools.cli;
 
 import picocli.CommandLine;
 
-public class CityGMLInputOptions implements Option {
+public class InputOptions implements Option {
     @CommandLine.Parameters(paramLabel = "<file>", arity = "1",
             description = "One or more files and directories to process (glob patterns allowed).")
     private String[] files;
@@ -38,6 +38,10 @@ public class CityGMLInputOptions implements Option {
 
     public String joinFiles() {
         return String.join(", ", files);
+    }
+
+    public boolean isSetEncoding() {
+        return encoding != null;
     }
 
     public String getEncoding() {

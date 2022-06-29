@@ -24,10 +24,10 @@ package org.citygml4j.tools.command;
 import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.core.AbstractFeature;
-import org.citygml4j.tools.cli.CityGMLInputOptions;
 import org.citygml4j.tools.cli.CityGMLOutputOptions;
 import org.citygml4j.tools.cli.CityGMLTool;
 import org.citygml4j.tools.cli.ExecutionException;
+import org.citygml4j.tools.cli.InputOptions;
 import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.upgrade.DeprecatedPropertiesProcessor;
 import org.citygml4j.tools.util.GlobalObjectsReader;
@@ -63,7 +63,7 @@ public class UpgradeCommand extends CityGMLTool {
     private boolean overwrite;
 
     @CommandLine.Mixin
-    private CityGMLInputOptions inputOptions;
+    private InputOptions inputOptions;
 
     private final Logger log = Logger.getInstance();
     private final String suffix = "__v3";

@@ -28,10 +28,10 @@ import org.citygml4j.cityjson.model.metadata.ReferenceSystem;
 import org.citygml4j.cityjson.writer.AbstractCityJSONWriter;
 import org.citygml4j.cityjson.writer.CityJSONOutputFactory;
 import org.citygml4j.cityjson.writer.CityJSONWriteException;
-import org.citygml4j.tools.cli.CityGMLInputOptions;
 import org.citygml4j.tools.cli.CityGMLTool;
 import org.citygml4j.tools.cli.CityJSONOutputOptions;
 import org.citygml4j.tools.cli.ExecutionException;
+import org.citygml4j.tools.cli.InputOptions;
 import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.util.GlobalObjects;
 import org.citygml4j.tools.util.GlobalObjectsReader;
@@ -71,9 +71,9 @@ public class ToCityJSONCommand extends CityGMLTool {
                     "transformation is always applied for CityJSON 1.1.")
     private boolean transformCoordinates;
 
-    @CommandLine.Option(names = {"-r", "--replace-templates"},
-            description = "Replace template geometries with their absolute coordinates.")
-    private boolean replaceTemplates;
+    @CommandLine.Option(names = {"-r", "--replace-implicit-geometries"},
+            description = "Replace implicit geometries with their absolute coordinates.")
+    private boolean replaceImplicitGeometries;
 
     @CommandLine.Option(names = "--no-material-defaults", negatable = true, defaultValue = "true",
             description = "Use CityGML default values for material properties (default: ${DEFAULT-VALUE}).")
@@ -92,7 +92,7 @@ public class ToCityJSONCommand extends CityGMLTool {
     private CityJSONOutputOptions outputOptions;
 
     @CommandLine.Mixin
-    private CityGMLInputOptions inputOptions;
+    private InputOptions inputOptions;
 
     private final Logger log = Logger.getInstance();
 
@@ -116,7 +116,7 @@ public class ToCityJSONCommand extends CityGMLTool {
                 .withTemplatePrecision(templatePrecision)
                 .withTextureVertexPrecision(textureVertexPrecision)
                 .applyTransformation(transformCoordinates)
-                .transformTemplateGeometries(replaceTemplates)
+                .transformTemplateGeometries(replaceImplicitGeometries)
                 .useMaterialDefaults(useMaterialDefaults)
                 .withFallbackTheme(fallbackTheme)
                 .writeGenericAttributeTypes(addGenericAttributeTypes);
@@ -161,19 +161,23 @@ public class ToCityJSONCommand extends CityGMLTool {
     }
 
     private void populateMetadata(Metadata metadata, FeatureInfo info) {
-        Envelope envelope = null;
-        String srsName = null;
+        if (info != null) {
+            if (info.getId() != null) {
+                metadata.setIdentifier(info.getId());
+            }
 
-        if (info != null
-                && info.getBoundedBy() != null
-                && info.getBoundedBy().getEnvelope() != null) {
-            envelope = info.getBoundedBy().getEnvelope();
-            srsName = envelope.getSrsName();
+            if (info.getDescription() != null) {
+                metadata.setTitle(info.getDescription().getValue());
+            }
+
+            if (info.getBoundedBy() != null
+                    && info.getBoundedBy().getEnvelope() != null) {
+                Envelope envelope = info.getBoundedBy().getEnvelope();
+                metadata.setGeographicalExtent(envelope);
+                metadata.setReferenceSystem(epsg > 0 ?
+                        new ReferenceSystem(epsg) :
+                        ReferenceSystem.parse(envelope.getSrsName()));
+            }
         }
-
-        metadata.setGeographicalExtent(envelope);
-        metadata.setReferenceSystem(epsg > 0 ?
-                new ReferenceSystem(epsg) :
-                ReferenceSystem.parse(srsName));
     }
 }

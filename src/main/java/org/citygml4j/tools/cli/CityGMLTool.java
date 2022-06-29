@@ -24,6 +24,9 @@ package org.citygml4j.tools.cli;
 import org.citygml4j.cityjson.CityJSONContext;
 import org.citygml4j.cityjson.CityJSONContextException;
 import org.citygml4j.cityjson.model.CityJSONVersion;
+import org.citygml4j.cityjson.reader.CityJSONInputFactory;
+import org.citygml4j.cityjson.reader.CityJSONReadException;
+import org.citygml4j.cityjson.reader.CityJSONReader;
 import org.citygml4j.cityjson.writer.AbstractCityJSONWriter;
 import org.citygml4j.cityjson.writer.CityJSONOutputFactory;
 import org.citygml4j.cityjson.writer.CityJSONWriteException;
@@ -83,7 +86,7 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    protected CityGMLReader createCityGMLReader(CityGMLInputFactory in, Path file, CityGMLInputOptions options) throws ExecutionException {
+    protected CityGMLReader createCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options) throws ExecutionException {
         try {
             return in.createCityGMLReader(file, options.getEncoding());
         } catch (CityGMLReadException e) {
@@ -91,7 +94,7 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    protected CityGMLReader createFilteredCityGMLReader(CityGMLInputFactory in, Path file, CityGMLInputOptions options, String... localNames) throws ExecutionException {
+    protected CityGMLReader createFilteredCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options, String... localNames) throws ExecutionException {
         CityGMLReader reader = createCityGMLReader(in, file, options);
         if (localNames != null) {
             Set<String> names = new HashSet<>(Arrays.asList(localNames));
@@ -115,6 +118,20 @@ public abstract class CityGMLTool implements Command {
                     .withIndent(options.isPrettyPrint() ? "  " : null);
         } catch (CityGMLWriteException e) {
             throw new ExecutionException("Failed to create CityGML writer.", e);
+        }
+    }
+
+    protected CityJSONInputFactory createCityJSONInputFactory() throws ExecutionException {
+        return getCityJSONContext().createCityJSONInputFactory();
+    }
+
+    protected CityJSONReader createCityJSONReader(CityJSONInputFactory in, Path file, InputOptions options) throws ExecutionException {
+        try {
+            return options.isSetEncoding() ?
+                    in.createCityJSONReader(file, options.getEncoding()) :
+                    in.createCityJSONReader(file);
+        } catch (CityJSONReadException e) {
+            throw new ExecutionException("Failed to create CityJSON reader.", e);
         }
     }
 

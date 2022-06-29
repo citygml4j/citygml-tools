@@ -28,6 +28,7 @@ import org.citygml4j.tools.cli.Command;
 import org.citygml4j.tools.cli.ExecutionException;
 import org.citygml4j.tools.cli.Option;
 import org.citygml4j.tools.command.FilterLodsCommand;
+import org.citygml4j.tools.command.FromCityJSONCommand;
 import org.citygml4j.tools.command.ToCityJSONCommand;
 import org.citygml4j.tools.command.UpgradeCommand;
 import org.citygml4j.tools.log.LogLevel;
@@ -62,6 +63,7 @@ import java.util.stream.Stream;
                 CommandLine.HelpCommand.class,
                 FilterLodsCommand.class,
                 ToCityJSONCommand.class,
+                FromCityJSONCommand.class,
                 UpgradeCommand.class
         }
 )

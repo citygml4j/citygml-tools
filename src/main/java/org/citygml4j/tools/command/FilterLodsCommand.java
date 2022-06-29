@@ -75,7 +75,7 @@ public class FilterLodsCommand extends CityGMLTool {
     private boolean overwrite;
 
     @CommandLine.Mixin
-    private CityGMLInputOptions inputOptions;
+    private InputOptions inputOptions;
 
     private final Logger log = Logger.getInstance();
     private final String suffix = "__filtered_lods";

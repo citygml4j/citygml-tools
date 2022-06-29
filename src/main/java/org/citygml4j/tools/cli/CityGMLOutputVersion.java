@@ -30,23 +30,14 @@ public class CityGMLOutputVersion implements Option {
                     "The default is to use the CityGML version of the input file.")
     private String version;
 
+    private CityGMLVersion versionOption;
+
     public boolean isSetVersion() {
-        return version != null;
+        return versionOption != null;
     }
 
     public CityGMLVersion getVersion() {
-        if (version != null) {
-            switch (version) {
-                case "1.0":
-                case "1":
-                    return CityGMLVersion.v1_0;
-                case "2.0":
-                case "2":
-                    return CityGMLVersion.v2_0;
-            }
-        }
-
-        return CityGMLVersion.v3_0;
+        return versionOption != null ? versionOption : CityGMLVersion.v3_0;
     }
 
     @Override
@@ -54,9 +45,13 @@ public class CityGMLOutputVersion implements Option {
         if (version != null) {
             switch (version) {
                 case "1.0":
-                case "1":
+                    versionOption = CityGMLVersion.v1_0;
+                    break;
                 case "2.0":
-                case "2":
+                    versionOption = CityGMLVersion.v2_0;
+                    break;
+                case "3.0":
+                    versionOption = CityGMLVersion.v3_0;
                     break;
                 default:
                     throw new CommandLine.ParameterException(commandLine,

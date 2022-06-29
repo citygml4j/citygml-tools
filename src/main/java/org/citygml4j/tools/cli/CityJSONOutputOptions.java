@@ -47,8 +47,11 @@ public class CityJSONOutputOptions implements Option {
             description = "Write JSON that is safe to embed into HTML.")
     private boolean htmlSafe;
 
+    private CityJSONVersion versionOption;
+    private OutputEncoding encodingOption;
+
     public CityJSONVersion getVersion() {
-        return "1.0".equals(version) ? CityJSONVersion.v1_0 : CityJSONVersion.v1_1;
+        return versionOption;
     }
 
     public boolean isWriteCityJSONFeatures() {
@@ -56,16 +59,7 @@ public class CityJSONOutputOptions implements Option {
     }
 
     public OutputEncoding getEncoding() {
-        switch (encoding.toUpperCase()) {
-            case "UTF-16":
-            case "UTF16":
-                return OutputEncoding.UTF16_LE;
-            case "UTF-32":
-            case "UTF32":
-                return OutputEncoding.UTF32_LE;
-            default:
-                return OutputEncoding.UTF8;
-        }
+        return encodingOption;
     }
 
     public boolean isPrettyPrint() {
@@ -80,7 +74,10 @@ public class CityJSONOutputOptions implements Option {
     public void preprocess(CommandLine commandLine) {
         switch (version) {
             case "1.0":
+                versionOption = CityJSONVersion.v1_0;
+                break;
             case "1.1":
+                versionOption = CityJSONVersion.v1_1;
                 break;
             default:
                 throw new CommandLine.ParameterException(commandLine,
@@ -100,11 +97,13 @@ public class CityJSONOutputOptions implements Option {
 
         switch (encoding.toUpperCase()) {
             case "UTF-8":
-            case "UTF8":
+                encodingOption = OutputEncoding.UTF8;
+                break;
             case "UTF-16":
-            case "UTF16":
+                encodingOption = OutputEncoding.UTF16_LE;
+                break;
             case "UTF-32":
-            case "UTF32":
+                encodingOption = OutputEncoding.UTF32_LE;
                 break;
             default:
                 throw new CommandLine.ParameterException(commandLine,
