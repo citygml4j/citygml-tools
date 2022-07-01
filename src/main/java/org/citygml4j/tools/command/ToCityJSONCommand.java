@@ -29,7 +29,6 @@ import org.citygml4j.cityjson.writer.AbstractCityJSONWriter;
 import org.citygml4j.cityjson.writer.CityJSONOutputFactory;
 import org.citygml4j.cityjson.writer.CityJSONWriteException;
 import org.citygml4j.tools.ExecutionException;
-import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityJSONOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.util.InputFiles;
@@ -92,8 +91,6 @@ public class ToCityJSONCommand extends CityGMLTool {
 
     @CommandLine.Mixin
     private InputOptions inputOptions;
-
-    private final Logger log = Logger.getInstance();
 
     @Override
     public Integer call() throws ExecutionException {

@@ -28,7 +28,6 @@ import org.citygml4j.cityjson.reader.CityJSONReader;
 import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.core.model.core.CityModel;
 import org.citygml4j.tools.ExecutionException;
-import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.util.InputFiles;
@@ -86,7 +85,6 @@ public class FromCityJSONCommand extends CityGMLTool {
     @CommandLine.Mixin
     InputOptions inputOptions;
 
-    private final Logger log = Logger.getInstance();
     private CityGMLVersion versionOption;
 
     @Override

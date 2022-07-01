@@ -29,10 +29,10 @@ import org.citygml4j.core.model.appearance.X3DMaterial;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.visitor.ObjectWalker;
 import org.citygml4j.tools.ExecutionException;
-import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
+import org.citygml4j.tools.option.OverwriteInputOption;
 import org.citygml4j.tools.util.InputFiles;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.reader.*;
@@ -72,14 +72,12 @@ public class RemoveAppsCommand extends CityGMLTool {
     @CommandLine.Mixin
     private CityGMLOutputOptions outputOptions;
 
-    @CommandLine.Option(names = {"-O", "--overwrite"},
-            description = "Overwrite input file(s).")
-    private boolean overwrite;
+    @CommandLine.Mixin
+    OverwriteInputOption overwriteOption;
 
     @CommandLine.Mixin
     private InputOptions inputOptions;
 
-    private final Logger log = Logger.getInstance();
     private final String suffix = "__removed_apps";
     private final String nullTheme = "null";
 
@@ -104,7 +102,7 @@ public class RemoveAppsCommand extends CityGMLTool {
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
-            Path outputFile = getOutputFile(inputFile, suffix, overwrite);
+            Path outputFile = getOutputFile(inputFile, suffix, overwriteOption.isOverwrite());
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
@@ -122,7 +120,7 @@ public class RemoveAppsCommand extends CityGMLTool {
                     info = reader.getParentInfo();
                 }
 
-                if (overwrite) {
+                if (overwriteOption.isOverwrite()) {
                     log.debug("Writing temporary output file " + outputFile.toAbsolutePath() + ".");
                 } else {
                     log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
@@ -156,7 +154,7 @@ public class RemoveAppsCommand extends CityGMLTool {
                 remover.reset();
             }
 
-            if (overwrite) {
+            if (overwriteOption.isOverwrite()) {
                 log.debug("Replacing input file with temporary output file.");
                 replaceInputFile(inputFile, outputFile);
             }

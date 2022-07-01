@@ -25,9 +25,9 @@ import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.tools.ExecutionException;
-import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
+import org.citygml4j.tools.option.OverwriteInputOption;
 import org.citygml4j.tools.util.DeprecatedPropertiesProcessor;
 import org.citygml4j.tools.util.InputFiles;
 import org.citygml4j.tools.util.reader.GlobalObjectsReader;
@@ -57,14 +57,12 @@ public class UpgradeCommand extends CityGMLTool {
     @CommandLine.Mixin
     private CityGMLOutputOptions outputOptions;
 
-    @CommandLine.Option(names = {"-O", "--overwrite"},
-            description = "Overwrite input file(s).")
-    private boolean overwrite;
+    @CommandLine.Mixin
+    OverwriteInputOption overwriteOption;
 
     @CommandLine.Mixin
     private InputOptions inputOptions;
 
-    private final Logger log = Logger.getInstance();
     private final String suffix = "__v3";
 
     @Override
@@ -90,7 +88,7 @@ public class UpgradeCommand extends CityGMLTool {
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
-            Path outputFile = getOutputFile(inputFile, suffix, overwrite);
+            Path outputFile = getOutputFile(inputFile, suffix, overwriteOption.isOverwrite());
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
@@ -117,7 +115,7 @@ public class UpgradeCommand extends CityGMLTool {
                             .getAppearances());
                 }
 
-                if (overwrite) {
+                if (overwriteOption.isOverwrite()) {
                     log.debug("Writing temporary output file " + outputFile.toAbsolutePath() + ".");
                 } else {
                     log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
@@ -144,7 +142,7 @@ public class UpgradeCommand extends CityGMLTool {
                 throw new ExecutionException("Failed to write file " + outputFile.toAbsolutePath() + ".", e);
             }
 
-            if (overwrite) {
+            if (overwriteOption.isOverwrite()) {
                 log.debug("Replacing input file with temporary output file.");
                 replaceInputFile(inputFile, outputFile);
             }
