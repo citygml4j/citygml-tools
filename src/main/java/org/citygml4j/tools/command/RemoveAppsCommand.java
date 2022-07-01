@@ -66,10 +66,6 @@ public class RemoveAppsCommand extends CityGMLTool {
             description = "Just remove materials.")
     private boolean onlyMaterials;
 
-    @CommandLine.Option(names = "--only-global",
-            description = "Just remove global appearances.")
-    private boolean onlyGlobal;
-
     @CommandLine.Mixin
     private CityGMLOutputVersion version;
 
@@ -112,7 +108,7 @@ public class RemoveAppsCommand extends CityGMLTool {
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions, "Appearance")) {
+            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions)) {
                 FeatureInfo info = null;
                 if (reader.hasNext()) {
                     if (!version.isSetVersion()) {
@@ -134,8 +130,6 @@ public class RemoveAppsCommand extends CityGMLTool {
 
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(info)) {
-                    Map<String, Integer> counter = new TreeMap<>();
-
                     String themes = this.themes != null ? " with theme(s) " + this.themes.stream()
                             .map(theme -> "'" + theme + "'")
                             .collect(Collectors.joining(", ")) : "";
@@ -143,23 +137,13 @@ public class RemoveAppsCommand extends CityGMLTool {
 
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
-
-                        if (feature instanceof Appearance) {
-                            if (!shouldRemove((Appearance) feature, counter)) {
-                                writer.writeMember(feature);
-                            }
-                        } else {
-                            if (!onlyGlobal) {
-                                remover.process(feature, counter);
-                            }
-
+                        if (remover.removeAppearance(feature)) {
                             writer.writeMember(feature);
                         }
-
                     }
 
-                    if (!counter.isEmpty()) {
-                        counter.forEach((key, value) -> log.debug("Removed " + key + " element(s): " + value));
+                    if (!remover.getCounter().isEmpty()) {
+                        remover.getCounter().forEach((key, value) -> log.debug("Removed " + key + " element(s): " + value));
                     } else {
                         log.debug("No appearance elements removed based on input parameters.");
                     }
@@ -168,6 +152,8 @@ public class RemoveAppsCommand extends CityGMLTool {
                 throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
             } catch (CityGMLWriteException e) {
                 throw new ExecutionException("Failed to write file " + outputFile.toAbsolutePath() + ".", e);
+            } finally {
+                remover.reset();
             }
 
             if (overwrite) {
@@ -179,40 +165,8 @@ public class RemoveAppsCommand extends CityGMLTool {
         return 0;
     }
 
-    private boolean shouldRemove(Appearance appearance, Map<String, Integer> counter) {
-        if (themes == null
-                || (appearance.getTheme() == null && themes.contains(nullTheme))
-                || themes.contains(appearance.getTheme())) {
-            if (!onlyTextures && !onlyMaterials) {
-                count(appearance, counter);
-                return true;
-            }
-
-            Class<?> target = onlyMaterials ? X3DMaterial.class : AbstractTexture.class;
-            List<AbstractSurfaceDataProperty> deleteList = new ArrayList<>();
-            appearance.getSurfaceData().stream()
-                    .filter(property -> target.isInstance(property.getObject()))
-                    .forEach(property -> {
-                        count(property.getObject(), counter);
-                        deleteList.add(property);
-                    });
-
-            appearance.getSurfaceData().removeAll(deleteList);
-            if (!appearance.isSetSurfaceData()) {
-                count(appearance, counter);
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private void count(Object object, Map<String, Integer> counter) {
-        counter.merge(object.getClass().getSimpleName(), 1, Integer::sum);
-    }
-
     @Override
-    public void preprocess(CommandLine commandLine) throws Exception {
+    public void preprocess(CommandLine commandLine) {
         if (onlyTextures && onlyMaterials) {
             throw new CommandLine.ParameterException(commandLine,
                     "Error: --only-textures and --only-materials are mutually exclusive (specify only one)");
@@ -220,22 +174,69 @@ public class RemoveAppsCommand extends CityGMLTool {
     }
 
     private class AppearanceRemover extends ObjectWalker {
-        private Map<String, Integer> counter;
+        private final Map<String, Integer> counter = new TreeMap<>();
+        private boolean keep;
 
-        void process(AbstractFeature feature, Map<String, Integer> counter) {
-            this.counter = counter;
+        private boolean removeAppearance(AbstractFeature feature) {
+            keep = true;
             feature.accept(this);
+            return !(feature instanceof Appearance) || keep;
         }
 
         @Override
         public void visit(Appearance appearance) {
-            if (shouldRemove(appearance, counter)) {
+            if (shouldRemove(appearance)) {
                 Child property = appearance.getParent();
-                Child parent = property.getParent();
-                if (parent instanceof GMLObject) {
-                    ((GMLObject) parent).unsetProperty(property, true);
+                if (property == null) {
+                    keep = false;
+                } else {
+                    Child parent = property.getParent();
+                    if (parent instanceof GMLObject) {
+                        ((GMLObject) parent).unsetProperty(property, true);
+                    }
                 }
             }
+        }
+
+        private boolean shouldRemove(Appearance appearance) {
+            if (themes == null
+                    || (appearance.getTheme() == null && themes.contains(nullTheme))
+                    || themes.contains(appearance.getTheme())) {
+                if (!onlyTextures && !onlyMaterials) {
+                    count(appearance, counter);
+                    return true;
+                }
+
+                Class<?> target = onlyMaterials ? X3DMaterial.class : AbstractTexture.class;
+                List<AbstractSurfaceDataProperty> deleteList = new ArrayList<>();
+                appearance.getSurfaceData().stream()
+                        .filter(property -> target.isInstance(property.getObject()))
+                        .forEach(property -> {
+                            count(property.getObject(), counter);
+                            deleteList.add(property);
+                        });
+
+                appearance.getSurfaceData().removeAll(deleteList);
+                if (!appearance.isSetSurfaceData()) {
+                    count(appearance, counter);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void count(Object object, Map<String, Integer> counter) {
+            counter.merge(object.getClass().getSimpleName(), 1, Integer::sum);
+        }
+
+        public Map<String, Integer> getCounter() {
+            return counter;
+        }
+
+        @Override
+        public void reset() {
+            counter.clear();
         }
     }
 }
