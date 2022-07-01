@@ -56,9 +56,10 @@ import java.util.stream.Stream;
         sortOptions = false,
         subcommands = {
                 CommandLine.HelpCommand.class,
+                RemoveAppsCommand.class,
                 FilterLodsCommand.class,
-                ToCityJSONCommand.class,
                 FromCityJSONCommand.class,
+                ToCityJSONCommand.class,
                 UpgradeCommand.class
         }
 )
