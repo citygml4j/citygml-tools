@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.upgrade;
+package org.citygml4j.tools.util;
 
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.bridge.*;
@@ -66,10 +66,9 @@ import org.citygml4j.core.model.vegetation.PlantCover;
 import org.citygml4j.core.model.vegetation.SolitaryVegetationObject;
 import org.citygml4j.core.model.waterbody.WaterBody;
 import org.citygml4j.core.visitor.ObjectWalker;
-import org.citygml4j.tools.lodfilter.LodFilter;
-import org.citygml4j.tools.lodfilter.LodFilterMode;
 import org.citygml4j.tools.log.Logger;
-import org.citygml4j.tools.util.CityObjects;
+import org.citygml4j.tools.util.lod.LodFilter;
+import org.citygml4j.tools.util.lod.LodFilterMode;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.GeometryProperty;
 import org.xmlobjects.gml.model.geometry.aggregates.MultiSolidProperty;

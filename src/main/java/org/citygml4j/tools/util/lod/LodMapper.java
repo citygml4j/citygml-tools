@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.util;
+package org.citygml4j.tools.util.lod;
 
 import org.citygml4j.cityjson.util.lod.DefaultLodMapper;
 

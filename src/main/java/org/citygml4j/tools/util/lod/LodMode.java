@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.util;
+package org.citygml4j.tools.util.lod;
 
 public enum LodMode {
     MAXIMUM,
