@@ -19,25 +19,24 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.cli;
+package org.citygml4j.tools.option;
 
-public class ExecutionException extends Exception {
-    private static final long serialVersionUID = -9007888613867236096L;
+import picocli.CommandLine;
 
-    public ExecutionException() {
-        super();
+public class CityGMLOutputOptions implements Option {
+    @CommandLine.Option(names = "--output-encoding", defaultValue = "UTF-8",
+            description = "Encoding to use for output file(s) (default: ${DEFAULT-VALUE}).")
+    private String encoding;
+
+    @CommandLine.Option(names = "--no-pretty-print", negatable = true, defaultValue = "true",
+            description = "Format and indent output file(s) (default: ${DEFAULT-VALUE}).")
+    private boolean prettyPrint;
+
+    public String getEncoding() {
+        return encoding;
     }
 
-    public ExecutionException(String message) {
-        super(message);
+    public boolean isPrettyPrint() {
+        return prettyPrint;
     }
-
-    public ExecutionException(Throwable cause) {
-        super(cause);
-    }
-
-    public ExecutionException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
 }

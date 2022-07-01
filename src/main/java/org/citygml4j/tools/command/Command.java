@@ -19,24 +19,15 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.cli;
+package org.citygml4j.tools.command;
 
+import org.citygml4j.tools.ExecutionException;
 import picocli.CommandLine;
 
-public class CityGMLOutputOptions implements Option {
-    @CommandLine.Option(names = "--output-encoding", defaultValue = "UTF-8",
-            description = "Encoding to use for output file(s) (default: ${DEFAULT-VALUE}).")
-    private String encoding;
+import java.util.concurrent.Callable;
 
-    @CommandLine.Option(names = "--no-pretty-print", negatable = true, defaultValue = "true",
-            description = "Format and indent output file(s) (default: ${DEFAULT-VALUE}).")
-    private boolean prettyPrint;
-
-    public String getEncoding() {
-        return encoding;
-    }
-
-    public boolean isPrettyPrint() {
-        return prettyPrint;
-    }
+public interface Command extends Callable<Integer> {
+    @Override
+    Integer call() throws ExecutionException;
+    default void preprocess(CommandLine commandLine) throws Exception {}
 }

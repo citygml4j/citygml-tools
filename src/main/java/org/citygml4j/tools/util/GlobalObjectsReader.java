@@ -24,7 +24,7 @@ package org.citygml4j.tools.util;
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.ImplicitGeometry;
-import org.citygml4j.tools.cli.ExecutionException;
+import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.reader.ChunkOptions;

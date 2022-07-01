@@ -19,14 +19,25 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.cli;
+package org.citygml4j.tools;
 
-import picocli.CommandLine;
+public class ExecutionException extends Exception {
+    private static final long serialVersionUID = -9007888613867236096L;
 
-import java.util.concurrent.Callable;
+    public ExecutionException() {
+        super();
+    }
 
-public interface Command extends Callable<Integer> {
-    @Override
-    Integer call() throws ExecutionException;
-    default void preprocess(CommandLine commandLine) throws Exception {}
+    public ExecutionException(String message) {
+        super(message);
+    }
+
+    public ExecutionException(Throwable cause) {
+        super(cause);
+    }
+
+    public ExecutionException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
 }

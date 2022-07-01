@@ -22,7 +22,7 @@
 package org.citygml4j.tools.util;
 
 import org.citygml4j.tools.CityGMLTools;
-import org.citygml4j.tools.cli.ExecutionException;
+import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.log.Logger;
 
 import java.io.File;

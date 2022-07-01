@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.cli;
+package org.citygml4j.tools.command;
 
 import org.citygml4j.cityjson.CityJSONContext;
 import org.citygml4j.cityjson.CityJSONContextException;
@@ -31,6 +31,10 @@ import org.citygml4j.cityjson.writer.AbstractCityJSONWriter;
 import org.citygml4j.cityjson.writer.CityJSONOutputFactory;
 import org.citygml4j.cityjson.writer.CityJSONWriteException;
 import org.citygml4j.core.model.CityGMLVersion;
+import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.option.CityGMLOutputOptions;
+import org.citygml4j.tools.option.CityJSONOutputOptions;
+import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.CityGMLContextException;
 import org.citygml4j.xml.module.citygml.CityGMLModules;

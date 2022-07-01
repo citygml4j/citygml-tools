@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.cli;
+package org.citygml4j.tools.option;
 
 import org.citygml4j.cityjson.model.CityJSONVersion;
 import org.citygml4j.cityjson.writer.OutputEncoding;
