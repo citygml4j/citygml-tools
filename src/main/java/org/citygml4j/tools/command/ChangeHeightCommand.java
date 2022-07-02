@@ -117,7 +117,7 @@ public class ChangeHeightCommand extends CityGMLTool {
 
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(getFeatureInfo(reader))) {
-                    log.debug("Reading city objects and changing height values appearances.");
+                    log.debug("Reading city objects and changing their height values.");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
 
