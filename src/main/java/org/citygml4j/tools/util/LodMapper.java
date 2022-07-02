@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.util.lod;
+package org.citygml4j.tools.util;
 
 import org.citygml4j.cityjson.util.lod.DefaultLodMapper;
 
@@ -31,8 +31,18 @@ public class LodMapper implements org.citygml4j.cityjson.util.lod.LodMapper {
     private Map<Integer, Double> mappings;
     private Set<Double> lods;
 
-    public LodMapper withMode(LodMode mode) {
-        lodMapper.withMappingStrategy(mode == LodMode.MINIMUM ?
+    public enum Mode {
+        MAXIMUM,
+        MINIMUM;
+
+        @Override
+        public String toString() {
+            return name().toLowerCase();
+        }
+    }
+
+    public LodMapper withMode(Mode mode) {
+        lodMapper.withMappingStrategy(mode == Mode.MINIMUM ?
                 DefaultLodMapper.Strategy.MINIMUM_LOD :
                 DefaultLodMapper.Strategy.MAXIMUM_LOD);
         return this;

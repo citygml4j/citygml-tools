@@ -31,8 +31,7 @@ import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.util.InputFiles;
-import org.citygml4j.tools.util.lod.LodMapper;
-import org.citygml4j.tools.util.lod.LodMode;
+import org.citygml4j.tools.util.LodMapper;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
@@ -67,7 +66,7 @@ public class FromCityJSONCommand extends CityGMLTool {
             description = "Default mode for selecting a CityJSON LoD formatted as X.Y if a city object " +
                     "has multiple CityJSON LoDs for the same CityGML LoD: ${COMPLETION-CANDIDATES} " +
                     "(default: ${DEFAULT-VALUE}).")
-    private LodMode mode;
+    private LodMapper.Mode mode;
 
     @CommandLine.Option(names = {"-l", "--lod-mapping"}, split = ",", paramLabel = "<lod=x.y>",
             description = "CityJSON LoD formatted as X.Y to use for the corresponding CityGML LoD " +

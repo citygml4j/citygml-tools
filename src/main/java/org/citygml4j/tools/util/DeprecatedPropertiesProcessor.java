@@ -67,8 +67,6 @@ import org.citygml4j.core.model.vegetation.SolitaryVegetationObject;
 import org.citygml4j.core.model.waterbody.WaterBody;
 import org.citygml4j.core.visitor.ObjectWalker;
 import org.citygml4j.tools.log.Logger;
-import org.citygml4j.tools.util.lod.LodFilter;
-import org.citygml4j.tools.util.lod.LodFilterMode;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.GeometryProperty;
 import org.xmlobjects.gml.model.geometry.aggregates.MultiSolidProperty;
@@ -93,7 +91,7 @@ public class DeprecatedPropertiesProcessor {
 
     public static DeprecatedPropertiesProcessor newInstance() {
         return new DeprecatedPropertiesProcessor(LodFilter.newInstance()
-                .withMode(LodFilterMode.REMOVE)
+                .withMode(LodFilter.Mode.REMOVE)
                 .keepEmptyObjects(false)
                 .collectRemovedFeatureIds(false));
     }

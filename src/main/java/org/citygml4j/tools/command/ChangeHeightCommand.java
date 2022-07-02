@@ -21,13 +21,16 @@
 
 package org.citygml4j.tools.command;
 
+import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.core.AbstractFeature;
+import org.citygml4j.core.util.reference.DefaultReferenceResolver;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOption;
-import org.citygml4j.tools.util.AppearanceRemover;
+import org.citygml4j.tools.util.GlobalObjectsReader;
+import org.citygml4j.tools.util.HeightChanger;
 import org.citygml4j.tools.util.InputFiles;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
@@ -36,28 +39,25 @@ import org.citygml4j.xml.reader.CityGMLReader;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
+import org.xmlobjects.gml.util.reference.ReferenceResolver;
+import org.xmlobjects.gml.visitor.Visitable;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-@CommandLine.Command(name = "remove-apps",
-        description = "Removes appearances from city objects.")
-public class RemoveAppsCommand extends CityGMLTool {
-    @CommandLine.Option(names = {"-t", "--theme"}, paramLabel = "<name>", split = ",",
-            description = "Only remove appearances of the given theme(s). Use '" + AppearanceRemover.NULL_THEME +
-                    "' to remove appearances without a theme attribute.")
-    private Set<String> themes;
+@CommandLine.Command(name = "change-height",
+        description = "Changes the height values of city objects by a given offset.")
+public class ChangeHeightCommand extends CityGMLTool {
+    @CommandLine.Option(names = {"-o", "--offset"}, paramLabel = "<double>", required = true,
+            description = "Offset to add to height values.")
+    private double offset;
 
-    @CommandLine.Option(names = "--only-textures",
-            description = "Just remove textures.")
-    private boolean onlyTextures;
-
-    @CommandLine.Option(names = "--only-materials",
-            description = "Just remove materials.")
-    private boolean onlyMaterials;
+    @CommandLine.Option(names = {"-m", "--mode"}, defaultValue = "relative",
+            description = "Height mode: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
+    private HeightChanger.Mode mode;
 
     @CommandLine.Mixin
     private CityGMLOutputVersion version;
@@ -71,7 +71,7 @@ public class RemoveAppsCommand extends CityGMLTool {
     @CommandLine.Mixin
     private InputOptions inputOptions;
 
-    private final String suffix = "__removed_apps";
+    private final String suffix = "__changed_height";
 
     @Override
     public Integer call() throws ExecutionException {
@@ -90,16 +90,19 @@ public class RemoveAppsCommand extends CityGMLTool {
         CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
         CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
 
-        AppearanceRemover remover = AppearanceRemover.newInstance()
-                .withThemes(themes)
-                .onlyTextures(onlyTextures)
-                .onlyMaterials(onlyMaterials);
+        HeightChanger heightChanger = HeightChanger.of(offset).withMode(mode);
+        ReferenceResolver resolver = DefaultReferenceResolver.newInstance();
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
             Path outputFile = getOutputFile(inputFile, suffix, overwriteOption.isOverwrite());
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
+
+            log.debug("Reading implicit geometries from input file.");
+            Deque<Visitable> resolveScope = new ArrayDeque<>(GlobalObjectsReader.onlyImplicitGeometries()
+                    .read(inputFile, getCityGMLContext())
+                    .getImplicitGeometries());
 
             try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions)) {
                 if (!version.isSetVersion()) {
@@ -114,30 +117,25 @@ public class RemoveAppsCommand extends CityGMLTool {
 
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(getFeatureInfo(reader))) {
-                    String themes = this.themes != null ? " with theme(s) " + this.themes.stream()
-                            .map(theme -> "'" + theme + "'")
-                            .collect(Collectors.joining(", ")) : "";
-                    log.debug("Reading city objects and removing appearances" + themes + ".");
-
+                    log.debug("Reading city objects and changing height values appearances.");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
-                        if (remover.removeAppearance(feature)) {
-                            writer.writeMember(feature);
-                        }
-                    }
 
-                    if (!remover.getCounter().isEmpty()) {
-                        remover.getCounter().forEach((key, value) -> log.debug("Removed " + key + " element(s): " + value));
-                    } else {
-                        log.debug("No appearance elements removed based on input parameters.");
+                        if (!(feature instanceof Appearance)) {
+                            resolveScope.push(feature);
+                            resolver.resolveReferences(resolveScope);
+                            resolveScope.pop();
+
+                            heightChanger.changeHeight(feature);
+                        }
+
+                        writer.writeMember(feature);
                     }
                 }
             } catch (CityGMLReadException e) {
                 throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
             } catch (CityGMLWriteException e) {
                 throw new ExecutionException("Failed to write file " + outputFile.toAbsolutePath() + ".", e);
-            } finally {
-                remover.reset();
             }
 
             if (overwriteOption.isOverwrite()) {
@@ -147,13 +145,5 @@ public class RemoveAppsCommand extends CityGMLTool {
         }
 
         return 0;
-    }
-
-    @Override
-    public void preprocess(CommandLine commandLine) {
-        if (onlyTextures && onlyMaterials) {
-            throw new CommandLine.ParameterException(commandLine,
-                    "Error: --only-textures and --only-materials are mutually exclusive (specify only one)");
-        }
     }
 }

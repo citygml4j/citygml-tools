@@ -56,6 +56,7 @@ import java.util.stream.Stream;
         sortOptions = false,
         subcommands = {
                 CommandLine.HelpCommand.class,
+                ChangeHeightCommand.class,
                 RemoveAppsCommand.class,
                 FilterLodsCommand.class,
                 FromCityJSONCommand.class,
@@ -64,7 +65,7 @@ import java.util.stream.Stream;
         }
 )
 public class CityGMLTools implements Command, CommandLine.IVersionProvider {
-    @CommandLine.Option(names = "--log-level", scope = CommandLine.ScopeType.INHERIT, paramLabel = "<level>",
+    @CommandLine.Option(names = {"-L", "--log-level"}, scope = CommandLine.ScopeType.INHERIT, paramLabel = "<level>",
             defaultValue = "info", description = "Log level: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
     private LogLevel logLevel;
 

@@ -21,7 +21,6 @@
 
 package org.citygml4j.tools.command;
 
-import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.AbstractFeature;
@@ -31,12 +30,13 @@ import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOption;
 import org.citygml4j.tools.util.CityObjects;
+import org.citygml4j.tools.util.GlobalObjectsReader;
 import org.citygml4j.tools.util.InputFiles;
-import org.citygml4j.tools.util.lod.LodFilter;
-import org.citygml4j.tools.util.lod.LodFilterMode;
-import org.citygml4j.tools.util.reader.GlobalObjectsReader;
-import org.citygml4j.xml.module.citygml.CityGMLModules;
-import org.citygml4j.xml.reader.*;
+import org.citygml4j.tools.util.LodFilter;
+import org.citygml4j.xml.reader.ChunkOptions;
+import org.citygml4j.xml.reader.CityGMLInputFactory;
+import org.citygml4j.xml.reader.CityGMLReadException;
+import org.citygml4j.xml.reader.CityGMLReader;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
@@ -61,7 +61,7 @@ public class FilterLodsCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-m", "--mode"}, defaultValue = "keep",
             description = "Filter mode: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}). The matching " +
                     "minimum or maximum LoD is determined per top-level object.")
-    private LodFilterMode mode;
+    private LodFilter.Mode mode;
 
     @CommandLine.Option(names = {"-k", "--keep-empty-objects"},
             description = "Keep city objects even if all their LoD representations have been filtered.")
@@ -116,17 +116,8 @@ public class FilterLodsCommand extends CityGMLTool {
                     .keepEmptyObjects(keepEmptyObjects);
 
             try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions, "Appearance")) {
-                FeatureInfo info = null;
-                if (reader.hasNext()) {
-                    if (!version.isSetVersion()) {
-                        CityGMLVersion version = CityGMLModules.getCityGMLVersion(reader.getName().getNamespaceURI());
-                        if (version != null) {
-                            log.debug("Using CityGML " + version + " for the output file.");
-                            out.withCityGMLVersion(version);
-                        }
-                    }
-
-                    info = reader.getParentInfo();
+                if (!version.isSetVersion()) {
+                    setCityGMLVersion(reader, out);
                 }
 
                 if (overwriteOption.isOverwrite()) {
@@ -136,7 +127,7 @@ public class FilterLodsCommand extends CityGMLTool {
                 }
 
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
-                        .withCityModelInfo(info)) {
+                        .withCityModelInfo(getFeatureInfo(reader))) {
                     log.debug("Reading city objects and filtering LoD representations.");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();

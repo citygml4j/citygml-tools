@@ -29,10 +29,13 @@ import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOption;
 import org.citygml4j.tools.util.DeprecatedPropertiesProcessor;
+import org.citygml4j.tools.util.GlobalObjectsReader;
 import org.citygml4j.tools.util.InputFiles;
-import org.citygml4j.tools.util.reader.GlobalObjectsReader;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
-import org.citygml4j.xml.reader.*;
+import org.citygml4j.xml.reader.ChunkOptions;
+import org.citygml4j.xml.reader.CityGMLInputFactory;
+import org.citygml4j.xml.reader.CityGMLReadException;
+import org.citygml4j.xml.reader.CityGMLReader;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
@@ -94,7 +97,6 @@ public class UpgradeCommand extends CityGMLTool {
 
             try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions,
                     useLod4AsLod3 ? new String[]{"Appearance"} : null)) {
-                FeatureInfo info = null;
                 if (reader.hasNext()) {
                     CityGMLVersion version = CityGMLModules.getCityGMLVersion(reader.getName().getNamespaceURI());
                     if (version == CityGMLVersion.v3_0) {
@@ -104,8 +106,6 @@ public class UpgradeCommand extends CityGMLTool {
                         log.error("Failed to detect CityGML version. Skipping file.");
                         continue;
                     }
-
-                    info = reader.getParentInfo();
                 }
 
                 if (useLod4AsLod3) {
@@ -122,7 +122,7 @@ public class UpgradeCommand extends CityGMLTool {
                 }
 
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
-                        .withCityModelInfo(info)) {
+                        .withCityModelInfo(getFeatureInfo(reader))) {
                     log.debug("Reading city objects and upgrading them to CityGML 3.0.");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();

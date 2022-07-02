@@ -19,13 +19,12 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.util.lod;
+package org.citygml4j.tools.util;
 
 import org.citygml4j.core.model.appearance.*;
 import org.citygml4j.core.model.common.GeometryInfo;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.visitor.ObjectWalker;
-import org.citygml4j.tools.util.CityObjects;
 import org.xmlobjects.gml.model.GMLObject;
 import org.xmlobjects.gml.model.base.AbstractProperty;
 import org.xmlobjects.gml.model.feature.FeatureProperty;
@@ -40,10 +39,22 @@ public class LodFilter {
     private final boolean[] lods = {false, false, false, false, false};
     private final Set<String> removedFeatureIds = new HashSet<>();
 
-    private LodFilterMode mode = LodFilterMode.KEEP;
+    private Mode mode = Mode.KEEP;
     private Collection<Appearance> globalAppearances;
     private boolean keepEmptyObjects;
     private boolean collectRemovedFeatureIds = true;
+
+    public enum Mode {
+        KEEP,
+        REMOVE,
+        MINIMUM,
+        MAXIMUM;
+
+        @Override
+        public String toString() {
+            return name().toLowerCase();
+        }
+    }
 
     private LodFilter() {
     }
@@ -75,8 +86,8 @@ public class LodFilter {
         return this;
     }
 
-    public LodFilter withMode(LodFilterMode mode) {
-        this.mode = mode != null ? mode : LodFilterMode.KEEP;
+    public LodFilter withMode(Mode mode) {
+        this.mode = mode != null ? mode : Mode.KEEP;
         return this;
     }
 
@@ -105,7 +116,7 @@ public class LodFilter {
 
         List<AbstractProperty<?>> geometries = new ArrayList<>();
         for (int lod = 0; lod < filter.length; lod++) {
-            if (filter[lod] ^ mode != LodFilterMode.REMOVE) {
+            if (filter[lod] ^ mode != Mode.REMOVE) {
                 geometries.addAll(geometryInfo.getGeometries(lod));
                 geometries.addAll(geometryInfo.getImplicitGeometries(lod));
             }
@@ -222,7 +233,7 @@ public class LodFilter {
     }
 
     private boolean[] createLodFilter(GeometryInfo geometryInfo) {
-        if (mode == LodFilterMode.KEEP || mode == LodFilterMode.REMOVE) {
+        if (mode == Mode.KEEP || mode == Mode.REMOVE) {
             return lods;
         } else {
             boolean[] lods = new boolean[this.lods.length];
@@ -236,9 +247,9 @@ public class LodFilter {
                 }
             }
 
-            if (mode == LodFilterMode.MAXIMUM && max != -Integer.MAX_VALUE) {
+            if (mode == Mode.MAXIMUM && max != -Integer.MAX_VALUE) {
                 lods[max] = true;
-            } else if (mode == LodFilterMode.MINIMUM && min != Integer.MAX_VALUE) {
+            } else if (mode == Mode.MINIMUM && min != Integer.MAX_VALUE) {
                 lods[min] = true;
             }
 

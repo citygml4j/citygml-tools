@@ -43,6 +43,7 @@ import org.citygml4j.xml.module.citygml.CoreModule;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
 import org.citygml4j.xml.reader.CityGMLReadException;
 import org.citygml4j.xml.reader.CityGMLReader;
+import org.citygml4j.xml.reader.FeatureInfo;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
@@ -156,6 +157,20 @@ public abstract class CityGMLTool implements Command {
         } catch (CityJSONWriteException e) {
             throw new ExecutionException("Failed to create CityJSON writer.", e);
         }
+    }
+
+    void setCityGMLVersion(CityGMLReader reader, CityGMLOutputFactory out) throws CityGMLReadException {
+        if (reader.hasNext()) {
+            CityGMLVersion version = CityGMLModules.getCityGMLVersion(reader.getName().getNamespaceURI());
+            if (version != null) {
+                log.debug("Using CityGML " + version + " for the output file.");
+                out.withCityGMLVersion(version);
+            }
+        }
+    }
+
+    FeatureInfo getFeatureInfo(CityGMLReader reader) throws CityGMLReadException {
+        return reader.hasNext() ? reader.getParentInfo() : null;
     }
 
     Path getOutputFile(Path file, String suffix, boolean overwrite) {
