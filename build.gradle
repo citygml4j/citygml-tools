@@ -25,8 +25,8 @@ repositories {
 dependencies {
     implementation 'org.citygml4j:citygml4j-xml:3.0.0-SNAPSHOT'
     implementation 'org.citygml4j:citygml4j-cityjson:3.0.0-SNAPSHOT'
-    implementation 'com.fasterxml.woodstox:woodstox-core:6.2.8'
     implementation 'info.picocli:picocli:4.6.3'
+    runtimeOnly 'com.fasterxml.woodstox:woodstox-core:6.2.8'
 }
 
 jar {

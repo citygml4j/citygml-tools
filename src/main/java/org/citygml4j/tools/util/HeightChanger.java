@@ -21,6 +21,7 @@
 
 package org.citygml4j.tools.util;
 
+import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.model.core.AbstractSpaceBoundary;
 import org.citygml4j.core.model.core.ImplicitGeometry;
@@ -137,6 +138,10 @@ public class HeightChanger {
             if (property.isSetInlineObject()) {
                 super.visit(property);
             }
+        }
+
+        @Override
+        public void visit(Appearance appearance) {
         }
 
         private DirectPosition changePosition(CoordinateListProvider provider) {
