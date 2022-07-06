@@ -81,6 +81,7 @@ public class AppearanceRemover {
     }
 
     private class AppearanceProcessor extends ObjectWalker {
+
         @Override
         public void visit(Appearance appearance) {
             if (shouldRemove(appearance)) {

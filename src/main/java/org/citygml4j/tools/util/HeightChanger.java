@@ -81,6 +81,7 @@ public class HeightChanger {
     }
 
     private class HeightProcessor extends ObjectWalker {
+
         @Override
         public void visit(AbstractFeature feature) {
             if (feature.getBoundedBy() != null && feature.getBoundedBy().isSetEnvelope()) {

@@ -59,6 +59,7 @@ import java.util.stream.Stream;
                 ChangeHeightCommand.class,
                 RemoveAppsCommand.class,
                 FilterLodsCommand.class,
+                ReprojectCommand.class,
                 FromCityJSONCommand.class,
                 ToCityJSONCommand.class,
                 UpgradeCommand.class

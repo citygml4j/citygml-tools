@@ -17,6 +17,9 @@ java {
 
 repositories {
     maven {
+        url 'https://repo.osgeo.org/repository/release'
+    }
+    maven {
         url 'https://oss.sonatype.org/content/repositories/snapshots'
     }
     mavenCentral()
@@ -26,6 +29,9 @@ dependencies {
     implementation 'org.citygml4j:citygml4j-xml:3.0.0-SNAPSHOT'
     implementation 'org.citygml4j:citygml4j-cityjson:3.0.0-SNAPSHOT'
     implementation 'info.picocli:picocli:4.6.3'
+    implementation 'org.geotools:gt-epsg-extension:27.0'
+    implementation 'org.geotools:gt-epsg-hsql:27.0'
+    implementation 'org.geotools:gt-referencing:27.0'
     runtimeOnly 'com.fasterxml.woodstox:woodstox-core:6.2.8'
 }
 
@@ -49,7 +55,6 @@ processResources {
 }
 
 application {
-    mainModule = 'org.citygml4j.tools'
     mainClass = 'org.citygml4j.tools.CityGMLTools'
     applicationDefaultJvmArgs = ['-Xms1G']
     executableDir = ''
