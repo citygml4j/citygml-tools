@@ -58,6 +58,7 @@ import java.util.stream.Stream;
                 CommandLine.HelpCommand.class,
                 ChangeHeightCommand.class,
                 RemoveAppsCommand.class,
+                ClipTexturesCommand.class,
                 FilterLodsCommand.class,
                 ReprojectCommand.class,
                 FromCityJSONCommand.class,
@@ -175,8 +176,10 @@ public class CityGMLTools implements Command, CommandLine.IVersionProvider {
 
             if (exitCode == 1) {
                 log.warn(APP_NAME + " execution failed.");
-            } else if (errors != 0 || warnings != 0) {
-                log.info(APP_NAME + " finished with " + warnings + " warning(s) and " + errors + " error(s).");
+            } else if (warnings != 0 || errors != 0) {
+                log.info(APP_NAME + " finished with " + (warnings != 0 ? warnings + " warning(s)" : "") +
+                        (warnings != 0 && errors != 0 ? " and " : "") +
+                        (errors != 0 ? errors + " error(s)" : "") + ".");
             } else {
                 log.info(APP_NAME + " successfully completed.");
             }

@@ -30,7 +30,7 @@ public class CityObjects {
 
     public static String getObjectSignature(AbstractGML object) {
         return object.getClass().getSimpleName()
-                + " (" + (object.getId() != null ? object.getId() : "unknown ID") + ")";
+                + " '" + (object.getId() != null ? object.getId() : "unknown ID") + "'";
     }
 
     public static String getIdFromReference(String reference) {
