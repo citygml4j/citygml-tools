@@ -30,12 +30,14 @@ import org.citygml4j.cityjson.reader.CityJSONReader;
 import org.citygml4j.cityjson.writer.AbstractCityJSONWriter;
 import org.citygml4j.cityjson.writer.CityJSONOutputFactory;
 import org.citygml4j.cityjson.writer.CityJSONWriteException;
+import org.citygml4j.core.ade.ADERegistry;
 import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityJSONOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
+import org.citygml4j.xml.CityGMLADELoader;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.CityGMLContextException;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
@@ -48,6 +50,7 @@ import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
 
+import javax.xml.XMLConstants;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -93,15 +96,19 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    CityGMLReader createCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options) throws ExecutionException {
+    CityGMLReader createCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options) throws ExecutionException, CityGMLReadException {
+        CityGMLReader reader;
         try {
-            return in.createCityGMLReader(file, options.getEncoding());
+            reader = in.createCityGMLReader(file, options.getEncoding());
         } catch (CityGMLReadException e) {
             throw new ExecutionException("Failed to create CityGML reader.", e);
         }
+
+        reportUnsupportedNamespaces(reader);
+        return reader;
     }
 
-    CityGMLReader createFilteredCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options, String... localNames) throws ExecutionException {
+    CityGMLReader createFilteredCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options, String... localNames) throws ExecutionException, CityGMLReadException {
         CityGMLReader reader = createCityGMLReader(in, file, options);
         if (localNames != null) {
             Set<String> names = new HashSet<>(Arrays.asList(localNames));
@@ -151,7 +158,7 @@ public abstract class CityGMLTool implements Command {
             AbstractCityJSONWriter<?> writer = options.isWriteCityJSONFeatures() ?
                     out.createCityJSONFeatureWriter(file, options.getEncoding()) :
                     out.createCityJSONWriter(file, options.getEncoding())
-                        .withIndent(options.isPrettyPrint() ? "  " : null);
+                            .withIndent(options.isPrettyPrint() ? "  " : null);
 
             return writer.setHtmlSafe(options.isHtmlSafe());
         } catch (CityJSONWriteException e) {
@@ -171,6 +178,33 @@ public abstract class CityGMLTool implements Command {
 
     FeatureInfo getFeatureInfo(CityGMLReader reader) throws CityGMLReadException {
         return reader.hasNext() ? reader.getParentInfo() : null;
+    }
+
+    private void reportUnsupportedNamespaces(CityGMLReader reader) throws CityGMLReadException {
+        if (reader.hasNext()) {
+            Set<String> namespaces = CityGMLModules.of(CityGMLVersion.v3_0).getNamespaces();
+            namespaces.addAll(CityGMLModules.of(CityGMLVersion.v2_0).getNamespaces());
+            namespaces.addAll(CityGMLModules.of(CityGMLVersion.v1_0).getNamespaces());
+
+            CityGMLADELoader loader = ADERegistry.getInstance().getADELoader(CityGMLADELoader.class);
+            Set<String> unsupported = new HashSet<>();
+            for (String namespace : reader.getNamespaces().get()) {
+                if (!XMLConstants.W3C_XML_SCHEMA_NS_URI.equals(namespace)
+                        && !XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI.equals(namespace)
+                        && !XMLConstants.XMLNS_ATTRIBUTE_NS_URI.equals(namespace)
+                        && !XMLConstants.XML_NS_URI.equals(namespace)
+                        && !namespaces.contains(namespace)
+                        && loader.getADEModule(namespace) == null) {
+                    unsupported.add(namespace);
+                }
+            }
+
+            if (!unsupported.isEmpty()) {
+                log.warn("The input file uses unsupported non-CityGML namespace(s): " +
+                        String.join(", ", unsupported) + ".");
+                log.info("Non-CityGML content is skipped unless a matching ADE extension has been loaded.");
+            }
+        }
     }
 
     Path getOutputFile(Path file, String suffix, boolean overwrite) {
