@@ -34,8 +34,8 @@ import java.util.*;
 
 public class AppearanceRemover {
     public static final String NULL_THEME = "null";
-    private final AppearanceProcessor appearanceProcessor;
-    private final Map<String, Integer> counter;
+    private final AppearanceProcessor appearanceProcessor = new AppearanceProcessor();
+    private final Map<String, Integer> counter = new TreeMap<>();
 
     private Set<String> themes;
     private boolean onlyTextures;
@@ -43,8 +43,6 @@ public class AppearanceRemover {
     private boolean keep;
 
     private AppearanceRemover() {
-        appearanceProcessor = new AppearanceProcessor();
-        counter = new TreeMap<>();
     }
 
     public static AppearanceRemover newInstance() {

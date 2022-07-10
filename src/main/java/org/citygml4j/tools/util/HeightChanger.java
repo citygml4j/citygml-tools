@@ -29,16 +29,18 @@ import org.citygml4j.core.model.relief.AbstractReliefComponent;
 import org.citygml4j.core.visitor.ObjectWalker;
 import org.xmlobjects.gml.model.base.AbstractInlineOrByReferenceProperty;
 import org.xmlobjects.gml.model.common.CoordinateListProvider;
-import org.xmlobjects.gml.model.geometry.DirectPosition;
-import org.xmlobjects.gml.model.geometry.DirectPositionList;
-import org.xmlobjects.gml.model.geometry.Envelope;
+import org.xmlobjects.gml.model.geometry.*;
 import org.xmlobjects.gml.model.geometry.primitives.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class HeightChanger {
     private final double offset;
-    private final HeightProcessor heightProcessor;
+    private final HeightProcessor heightProcessor = new HeightProcessor();
+    private final ImplicitGeometryResolver resolver = new ImplicitGeometryResolver();
+    private final Map<String, AbstractGeometry> templates = new HashMap<>();
 
     private Mode mode = Mode.RELATIVE;
     private double correction;
@@ -55,11 +57,23 @@ public class HeightChanger {
 
     private HeightChanger(double offset) {
         this.offset = offset;
-        heightProcessor = new HeightProcessor();
     }
 
     public static HeightChanger of(double offset) {
         return new HeightChanger(offset);
+    }
+
+    public HeightChanger withImplicitGeometries(List<ImplicitGeometry> implicitGeometries) {
+        for (ImplicitGeometry implicitGeometry : implicitGeometries) {
+            if (implicitGeometry.getRelativeGeometry() != null
+                    && implicitGeometry.getRelativeGeometry().getObject() != null
+                    && implicitGeometry.getRelativeGeometry().getObject().getId() != null) {
+                AbstractGeometry template = implicitGeometry.getRelativeGeometry().getObject();
+                templates.put(template.getId(), template);
+            }
+        }
+
+        return this;
     }
 
     public HeightChanger withMode(Mode mode) {
@@ -69,6 +83,10 @@ public class HeightChanger {
 
     public void changeHeight(AbstractFeature feature) {
         if (offset != 0 || mode != Mode.RELATIVE) {
+            if (!templates.isEmpty()) {
+                feature.accept(resolver);
+            }
+
             double minimumHeight = mode == Mode.ABSOLUTE ?
                     feature.computeEnvelope().getLowerCorner().getValue().get(2) :
                     0;
@@ -164,6 +182,22 @@ public class HeightChanger {
             }
 
             return coordinates;
+        }
+    }
+
+    private class ImplicitGeometryResolver extends ObjectWalker {
+
+        @Override
+        public void visit(ImplicitGeometry implicitGeometry) {
+            GeometryProperty<?> property = implicitGeometry.getRelativeGeometry();
+            if (property != null
+                    && property.getObject() == null
+                    && property.getHref() != null) {
+                AbstractGeometry template = templates.get(CityObjects.getIdFromReference(property.getHref()));
+                if (template != null) {
+                    property.setReferencedObjectIfValid(template);
+                }
+            }
         }
     }
 }

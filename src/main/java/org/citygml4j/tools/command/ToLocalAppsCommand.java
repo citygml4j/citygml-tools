@@ -23,13 +23,14 @@ package org.citygml4j.tools.command;
 
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.core.AbstractFeature;
+import org.citygml4j.core.util.reference.DefaultReferenceResolver;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOption;
+import org.citygml4j.tools.util.GlobalAppearanceConverter;
 import org.citygml4j.tools.util.GlobalObjectsReader;
-import org.citygml4j.tools.util.HeightChanger;
 import org.citygml4j.tools.util.InputFiles;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
@@ -38,21 +39,19 @@ import org.citygml4j.xml.reader.CityGMLReader;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
+import org.xmlobjects.gml.util.reference.ReferenceResolver;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
 import java.util.List;
 
-@CommandLine.Command(name = "change-height",
-        description = "Changes the height values of city objects by a given offset.")
-public class ChangeHeightCommand extends CityGMLTool {
-    @CommandLine.Option(names = {"-o", "--offset"}, paramLabel = "<double>", required = true,
-            description = "Offset to add to height values.")
-    private double offset;
-
-    @CommandLine.Option(names = {"-m", "--mode"}, defaultValue = "relative",
-            description = "Height mode: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
-    private HeightChanger.Mode mode;
+@CommandLine.Command(name = "to-local-apps",
+        description = "Converts global appearances into local ones.")
+public class ToLocalAppsCommand extends CityGMLTool {
+    @CommandLine.Option(names = {"-t", "--target-feature"}, paramLabel = "<level>", defaultValue = "toplevel",
+            description = "Feature to assign the local appearance to: ${COMPLETION-CANDIDATES} " +
+                    "(default: ${DEFAULT-VALUE}).")
+    private GlobalAppearanceConverter.Mode mode;
 
     @CommandLine.Mixin
     private CityGMLOutputVersion version;
@@ -66,7 +65,7 @@ public class ChangeHeightCommand extends CityGMLTool {
     @CommandLine.Mixin
     private InputOptions inputOptions;
 
-    private final String suffix = "__changed_height";
+    private final String suffix = "__local_apps";
 
     @Override
     public Integer call() throws ExecutionException {
@@ -85,20 +84,28 @@ public class ChangeHeightCommand extends CityGMLTool {
         CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
         CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
 
+        ReferenceResolver resolver = DefaultReferenceResolver.newInstance()
+                .storeRefereesWithReferencedObject(true);
+
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
             Path outputFile = getOutputFile(inputFile, suffix, overwriteOption.isOverwrite());
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            log.debug("Reading implicit geometries from input file.");
-            HeightChanger heightChanger = HeightChanger.of(offset)
-                    .withMode(mode)
-                    .withImplicitGeometries(GlobalObjectsReader.onlyImplicitGeometries()
-                            .read(inputFile, getCityGMLContext())
-                            .getImplicitGeometries());
+            log.debug("Reading global appearances from input file.");
+            List<Appearance> appearances = GlobalObjectsReader.onlyAppearances()
+                    .read(inputFile, getCityGMLContext())
+                    .getAppearances();
 
-            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions)) {
+            if (appearances.isEmpty()) {
+                log.info("The file does not contain global appearances. No action required.");
+                continue;
+            } else {
+                log.debug("Found " + appearances.size() + " global appearance(s).");
+            }
+
+            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions, "Appearance")) {
                 if (!version.isSetVersion()) {
                     setCityGMLVersion(reader, out);
                 }
@@ -109,16 +116,32 @@ public class ChangeHeightCommand extends CityGMLTool {
                     log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
                 }
 
+                GlobalAppearanceConverter converter = GlobalAppearanceConverter.of(appearances, out.getVersion())
+                        .withMode(mode);
+
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(getFeatureInfo(reader))) {
-                    log.debug("Reading city objects and changing their height values.");
+                    log.debug("Reading city objects and converting global appearances into local ones.");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
-                        if (!(feature instanceof Appearance)) {
-                            heightChanger.changeHeight(feature);
-                        }
-
+                        converter.convertGlobalAppearance(feature);
                         writer.writeMember(feature);
+                    }
+
+                    if (converter.hasGlobalAppearances()) {
+                        List<Appearance> remaining = converter.getGlobalAppearances();
+                        log.info(remaining.size() + " global appearance(s) could not be converted due to " +
+                                "implicit geometries.");
+                        for (Appearance appearance : remaining) {
+                            writer.writeMember(appearance);
+                        }
+                    } else {
+                        log.info("Successfully converted all global appearances.");
+                    }
+
+                    if (!converter.getCounter().isEmpty()) {
+                        converter.getCounter().forEach((key, value) ->
+                                log.debug("Created local " + key + " element(s): " + value));
                     }
                 }
             } catch (CityGMLReadException e) {

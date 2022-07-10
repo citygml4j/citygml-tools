@@ -58,6 +58,7 @@ import java.util.stream.Stream;
                 CommandLine.HelpCommand.class,
                 ChangeHeightCommand.class,
                 RemoveAppsCommand.class,
+                ToLocalAppsCommand.class,
                 ClipTexturesCommand.class,
                 FilterLodsCommand.class,
                 ReprojectCommand.class,
