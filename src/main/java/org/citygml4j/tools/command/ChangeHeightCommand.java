@@ -91,12 +91,12 @@ public class ChangeHeightCommand extends CityGMLTool {
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
+            HeightChanger heightChanger = HeightChanger.of(offset).withMode(mode);
+
             log.debug("Reading implicit geometries from input file.");
-            HeightChanger heightChanger = HeightChanger.of(offset)
-                    .withMode(mode)
-                    .withImplicitGeometries(GlobalObjectsReader.onlyImplicitGeometries()
-                            .read(inputFile, getCityGMLContext())
-                            .getImplicitGeometries());
+            heightChanger.withImplicitGeometries(GlobalObjectsReader.onlyImplicitGeometries()
+                    .read(inputFile, getCityGMLContext())
+                    .getImplicitGeometries());
 
             try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions)) {
                 if (!version.isSetVersion()) {
