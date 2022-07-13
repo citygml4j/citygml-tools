@@ -21,7 +21,9 @@
 
 package org.citygml4j.tools.util;
 
+import org.citygml4j.core.model.core.AbstractFeature;
 import org.xmlobjects.gml.model.base.AbstractGML;
+import org.xmlobjects.gml.util.id.DefaultIdCreator;
 
 public class CityObjects {
 
@@ -36,5 +38,13 @@ public class CityObjects {
     public static String getIdFromReference(String reference) {
         int index = reference.lastIndexOf("#");
         return index != -1 ? reference.substring(index + 1) : reference;
+    }
+
+    public static String getOrCreateId(AbstractFeature feature) {
+        if (feature.getId() == null) {
+            feature.setId(DefaultIdCreator.getInstance().createId());
+        }
+
+        return feature.getId();
     }
 }

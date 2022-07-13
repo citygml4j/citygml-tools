@@ -40,7 +40,7 @@ public class LodFilter {
     private final Set<String> removedFeatureIds = new HashSet<>();
 
     private Mode mode = Mode.KEEP;
-    private Collection<Appearance> globalAppearances;
+    private List<Appearance> globalAppearances;
     private boolean keepEmptyObjects;
     private boolean collectRemovedFeatureIds = true;
 
@@ -91,11 +91,11 @@ public class LodFilter {
         return this;
     }
 
-    public Collection<Appearance> getGlobalAppearances() {
+    public List<Appearance> getGlobalAppearances() {
         return globalAppearances != null ? globalAppearances : Collections.emptyList();
     }
 
-    public LodFilter withGlobalAppearances(Collection<Appearance> globalAppearances) {
+    public LodFilter withGlobalAppearances(List<Appearance> globalAppearances) {
         this.globalAppearances = globalAppearances;
         return this;
     }

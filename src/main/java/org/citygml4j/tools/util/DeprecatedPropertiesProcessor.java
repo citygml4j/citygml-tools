@@ -75,7 +75,7 @@ import org.xmlobjects.gml.model.geometry.aggregates.MultiSurfaceProperty;
 import org.xmlobjects.gml.model.geometry.primitives.*;
 import org.xmlobjects.util.copy.CopyBuilder;
 
-import java.util.Collection;
+import java.util.List;
 
 public class DeprecatedPropertiesProcessor {
     private final LodFilter lodFilter;
@@ -96,9 +96,17 @@ public class DeprecatedPropertiesProcessor {
                 .collectRemovedFeatureIds(false));
     }
 
+    public boolean isUseLod4AsLod3() {
+        return useLod4AsLod3;
+    }
+
     public DeprecatedPropertiesProcessor useLod4AsLod3(boolean useLod4AsLod3) {
         this.useLod4AsLod3 = useLod4AsLod3;
         return this;
+    }
+
+    public boolean isMapLod1MultiSurfaces() {
+        return mapLod1MultiSurfaces;
     }
 
     public DeprecatedPropertiesProcessor mapLod1MultiSurfaces(boolean mapLod1MultiSurfaces) {
@@ -106,12 +114,15 @@ public class DeprecatedPropertiesProcessor {
         return this;
     }
 
-    public Collection<Appearance> getGlobalAppearances() {
+    public List<Appearance> getGlobalAppearances() {
         return lodFilter.getGlobalAppearances();
     }
 
-    public DeprecatedPropertiesProcessor withGlobalAppearances(Collection<Appearance> globalAppearances) {
-        lodFilter.withGlobalAppearances(globalAppearances);
+    public DeprecatedPropertiesProcessor withGlobalAppearances(List<Appearance> globalAppearances) {
+        if (globalAppearances != null && !globalAppearances.isEmpty()) {
+            lodFilter.withGlobalAppearances(globalAppearances);
+        }
+
         return this;
     }
 

@@ -28,9 +28,8 @@ import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOption;
-import org.citygml4j.tools.util.DeprecatedPropertiesProcessor;
-import org.citygml4j.tools.util.GlobalObjectsReader;
 import org.citygml4j.tools.util.InputFiles;
+import org.citygml4j.tools.util.UpgradeProcessor;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
@@ -56,6 +55,15 @@ public class UpgradeCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-m", "--map-lod1-multi-surfaces"},
             description = "Map the LoD1 multi-surface representation of city objects onto generic thematic surfaces.")
     private boolean mapLod1MultiSurfaces;
+
+    @CommandLine.Option(names = {"-r", "--resolve-geometry-references"},
+            description = "Resolve geometry references between top-level features.")
+    private boolean resolveGeometryReferences;
+
+    @CommandLine.Option(names = {"-l", "--add-object-links"},
+            description = "Add CityObjectRelation links between top-level features sharing a common geometry. " +
+                    "Use only when resolving of geometry references is enabled.")
+    private boolean createCityObjectRelations;
 
     @CommandLine.Mixin
     private CityGMLOutputOptions outputOptions;
@@ -85,34 +93,30 @@ public class UpgradeCommand extends CityGMLTool {
         CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
         CityGMLOutputFactory out = createCityGMLOutputFactory(CityGMLVersion.v3_0);
 
-        DeprecatedPropertiesProcessor processor = DeprecatedPropertiesProcessor.newInstance()
-                .useLod4AsLod3(useLod4AsLod3)
-                .mapLod1MultiSurfaces(mapLod1MultiSurfaces);
-
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
             Path outputFile = getOutputFile(inputFile, suffix, overwriteOption.isOverwrite());
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions,
-                    useLod4AsLod3 ? new String[]{"Appearance"} : null)) {
+            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions)) {
                 if (reader.hasNext()) {
                     CityGMLVersion version = CityGMLModules.getCityGMLVersion(reader.getName().getNamespaceURI());
                     if (version == CityGMLVersion.v3_0) {
                         log.info("This is already a CityGML 3.0 file. No action required.");
                         continue;
-                    } else if (version == null) {
-                        log.error("Failed to detect CityGML version. Skipping file.");
-                        continue;
                     }
                 }
 
-                if (useLod4AsLod3) {
-                    log.debug("Reading global appearances from input file.");
-                    processor.withGlobalAppearances(GlobalObjectsReader.onlyAppearances()
-                            .read(inputFile, getCityGMLContext())
-                            .getAppearances());
+                UpgradeProcessor processor = UpgradeProcessor.newInstance()
+                        .useLod4AsLod3(useLod4AsLod3)
+                        .mapLod1MultiSurfaces(mapLod1MultiSurfaces)
+                        .resolveGeometryReferences(resolveGeometryReferences)
+                        .createCityObjectRelations(createCityObjectRelations);
+
+                if (useLod4AsLod3 || resolveGeometryReferences) {
+                    log.debug("Reading global objects from input file.");
+                    processor.readGlobalObjects(inputFile, getCityGMLContext());
                 }
 
                 if (overwriteOption.isOverwrite()) {
@@ -124,10 +128,14 @@ public class UpgradeCommand extends CityGMLTool {
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(getFeatureInfo(reader))) {
                     log.debug("Reading city objects and upgrading them to CityGML 3.0.");
+                    int featureId = 0;
                     while (reader.hasNext()) {
+                        featureId++;
                         AbstractFeature feature = reader.next();
-                        processor.process(feature);
-                        writer.writeMember(feature);
+                        processor.upgrade(feature, featureId);
+                        if (!useLod4AsLod3 || !(feature instanceof Appearance)) {
+                            writer.writeMember(feature);
+                        }
                     }
 
                     if (useLod4AsLod3) {
@@ -149,5 +157,13 @@ public class UpgradeCommand extends CityGMLTool {
         }
 
         return 0;
+    }
+
+    @Override
+    public void preprocess(CommandLine commandLine) throws Exception {
+        if (createCityObjectRelations && !resolveGeometryReferences) {
+            throw new CommandLine.ParameterException(commandLine,
+                    "Error: --create-object-relations can only be used together with --resolve-geometry-references");
+        }
     }
 }

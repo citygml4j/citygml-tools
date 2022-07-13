@@ -172,6 +172,9 @@ public abstract class CityGMLTool implements Command {
             if (version != null) {
                 log.debug("Using CityGML " + version + " for the output file.");
                 out.withCityGMLVersion(version);
+            } else {
+                log.warn("Failed to detect CityGML version from input file. " +
+                        "Using CityGML " + out.getVersion() + " for the output file.");
             }
         }
     }
