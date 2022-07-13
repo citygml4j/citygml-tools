@@ -1,0 +1,176 @@
+/*
+ * citygml-tools - Collection of tools for processing CityGML files
+ * https://github.com/citygml4j/citygml-tools
+ *
+ * citygml-tools is part of the citygml4j project
+ *
+ * Copyright 2018-2022 Claus Nagel <claus.nagel@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.citygml4j.tools.command;
+
+import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.log.LogLevel;
+import org.citygml4j.tools.option.InputOptions;
+import org.citygml4j.tools.util.InputFiles;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+import org.xmlobjects.schema.SchemaHandler;
+import org.xmlobjects.schema.SchemaHandlerException;
+import picocli.CommandLine;
+
+import javax.xml.XMLConstants;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Set;
+
+@CommandLine.Command(
+        name = "validate",
+        description = "Validates CityGML files against the CityGML XML schemas."
+)
+public class ValidateCommand extends CityGMLTool {
+    @CommandLine.Option(names = {"-e", "--suppress-errors"},
+            description = "Do not print validation error messages for a concise report.")
+    private boolean suppressMessages;
+
+    @CommandLine.Option(names = {"-s", "--schema"}, split = ",", paramLabel = "<URI>",
+            description = "One or more files or URLs of additional XML schemas to use for the validation. " +
+                    "Note that the official CityGML schemas cannot be replaced.")
+    private Set<String> schemas;
+
+    @CommandLine.Mixin
+    private InputOptions inputOptions;
+
+    @Override
+    public Integer call() throws ExecutionException {
+        log.debug("Searching for CityGML input files.");
+        List<Path> inputFiles = InputFiles.of(inputOptions.getFiles()).find();
+        if (inputFiles.isEmpty()) {
+            log.warn("No files found at " + inputOptions.joinFiles() + ".");
+            return 0;
+        }
+
+        log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
+
+        log.debug("Loading default CityGML schemas.");
+        SchemaHandler schemaHandler;
+        try {
+            schemaHandler = getCityGMLContext().getDefaultSchemaHandler();
+        } catch (SchemaHandlerException e) {
+            throw new ExecutionException("Failed to load default CityGML schemas.", e);
+        }
+
+        if (schemas != null) {
+            for (String schema : schemas) {
+                try {
+                    log.debug("Loading additional XML schema from " + schema + ".");
+                    schemaHandler.parseSchema(schema);
+                } catch (SchemaHandlerException e) {
+                    throw new ExecutionException("Failed to load XML schema from " + schema + ".", e);
+                }
+            }
+        }
+
+        Validator validator;
+        try {
+            SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            Schema schema = schemaFactory.newSchema(schemaHandler.getSchemas());
+            validator = schema.newValidator();
+        } catch (SAXException e) {
+            throw new ExecutionException("Failed to create XML validator.", e);
+        }
+
+        ValidationErrorHandler handler = new ValidationErrorHandler();
+        int invalid = 0;
+
+        for (int i = 0; i < inputFiles.size(); i++) {
+            Path inputFile = inputFiles.get(i);
+
+            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Validating file " + inputFile.toAbsolutePath() + ".");
+
+            try {
+                validator.setErrorHandler(handler);
+                validator.validate(new StreamSource(inputFile.toFile()));
+
+                if (handler.getErrors() == 0) {
+                    log.info("The file is valid.");
+                } else {
+                    log.warn("The file is invalid. Found " + handler.getErrors() + " error(s).");
+                    invalid++;
+                }
+            } catch (SAXException | IOException e) {
+                throw new ExecutionException("Failed to validate CityGML file.", e);
+            } finally {
+                validator.reset();
+                handler.reset();
+            }
+        }
+
+        if (invalid == 0) {
+            log.info("Validation complete. All files are valid.");
+            return 0;
+        } else {
+            log.warn("Validation complete. Found " + invalid + " invalid file(s).");
+            return 3;
+        }
+    }
+
+    private class ValidationErrorHandler implements ErrorHandler {
+        private String location;
+        private int errors;
+
+        int getErrors() {
+            return errors;
+        }
+
+        void reset() {
+            location = null;
+            errors = 0;
+        }
+
+        @Override
+        public void warning(SAXParseException exception) {
+            reportError(exception, "Warning", LogLevel.WARN);
+        }
+
+        @Override
+        public void error(SAXParseException exception) {
+            reportError(exception, "Invalid content", LogLevel.ERROR);
+        }
+
+        @Override
+        public void fatalError(SAXParseException exception) {
+            reportError(exception, "Invalid content", LogLevel.ERROR);
+        }
+
+        private void reportError(SAXParseException exception, String type, LogLevel level) {
+            String location = exception.getLineNumber() + ", " + exception.getColumnNumber();
+            if (!location.equals(this.location)) {
+                this.location = location;
+                errors++;
+            }
+
+            if (!suppressMessages) {
+                log.log(level, type + " at [" + location + "]: " + exception.getMessage());
+            }
+        }
+    }
+}

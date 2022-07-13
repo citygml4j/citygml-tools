@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 @CommandLine.Command(name = "remove-apps",
         description = "Removes appearances from city objects.")
 public class RemoveAppsCommand extends CityGMLTool {
-    @CommandLine.Option(names = {"-t", "--theme"}, paramLabel = "<name>", split = ",",
+    @CommandLine.Option(names = {"-t", "--theme"}, split = ",", paramLabel = "<name>",
             description = "Only remove appearances of the given theme(s). Use '" + AppearanceRemover.NULL_THEME +
                     "' to remove appearances without a theme attribute.")
     private Set<String> themes;
