@@ -1,28 +1,34 @@
-FROM openjdk:11-jdk-slim as builder
+# Build stage #################################################################
+# Arguments
+ARG BUILDER_IMAGE_TAG='17-jdk-slim'
+ARG RUNTIME_IMAGE_TAG='17-slim'
 
-WORKDIR /code
+# Base image
+FROM openjdk:${BUILDER_IMAGE_TAG} AS builder
 
-ADD . /code
+# Copy source code
+WORKDIR /build
+COPY . /build
 
-RUN /bin/sh gradlew installDist
+# Build
+RUN chmod u+x ./gradlew && ./gradlew installDist
 
-FROM openjdk:8-jre-alpine
+# Runtime stage ###############################################################
+# Base image
+FROM openjdk:${RUNTIME_IMAGE_TAG} AS runtime
 
-COPY --from=builder /code/build/install/ /opt/
+# Copy from builder
+COPY --from=builder /build/build/install/ /opt/
 
-RUN ln -s /opt/citygml-tools/citygml-tools /usr/local/bin/ && \
-    adduser -D -S -h /data -s /sbin/nologin -G root --uid 1001 citygml-tools && \
-    chgrp 0 /etc/passwd && \
-    chmod g=u /etc/passwd && \
-    chgrp -R 0 /data && \
-    chmod -R g=u /data
+# Run as non-root user
+RUN groupadd --gid 1000 -r citygml-tools && \
+    useradd --uid 1000 --gid 1000 -d /data -m -r --no-log-init citygml-tools
 
-COPY --chown=1001:0 resources/docker/docker_uid_entrypoint.sh /usr/local/bin/
+# Add start script to path
+RUN ln -sf /opt/citygml-tools/citygml-tools /usr/local/bin/
 
 WORKDIR /data
+USER 1000
 
-USER 1001
-
-ENTRYPOINT ["/usr/local/bin/docker_uid_entrypoint.sh"]
-
+ENTRYPOINT ["citygml-tools"]
 CMD ["--help"]

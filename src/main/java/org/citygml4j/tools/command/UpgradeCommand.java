@@ -21,16 +21,20 @@
 
 package org.citygml4j.tools.command;
 
+import org.citygml4j.core.model.CityGMLVersion;
+import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.tools.ExecutionException;
-import org.citygml4j.tools.log.LogLevel;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
-import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOption;
 import org.citygml4j.tools.util.InputFiles;
-import org.citygml4j.tools.util.Reprojector;
-import org.citygml4j.xml.reader.*;
+import org.citygml4j.tools.util.UpgradeProcessor;
+import org.citygml4j.xml.module.citygml.CityGMLModules;
+import org.citygml4j.xml.reader.ChunkOptions;
+import org.citygml4j.xml.reader.CityGMLInputFactory;
+import org.citygml4j.xml.reader.CityGMLReadException;
+import org.citygml4j.xml.reader.CityGMLReader;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
@@ -39,41 +43,27 @@ import picocli.CommandLine;
 import java.nio.file.Path;
 import java.util.List;
 
-@CommandLine.Command(name = "reproject",
-        description = "Reprojects city objects to a new coordinate reference system.")
-public class ReprojectCommand extends CityGMLTool {
-    @CommandLine.Option(names = {"-t", "--target-crs"}, paramLabel = "<crs>", required = true,
-            description = "Target CRS given as either EPSG code, OGC URL, OGC URN, or OGC Well-Known Text (WKT).")
-    private String targetCRS;
+@CommandLine.Command(
+        name = "upgrade",
+        description = "Upgrades CityGML files to version 3.0."
+)
+public class UpgradeCommand extends CityGMLTool {
+    @CommandLine.Option(names = {"-u", "--use-lod4-as-lod3"},
+            description = "Use the LoD4 representation of city objects as LoD3, replacing an existing LoD3.")
+    private boolean useLod4AsLod3;
 
-    @CommandLine.Option(names = {"-n", "--target-name"}, paramLabel = "<name>",
-            description = "Name of the target CRS to use as gml:srsName attribute in the output file(s).")
-    private String targetName;
+    @CommandLine.Option(names = {"-m", "--map-lod1-multi-surfaces"},
+            description = "Map the LoD1 multi-surface representation of city objects onto generic thematic surfaces.")
+    private boolean mapLod1MultiSurfaces;
 
-    @CommandLine.Option(names = {"-l", "--target-longitude-first"},
-            description = "Force axis order of the target CRS to longitude, latitude.")
-    private boolean forceLongitudeFirst;
+    @CommandLine.Option(names = {"-r", "--resolve-geometry-references"},
+            description = "Resolve geometry references between top-level features.")
+    private boolean resolveGeometryReferences;
 
-    @CommandLine.Option(names = {"-s", "--source-crs"}, paramLabel = "<crs>",
-            description = "Source CRS given as either EPSG code, OGC URL, OGC URN, or OGC Well-Known Text (WKT). " +
-                    "If specified, the source CRS takes precedence over any reference systems defined in the " +
-                    "input file(s).")
-    private String sourceCRS;
-
-    @CommandLine.Option(names = "--source-swap-axis-order",
-            description = "Swap X and Y axes for all input geometries before performing the reprojection.")
-    private boolean swapAxisOrder;
-
-    @CommandLine.Option(names = "--keep-height-values",
-            description = "Do not transform height values.")
-    private boolean keepHeightValues;
-
-    @CommandLine.Option(names = "--lenient-transform",
-            description = "Perform transformation even when there is no information available for a datum shift.")
-    private boolean lenientTransform;
-
-    @CommandLine.Mixin
-    private CityGMLOutputVersion version;
+    @CommandLine.Option(names = {"-l", "--add-object-links"},
+            description = "Add CityObjectRelation links between top-level features sharing a common geometry. " +
+                    "Use only when resolving of geometry references is enabled.")
+    private boolean createCityObjectRelations;
 
     @CommandLine.Mixin
     private CityGMLOutputOptions outputOptions;
@@ -84,7 +74,7 @@ public class ReprojectCommand extends CityGMLTool {
     @CommandLine.Mixin
     private InputOptions inputOptions;
 
-    private final String suffix = "__reprojected";
+    private final String suffix = "__v3";
 
     @Override
     public Integer call() throws ExecutionException {
@@ -101,17 +91,7 @@ public class ReprojectCommand extends CityGMLTool {
         log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
 
         CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
-        CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
-
-        Reprojector reprojector = Reprojector.of(targetCRS, forceLongitudeFirst)
-                .withTargetName(targetName)
-                .withSourceCRS(sourceCRS)
-                .swapAxisOrder(swapAxisOrder)
-                .keepHeightValues(keepHeightValues)
-                .lenientTransform(lenientTransform);
-
-        log.debug("Using the following target CRS definition:");
-        log.log(LogLevel.DEBUG, reprojector.getTargetCRS().getCRS().toString());
+        CityGMLOutputFactory out = createCityGMLOutputFactory(CityGMLVersion.v3_0);
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
@@ -120,13 +100,23 @@ public class ReprojectCommand extends CityGMLTool {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
             try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions)) {
-                FeatureInfo cityModelInfo = getFeatureInfo(reader);
-                if (cityModelInfo != null) {
-                    reprojector.withCityModelInfo(cityModelInfo);
+                if (reader.hasNext()) {
+                    CityGMLVersion version = CityGMLModules.getCityGMLVersion(reader.getName().getNamespaceURI());
+                    if (version == CityGMLVersion.v3_0) {
+                        log.info("This is already a CityGML 3.0 file. No action required.");
+                        continue;
+                    }
                 }
 
-                if (!version.isSetVersion()) {
-                    setCityGMLVersion(reader, out);
+                UpgradeProcessor processor = UpgradeProcessor.newInstance()
+                        .useLod4AsLod3(useLod4AsLod3)
+                        .mapLod1MultiSurfaces(mapLod1MultiSurfaces)
+                        .resolveGeometryReferences(resolveGeometryReferences)
+                        .createCityObjectRelations(createCityObjectRelations);
+
+                if (useLod4AsLod3 || resolveGeometryReferences) {
+                    log.debug("Reading global objects from input file.");
+                    processor.readGlobalObjects(inputFile, getCityGMLContext());
                 }
 
                 if (overwriteOption.isOverwrite()) {
@@ -136,12 +126,22 @@ public class ReprojectCommand extends CityGMLTool {
                 }
 
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
-                        .withCityModelInfo(cityModelInfo)) {
-                    log.debug("Reading city objects and transforming coordinates to " + reprojector.getTargetName() + ".");
+                        .withCityModelInfo(getFeatureInfo(reader))) {
+                    log.debug("Reading city objects and upgrading them to CityGML 3.0.");
+                    int featureId = 0;
                     while (reader.hasNext()) {
+                        featureId++;
                         AbstractFeature feature = reader.next();
-                        reprojector.reproject(feature);
-                        writer.writeMember(feature);
+                        processor.upgrade(feature, featureId);
+                        if (!useLod4AsLod3 || !(feature instanceof Appearance)) {
+                            writer.writeMember(feature);
+                        }
+                    }
+
+                    if (useLod4AsLod3) {
+                        for (Appearance appearance : processor.getGlobalAppearances()) {
+                            writer.writeMember(appearance);
+                        }
                     }
                 }
             } catch (CityGMLReadException e) {
@@ -157,5 +157,13 @@ public class ReprojectCommand extends CityGMLTool {
         }
 
         return 0;
+    }
+
+    @Override
+    public void preprocess(CommandLine commandLine) throws Exception {
+        if (createCityObjectRelations && !resolveGeometryReferences) {
+            throw new CommandLine.ParameterException(commandLine,
+                    "Error: --create-object-relations can only be used together with --resolve-geometry-references");
+        }
     }
 }

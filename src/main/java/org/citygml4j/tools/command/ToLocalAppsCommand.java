@@ -22,17 +22,16 @@
 package org.citygml4j.tools.command;
 
 import org.citygml4j.core.model.appearance.Appearance;
-import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.AbstractFeature;
+import org.citygml4j.core.util.reference.DefaultReferenceResolver;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOption;
-import org.citygml4j.tools.util.CityObjects;
+import org.citygml4j.tools.util.GlobalAppearanceConverter;
 import org.citygml4j.tools.util.GlobalObjectsReader;
 import org.citygml4j.tools.util.InputFiles;
-import org.citygml4j.tools.util.LodFilter;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
 import org.citygml4j.xml.reader.CityGMLReadException;
@@ -40,32 +39,19 @@ import org.citygml4j.xml.reader.CityGMLReader;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
+import org.xmlobjects.gml.util.reference.ReferenceResolver;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-@CommandLine.Command(
-        name = "filter-lods",
-        description = "Filters LoD representations of city objects."
-)
-public class FilterLodsCommand extends CityGMLTool {
-    @CommandLine.Option(names = {"-l", "--lod"}, required = true, split = ",", paramLabel = "<0..4>",
-            description = "LoD representations to filter.")
-    private int[] lods;
-
-    @CommandLine.Option(names = {"-m", "--mode"}, defaultValue = "keep",
-            description = "Filter mode: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}). The matching " +
-                    "minimum or maximum LoD is determined per top-level object.")
-    private LodFilter.Mode mode;
-
-    @CommandLine.Option(names = {"-k", "--keep-empty-objects"},
-            description = "Keep city objects even if all their LoD representations have been filtered.")
-    private boolean keepEmptyObjects;
+@CommandLine.Command(name = "to-local-apps",
+        description = "Converts global appearances into local ones.")
+public class ToLocalAppsCommand extends CityGMLTool {
+    @CommandLine.Option(names = {"-t", "--target-feature"}, paramLabel = "<level>", defaultValue = "toplevel",
+            description = "Feature to assign the local appearance to: ${COMPLETION-CANDIDATES} " +
+                    "(default: ${DEFAULT-VALUE}).")
+    private GlobalAppearanceConverter.Mode mode;
 
     @CommandLine.Mixin
     private CityGMLOutputVersion version;
@@ -79,7 +65,7 @@ public class FilterLodsCommand extends CityGMLTool {
     @CommandLine.Mixin
     private InputOptions inputOptions;
 
-    private final String suffix = "__filtered_lods";
+    private final String suffix = "__local_apps";
 
     @Override
     public Integer call() throws ExecutionException {
@@ -98,6 +84,9 @@ public class FilterLodsCommand extends CityGMLTool {
         CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
         CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
 
+        ReferenceResolver resolver = DefaultReferenceResolver.newInstance()
+                .storeRefereesWithReferencedObject(true);
+
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
             Path outputFile = getOutputFile(inputFile, suffix, overwriteOption.isOverwrite());
@@ -105,15 +94,16 @@ public class FilterLodsCommand extends CityGMLTool {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
             log.debug("Reading global appearances from input file.");
-            List<CityObjectGroup> groups = new ArrayList<>();
             List<Appearance> appearances = GlobalObjectsReader.onlyAppearances()
                     .read(inputFile, getCityGMLContext())
                     .getAppearances();
 
-            LodFilter lodFilter = LodFilter.of(lods)
-                    .withMode(mode)
-                    .withGlobalAppearances(appearances)
-                    .keepEmptyObjects(keepEmptyObjects);
+            if (appearances.isEmpty()) {
+                log.info("The file does not contain global appearances. No action required.");
+                continue;
+            } else {
+                log.debug("Found " + appearances.size() + " global appearance(s).");
+            }
 
             try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions, "Appearance")) {
                 if (!version.isSetVersion()) {
@@ -126,31 +116,32 @@ public class FilterLodsCommand extends CityGMLTool {
                     log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
                 }
 
+                GlobalAppearanceConverter converter = GlobalAppearanceConverter.of(appearances, out.getVersion())
+                        .withMode(mode);
+
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(getFeatureInfo(reader))) {
-                    log.debug("Reading city objects and filtering LoD representations.");
+                    log.debug("Reading city objects and converting global appearances into local ones.");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
-                        boolean keep = lodFilter.apply(feature);
-
-                        if (feature instanceof CityObjectGroup) {
-                            groups.add((CityObjectGroup) feature);
-                        } else if (keep) {
-                            writer.writeMember(feature);
-                        }
+                        converter.convertGlobalAppearance(feature);
+                        writer.writeMember(feature);
                     }
 
-                    if (!groups.isEmpty()) {
-                        postprocess(groups, lodFilter.getRemovedFeatureIds());
-                        for (CityObjectGroup group : groups) {
-                            writer.writeMember(group);
-                        }
-                    }
-
-                    if (!appearances.isEmpty()) {
-                        for (Appearance appearance : appearances) {
+                    if (converter.hasGlobalAppearances()) {
+                        List<Appearance> remaining = converter.getGlobalAppearances();
+                        log.info(remaining.size() + " global appearance(s) could not be converted due to " +
+                                "implicit geometries.");
+                        for (Appearance appearance : remaining) {
                             writer.writeMember(appearance);
                         }
+                    } else {
+                        log.info("Successfully converted all global appearances.");
+                    }
+
+                    if (!converter.getCounter().isEmpty()) {
+                        converter.getCounter().forEach((key, value) ->
+                                log.debug("Created local " + key + " element(s): " + value));
                     }
                 }
             } catch (CityGMLReadException e) {
@@ -166,50 +157,5 @@ public class FilterLodsCommand extends CityGMLTool {
         }
 
         return 0;
-    }
-
-    private void postprocess(List<CityObjectGroup> groups, Set<String> removedFeatureIds) {
-        if (!removedFeatureIds.isEmpty()) {
-            for (CityObjectGroup group : groups) {
-                if (group.isSetGroupMembers()) {
-                    group.getGroupMembers().removeIf(property -> property.getObject() != null
-                            && property.getObject().getGroupMember() != null
-                            && property.getObject().getGroupMember().getHref() != null
-                            && removedFeatureIds.contains(CityObjects.getIdFromReference(
-                                    property.getObject().getGroupMember().getHref())));
-                }
-
-                if (group.getGroupParent() != null
-                        && group.getGroupParent().getHref() != null
-                        && removedFeatureIds.contains(CityObjects.getIdFromReference(
-                                group.getGroupParent().getHref()))) {
-                    group.setGroupParent(null);
-                }
-            }
-
-            List<CityObjectGroup> emptyGroups = groups.stream()
-                    .filter(group -> !group.isSetGroupMembers())
-                    .collect(Collectors.toList());
-
-            if (!emptyGroups.isEmpty()) {
-                groups.removeAll(emptyGroups);
-                if (!groups.isEmpty()) {
-                    postprocess(groups, emptyGroups.stream()
-                            .map(CityObjectGroup::getId)
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toSet()));
-                }
-            }
-        }
-    }
-
-    @Override
-    public void preprocess(CommandLine commandLine) {
-        for (int lod : lods) {
-            if (lod < 0 || lod > 4) {
-                throw new CommandLine.ParameterException(commandLine,
-                        "Error: An LoD value must be between 0 and 4 but was '" + lod + "'");
-            }
-        }
     }
 }

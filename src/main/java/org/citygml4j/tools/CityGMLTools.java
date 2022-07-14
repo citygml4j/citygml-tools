@@ -21,32 +21,35 @@
 
 package org.citygml4j.tools;
 
-import org.citygml4j.CityGMLContext;
-import org.citygml4j.builder.jaxb.CityGMLBuilder;
-import org.citygml4j.model.citygml.ade.binding.ADEContext;
+import org.citygml4j.cityjson.ExtensionLoader;
+import org.citygml4j.core.ade.ADEException;
+import org.citygml4j.core.ade.ADERegistry;
 import org.citygml4j.tools.command.*;
-import org.citygml4j.tools.common.log.LogLevel;
-import org.citygml4j.tools.common.log.Logger;
-import org.citygml4j.tools.util.Constants;
-import org.citygml4j.tools.util.ObjectRegistry;
+import org.citygml4j.tools.log.LogLevel;
+import org.citygml4j.tools.log.Logger;
+import org.citygml4j.tools.option.Option;
+import org.citygml4j.tools.util.PidFile;
 import org.citygml4j.tools.util.URLClassLoader;
-import org.citygml4j.tools.util.Util;
+import org.citygml4j.xml.CityGMLADELoader;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.ServiceLoader;
+import java.util.Properties;
 import java.util.stream.Stream;
 
-@CommandLine.Command(name = Constants.APP_NAME,
+@CommandLine.Command(
+        name = CityGMLTools.APP_NAME,
         scope = CommandLine.ScopeType.INHERIT,
         description = "Collection of tools for processing CityGML files.",
-        synopsisSubcommandLabel = "COMMAND",
         mixinStandardHelpOptions = true,
         versionProvider = CityGMLTools.class,
         showAtFileInUsageHelp = true,
@@ -56,39 +59,69 @@ import java.util.stream.Stream;
                 ValidateCommand.class,
                 ChangeHeightCommand.class,
                 RemoveAppsCommand.class,
-                MoveGlobalAppsCommand.class,
+                ToLocalAppsCommand.class,
                 ClipTexturesCommand.class,
                 FilterLodsCommand.class,
                 ReprojectCommand.class,
                 FromCityJSONCommand.class,
-                ToCityJSONCommand.class
-        })
-public class CityGMLTools extends CityGMLTool implements CommandLine.IVersionProvider {
-    @CommandLine.Option(names = "--log-level", scope = CommandLine.ScopeType.INHERIT, paramLabel = "<level>",
+                ToCityJSONCommand.class,
+                UpgradeCommand.class
+        }
+)
+public class CityGMLTools implements Command, CommandLine.IVersionProvider {
+    @CommandLine.Option(names = {"-L", "--log-level"}, scope = CommandLine.ScopeType.INHERIT, paramLabel = "<level>",
             defaultValue = "info", description = "Log level: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
-    private LogLevel logLevel = LogLevel.INFO;
+    private LogLevel logLevel;
 
     @CommandLine.Option(names = "--log-file", scope = CommandLine.ScopeType.INHERIT, paramLabel = "<file>",
-            description = "Write log messages to the specified file.")
+            description = "Write log messages to this file.")
     private Path logFile;
+
+    @CommandLine.Option(names = "--pid-file", scope = CommandLine.ScopeType.INHERIT, paramLabel = "<file>",
+            description = "Create a file containing the process ID.")
+    private Path pidFile;
+
+    @CommandLine.Option(names = "--extensions", scope = CommandLine.ScopeType.INHERIT, paramLabel = "<folder>",
+            description = "Load extensions from this folder.")
+    private Path extensionsDir;
+
+    public static final String APP_NAME = "citygml-tools";
+    public static final String EXTENSIONS_DIR = "extensions";
+    public static final Path APP_HOME;
+    public static final Path WORKING_DIR;
 
     private final Logger log = Logger.getInstance();
     private String commandLine;
     private String subCommandName;
 
+    static {
+        String appHomeEnv = System.getenv("APP_HOME");
+        if (appHomeEnv == null) {
+            appHomeEnv = ".";
+        }
+
+        String workingDirEnv = System.getenv("WORKING_DIR");
+        if (workingDirEnv == null) {
+            workingDirEnv = ".";
+        }
+
+        APP_HOME = Paths.get(appHomeEnv).normalize().toAbsolutePath();
+        WORKING_DIR = Paths.get(workingDirEnv).normalize().toAbsolutePath();
+    }
+
     public static void main(String[] args) {
-        CityGMLTools cityGMLTools = new CityGMLTools();
+        CityGMLTools app = new CityGMLTools();
         try {
-            System.exit(cityGMLTools.process(args));
+            System.exit(app.execute(args));
         } catch (Exception e) {
-            cityGMLTools.logError(e);
-            System.exit(1);
+            app.logException(e);
+            System.exit(CommandLine.ExitCode.SOFTWARE);
         }
     }
 
-    private int process(String[] args) throws Exception {
+    private int execute(String[] args) throws Exception {
         Instant start = Instant.now();
-        int exitCode = 1;
+        int exitCode = CommandLine.ExitCode.SOFTWARE;
 
         CommandLine cmd = new CommandLine(this)
                 .setCaseInsensitiveEnumValuesAllowed(true)
@@ -104,6 +137,8 @@ public class CityGMLTools extends CityGMLTool implements CommandLine.IVersionPro
             for (CommandLine commandLine : commandLines) {
                 if (commandLine.isUsageHelpRequested() || commandLine.isVersionHelpRequested()) {
                     return CommandLine.executeHelpRequest(parseResult);
+                } else if (commandLine.getCommand() instanceof CommandLine.HelpCommand) {
+                    return cmd.getExecutionStrategy().execute(parseResult);
                 }
             }
 
@@ -112,37 +147,51 @@ public class CityGMLTools extends CityGMLTool implements CommandLine.IVersionPro
                 throw new CommandLine.ParameterException(cmd, "Missing required subcommand.");
             }
 
-            // validate commands
             for (CommandLine commandLine : commandLines) {
                 Object command = commandLine.getCommand();
-                if (command instanceof CityGMLTool) {
-                    ((CityGMLTool) command).preprocess();
+
+                // preprocess options
+                for (Field field : command.getClass().getDeclaredFields()) {
+                    if (Option.class.isAssignableFrom(field.getType())) {
+                        field.setAccessible(true);
+                        Option option = (Option) field.get(command);
+                        if (option != null) {
+                            option.preprocess(commandLine);
+                        }
+                    }
+                }
+
+                // preprocess commands
+                if (command instanceof Command) {
+                    ((Command) command).preprocess(commandLine);
                 }
             }
 
             // execute commands
-            commandLine = Constants.APP_NAME + " " + String.join(" ", args);
+            commandLine = APP_NAME + " " + String.join(" ", args);
             subCommandName = commandLines.get(1).getCommandName();
             exitCode = cmd.getExecutionStrategy().execute(parseResult);
 
-            log.info("Total execution time: " + Util.formatElapsedTime(Duration.between(start, Instant.now()).toMillis()) + ".");
+            log.info("Total execution time: " + formatElapsedTime(Duration.between(start, Instant.now())) + ".");
             int warnings = log.getNumberOfWarnings();
             int errors = log.getNumberOfErrors();
 
             if (exitCode == 1) {
-                log.warn(Constants.APP_NAME + " execution failed.");
-            } else if (errors != 0 || warnings != 0) {
-                log.info(Constants.APP_NAME + " finished with " + warnings + " warning(s) and " + errors + " error(s).");
+                log.warn(APP_NAME + " execution failed.");
+            } else if (warnings != 0 || errors != 0) {
+                log.info(APP_NAME + " finished with " + (warnings != 0 ? warnings + " warning(s)" : "") +
+                        (warnings != 0 && errors != 0 ? " and " : "") +
+                        (errors != 0 ? errors + " error(s)" : "") + ".");
             } else {
-                log.info(Constants.APP_NAME + " successfully completed.");
+                log.info(APP_NAME + " successfully completed.");
             }
         } catch (CommandLine.ParameterException e) {
             cmd.getParameterExceptionHandler().handleParseException(e, args);
-            exitCode = 2;
-        } catch (Throwable e) {
-            log.error("The following unexpected error occurred during execution.");
-            log.logStackTrace(e);
-            log.warn(Constants.APP_NAME + " execution failed.");
+            exitCode = CommandLine.ExitCode.USAGE;
+        } catch (CommandLine.ExecutionException e) {
+            logException(e.getCause());
+        } catch (Exception e) {
+            logException(e);
         } finally {
             log.close();
         }
@@ -151,7 +200,18 @@ public class CityGMLTools extends CityGMLTool implements CommandLine.IVersionPro
     }
 
     @Override
-    public Integer call() throws Exception {
+    public Integer call() throws ExecutionException {
+        initializeLogging();
+
+        log.info("Starting " + APP_NAME + ".");
+        loadADEExtensions(extensionsDir);
+        createPidFile();
+
+        log.info("Executing '" + subCommandName + "' command.");
+        return 0;
+    }
+
+    private void initializeLogging() throws ExecutionException {
         log.setLogLevel(logLevel);
 
         if (logFile != null) {
@@ -159,65 +219,106 @@ public class CityGMLTools extends CityGMLTool implements CommandLine.IVersionPro
                 if (logFile.getParent() != null && !Files.exists(logFile.getParent())) {
                     Files.createDirectories(logFile);
                 } else if (Files.isDirectory(logFile)) {
-                    logFile = logFile.resolve(Constants.APP_NAME + ".log");
+                    logFile = logFile.resolve(APP_NAME + ".log");
                 }
 
-                log.withLogFile(logFile);
-                log.logToFile("# " + commandLine);
+                log.debug("Writing log messages to " + logFile.toAbsolutePath() + ".");
+                log.setLogFile(logFile).writeToFile("# " + commandLine);
             } catch (IOException e) {
-                log.error("Failed to create log file '" + logFile + "'.");
-                throw e;
+                throw new ExecutionException("Failed to create log file " + logFile.toAbsolutePath() + ".", e);
             }
         }
+    }
 
-        log.info("Starting " + Constants.APP_NAME + ".");
-        CityGMLContext context = CityGMLContext.getInstance();
+    private void loadADEExtensions(Path extensionsDir) throws ExecutionException {
+        extensionsDir = extensionsDir != null ?
+                WORKING_DIR.resolve(extensionsDir) :
+                APP_HOME.resolve(EXTENSIONS_DIR);
 
-        // search for ADE extensions
-        URLClassLoader classLoader = new URLClassLoader(CityGMLTools.class.getClassLoader());
-        try {
-            Path adeExtensionsDir = Constants.APP_HOME.resolve(Constants.ADE_EXTENSIONS_DIR);
-            if (Files.exists(adeExtensionsDir)) {
-                try (Stream<Path> stream = Files.walk(adeExtensionsDir)
+        if (Files.exists(extensionsDir) && Files.isDirectory(extensionsDir)) {
+            try (URLClassLoader classLoader = new URLClassLoader(Thread.currentThread().getContextClassLoader())) {
+                try (Stream<Path> stream = Files.walk(extensionsDir)
                         .filter(path -> path.getFileName().toString().toLowerCase().endsWith(".jar"))) {
                     stream.forEach(classLoader::addPath);
                 }
-            }
 
-            if (classLoader.getURLs().length > 0) {
-                log.info("Loading ADE extensions.");
-                ServiceLoader<ADEContext> adeLoader = ServiceLoader.load(ADEContext.class, classLoader);
+                if (classLoader.getURLs().length > 0) {
+                    log.info("Loading extensions from " + extensionsDir.toAbsolutePath() + ".");
 
-                for (ADEContext adeContext : adeLoader) {
-                    log.debug("Registering ADE extension '" + adeContext.getClass().getTypeName() + "'.");
-                    context.registerADEContext(adeContext);
+                    ADERegistry registry = ADERegistry.getInstance();
+                    registry.loadADEs(classLoader);
+
+                    registry.getADELoader(CityGMLADELoader.class).getADEModules().forEach(
+                            module -> log.debug("Loaded CityGML ADE " + module.getNamespaceURI() +
+                                    " for CityGML version " + module.getCityGMLVersion() + "."));
+
+                    registry.getADELoader(ExtensionLoader.class).getExtensions().forEach(
+                            extension -> log.debug("Loaded CityJSON Extension " + extension.getName() +
+                                    " for CityJSON version " + extension.getCityJSONVersion() + "."));
                 }
+            } catch (ADEException | IOException e) {
+                throw new ExecutionException("Failed to load ADE extensions.", e);
             }
-        } catch (IOException e) {
-            log.error("Failed to initialize ADE extensions.");
-            throw e;
+        } else if (this.extensionsDir != null) {
+            log.warn("The ADE extensions folder " + extensionsDir.toAbsolutePath() + " does not exist.");
         }
-
-        log.info("Initializing application environment.");
-        CityGMLBuilder cityGMLBuilder = context.createCityGMLBuilder(classLoader);
-        ObjectRegistry.getInstance().put(cityGMLBuilder);
-
-        log.info("Executing command '" + subCommandName + "'.");
-        return 0;
     }
 
-    private void logError(Exception e) {
-        log.error("The following unexpected error occurred during execution.");
-        log.logStackTrace(e);
-        log.warn(Constants.APP_NAME + " execution failed.");
+    private void createPidFile() throws ExecutionException {
+        if (pidFile != null) {
+            try {
+                log.debug("Creating PID file at " + pidFile.toAbsolutePath() + ".");
+                PidFile.create(pidFile, true);
+            } catch (IOException e) {
+                throw new ExecutionException("Failed to create PID file.", e);
+            }
+        }
+    }
+
+    private void logException(Throwable e) {
+        if (e instanceof ExecutionException) {
+            if (log.getLogLevel() == LogLevel.DEBUG) {
+                log.error(e.getMessage());
+                log.logStackTrace(e.getCause());
+            } else {
+                log.error(e.getMessage(), e.getCause());
+            }
+        } else {
+            log.error("An unexpected error occurred during execution.");
+            log.logStackTrace(e);
+        }
+
+        log.warn(APP_NAME + " execution failed.");
+    }
+
+    private String formatElapsedTime(Duration elapsed) {
+        long d = elapsed.toDaysPart();
+        long h = elapsed.toHoursPart();
+        long m = elapsed.toMinutesPart();
+        long s = elapsed.toSecondsPart();
+
+        if (d > 0) {
+            return String.format("%02d d, %02d h, %02d m, %02d s", d, h, m, s);
+        } else if (h > 0) {
+            return String.format("%02d h, %02d m, %02d s", h, m, s);
+        } else if (m > 0) {
+            return String.format("%02d m, %02d s", m, s);
+        } else {
+            return String.format("%02d s", s);
+        }
     }
 
     @Override
     public String[] getVersion() {
-        return new String[]{
-                getClass().getPackage().getImplementationTitle() + ", version " +
-                        getClass().getPackage().getImplementationVersion() + "\n" +
-                        "(c) 2018-" + LocalDate.now().getYear() + " Claus Nagel <claus.nagel@gmail.com>\n"
-        };
+        try (InputStream stream = getClass().getResourceAsStream("/org/citygml4j/tools/application.properties")) {
+            Properties properties = new Properties();
+            properties.load(stream);
+            return new String[]{
+                    properties.getProperty("name") + ", version " + properties.getProperty("version"),
+                    "(C) 2018-" + LocalDate.now().getYear() + " Claus Nagel <claus.nagel@gmail.com>"
+            };
+        } catch (IOException e) {
+            return new String[]{};
+        }
     }
 }

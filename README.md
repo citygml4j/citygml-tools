@@ -12,6 +12,11 @@ Download the citygml-tools 1.4.5 release binaries
 [here](https://github.com/citygml4j/citygml-tools/releases/download/v1.4.5/citygml-tools-1.4.5.zip). Previous releases
 are available from the [releases section](https://github.com/citygml4j/citygml-tools/releases).
 
+Note that [citygml-tools v1](https://github.com/citygml4j/citygml-tools/tree/v1) is in _maintenance mode_, and we
+are focusing all of our attention on the [**next major version 2.0**](https://github.com/citygml4j/citygml-tools/releases/tag/v2.0.0-rc.1) with support for [**CityGML 3.0**](https://docs.ogc.org/is/20-010/20-010.html). This means that v1 is not
+updated with new features but at most receives critical bug fixes. A **release candidate** of the
+upcoming v2 is available from [here](https://github.com/citygml4j/citygml-tools/releases/tag/v2.0.0-rc.1).
+
 ## Contributing
 * To file bugs found in the software create a GitHub issue.
 * To contribute code for fixing filed issues create a pull request with the issue id.
@@ -29,25 +34,29 @@ To show the help message and all available commands of citygml-tools, simply typ
 This will print the following usage information:
 
 ```
-Usage: citygml-tools [-hV] [--log-file=<file>] [--log-level=<level>]
-                     [@<filename>...] COMMAND
+Usage: citygml-tools [-hV] [--extensions=<folder>] [-L=<level>]
+                     [--log-file=<file>] [--pid-file=<file>] [@<filename>...]
+                     [COMMAND]
 Collection of tools for processing CityGML files.
       [@<filename>...]      One or more argument files containing options.
+  -L, --log-level=<level>   Log level: error, warn, info, debug (default: info).
+      --log-file=<file>     Write log messages to this file.
+      --pid-file=<file>     Create a file containing the process ID.
+      --extensions=<folder> Load extensions from this folder.
   -h, --help                Show this help message and exit.
-      --log-file=<file>     Write log messages to the specified file.
-      --log-level=<level>   Log level: error, warn, info, debug (default: info).
   -V, --version             Print version information and exit.
 Commands:
-  help              Displays help information about the specified command
-  validate          Validates CityGML files according to the given subcommand.
-  change-height     Changes the height values of city objects by a given offset.
-  remove-apps       Removes appearances from city objects.
-  move-global-apps  Converts global appearances to local ones.
-  clip-textures     Clips texture images to the extent of the target surface.
-  filter-lods       Filters the LoD representations of city objects.
-  reproject         Reprojects city objects to a new spatial reference system.
-  from-cityjson     Converts CityJSON files into CityGML.
-  to-cityjson       Converts CityGML files into CityJSON.
+  help           Displays help information about the specified command
+  validate       Validates CityGML files against the CityGML XML schemas.
+  change-height  Changes the height values of city objects by a given offset.
+  remove-apps    Removes appearances from city objects.
+  to-local-apps  Converts global appearances into local ones.
+  clip-textures  Clips texture images to the extent of the target surface.
+  filter-lods    Filters LoD representations of city objects.
+  reproject      Reprojects city objects to a new coordinate reference system.
+  from-cityjson  Converts CityJSON files into CityGML.
+  to-cityjson    Converts CityGML files into CityJSON.
+  upgrade        Upgrades CityGML files to version 3.0.
 ```
 
 To get help about a specific command of citygml-tools, enter the following and replace `COMMAND` with the name of
@@ -60,9 +69,9 @@ The following example shows how to use the `to-cityjson` command to convert a Ci
     > citygml-tools to-cityjson /path/to/your/CityGML.gml
 
 ## System requirements
-* Java JRE or JDK >= 1.8
-  
-citygml-tools can be run on any platform providing appropriate Java support. 
+* Java 11 or higher
+
+citygml-tools can be run on any platform providing appropriate Java support.
 
 ## Docker image
 
@@ -75,71 +84,27 @@ repository:
     > docker build -t citygml-tools .
 
 ### How to use the image
-    
+
 Using citygml-tools via docker is simple:
- 
+
      > docker run --rm citygml-tools
-     
- This will show the help message and all available commands of citygml-tools.
- 
- The following command mounts a volume and runs the `to-cityjson` command of citygml-tools on all CityGML files 
- in the mounted volume.
+
+This will show the help message and all available commands of citygml-tools.
+
+The following command mounts a volume and runs the `to-cityjson` command of citygml-tools on all CityGML files
+in the mounted volume.
 
     > docker run --rm -u 1000 -v /path/to/your/data:/data citygml-tools to-cityjson /data
 
 Use the `-u` parameter to pass the username or UID of your current host's user to set the correct file permissions on
 generated files in the mounted directory.
 
-### Technical details
-
-The citygml-tools image uses [OpenJDK](https://hub.docker.com/_/openjdk) Alpine Linux to keep the resulting images
-small. Additionally, it is written as multi-stage image, which means the "JDK image" is only used for building, while
-the final application gets wrapped in a smaller "JRE image".
-
-By default, the container process is executed as non-root user. The included entrypoint script allows the image also to
-be used in OpenShift environments, where an arbitrary user might be created on container start.
-
-The default working directory inside the container is `/data`.
-
-## Using citygml-tools as library
-citygml-tools is not just a CLI program. Most commands are also available as separate JAR libraries. Simply put the
-library file from the `lib` folder on your classpath to use the operation in your citygml4j project. The
-`citygml-tools-common-<version>.jar` library renders a mandatory dependency for all commands.
-
-The libraries are also available as [Maven](http://maven.apache.org/) artifacts from the
-[Maven Central Repository](https://search.maven.org/search?q=org.citygml4j.tools). For example, to add the
-`global-app-mover` library for removing global appearances to your project with Maven, add the following code to your
-`pom.xml`. You may need to adapt the `global-app-mover` version number.
-
-```xml
-<dependency>
-  <groupId>org.citygml4j.tools</groupId>
-  <artifactId>global-app-mover</artifactId>
-  <version>1.4.5</version>
-</dependency>
-```
-
-Here is how you use `global-app-mover` with your Gradle project:
-
-```gradle
-repositories {
-  mavenCentral()
-}
-
-dependencies {
-  compile 'org.citygml4j.tools:global-app-mover:1.4.5'
-}
-```
-
-Note that all commands, which are not available as separate JAR library, just require a few lines of code with
-citygml4j. Check out the source code to see how they are implemented.
-
 ## Building
 citygml-tools uses [Gradle](https://gradle.org/) as build system. To build the program from source, clone the
 repository to your local machine and run the following command from the root of the repository.
 
     > gradlew installDist
-    
+
 The script automatically downloads all required dependencies for building and running citygml-tools. So make sure you
 are connected to the internet. The build process runs on all major operating systems and only requires a Java 8 JDK or
 higher to run.

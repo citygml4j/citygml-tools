@@ -21,75 +21,22 @@
 
 package org.citygml4j.tools.option;
 
-import org.citygml4j.builder.jaxb.CityGMLBuilder;
-import org.citygml4j.model.module.ModuleContext;
-import org.citygml4j.model.module.citygml.CityGMLModuleType;
-import org.citygml4j.model.module.citygml.CityGMLVersion;
-import org.citygml4j.tools.util.ObjectRegistry;
-import org.citygml4j.xml.io.CityGMLOutputFactory;
-import org.citygml4j.xml.io.writer.AbstractCityGMLWriter;
-import org.citygml4j.xml.io.writer.CityGMLWriteException;
-import org.citygml4j.xml.io.writer.CityGMLWriter;
-import org.citygml4j.xml.io.writer.CityModelWriter;
 import picocli.CommandLine;
 
-import java.nio.file.Path;
+public class CityGMLOutputOptions implements Option {
+    @CommandLine.Option(names = "--output-encoding", defaultValue = "UTF-8",
+            description = "Encoding to use for output file(s) (default: ${DEFAULT-VALUE}).")
+    private String encoding;
 
-public class CityGMLOutputOptions extends OutputOptions {
-    @CommandLine.Option(names = "--citygml", description = "CityGML version used for output file(s): 2.0, 1.0 (default: ${DEFAULT-VALUE}).")
-    private String version = "2.0";
+    @CommandLine.Option(names = "--no-pretty-print", negatable = true, defaultValue = "true",
+            description = "Format and indent output file(s) (default: ${DEFAULT-VALUE}).")
+    private boolean prettyPrint;
 
-    public CityGMLVersion getVersion() {
-        if (version.equals("1.0"))
-            return CityGMLVersion.v1_0_0;
-
-        try {
-            if (Double.parseDouble(version) == 1)
-                return CityGMLVersion.v1_0_0;
-        } catch (NumberFormatException e) {
-            //
-        }
-
-        return CityGMLVersion.v2_0_0;
+    public String getEncoding() {
+        return encoding;
     }
 
-    private CityGMLOutputFactory createCityGMLOutputFactory(CityGMLVersion version) {
-        CityGMLBuilder builder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
-        return builder.createCityGMLOutputFactory(version);
-    }
-
-    public CityGMLOutputFactory createCityGMLOutputFactory() {
-        return createCityGMLOutputFactory(getVersion());
-    }
-
-    public CityModelWriter createCityModelWriter(Path outputFile) throws CityGMLWriteException {
-        CityGMLVersion version = getVersion();
-        CityGMLOutputFactory out = createCityGMLOutputFactory(version);
-        CityModelWriter writer = out.createCityModelWriter(outputFile.toFile(), getEncoding());
-        setDefaultXMLContext(writer, version);
-
-        return writer;
-    }
-
-    public CityGMLWriter createCityGMLWriter(Path outputFile) throws CityGMLWriteException {
-        CityGMLVersion version = getVersion();
-        CityGMLOutputFactory out = createCityGMLOutputFactory(version);
-        CityGMLWriter writer = out.createCityGMLWriter(outputFile.toFile(), getEncoding());
-        setDefaultXMLContext(writer, version);
-
-        return writer;
-    }
-
-    public void setDefaultXMLContext(AbstractCityGMLWriter writer) {
-        CityGMLVersion version = getVersion();
-        setDefaultXMLContext(writer, version);
-    }
-
-    private void setDefaultXMLContext(AbstractCityGMLWriter writer, CityGMLVersion version) {
-        ModuleContext moduleContext = new ModuleContext(version);
-        writer.setPrefixes(moduleContext);
-        writer.setSchemaLocations(moduleContext);
-        writer.setDefaultNamespace(version.getCityGMLModule(CityGMLModuleType.CORE));
-        writer.setIndentString("  ");
+    public boolean isPrettyPrint() {
+        return prettyPrint;
     }
 }

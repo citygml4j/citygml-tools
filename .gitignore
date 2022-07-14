@@ -1,5 +1,5 @@
 .gradle/
-/gradle.properties
+gradle.properties
 build/
 
 # Eclipse
@@ -13,4 +13,3 @@ bin/
 *.iml
 *.iws
 out/
-ade-extensions/

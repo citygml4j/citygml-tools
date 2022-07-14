@@ -21,185 +21,139 @@
 
 package org.citygml4j.tools.command;
 
-import org.citygml4j.builder.jaxb.CityGMLBuilderException;
-import org.citygml4j.model.citygml.CityGML;
-import org.citygml4j.model.citygml.appearance.*;
-import org.citygml4j.model.citygml.core.AbstractCityObject;
-import org.citygml4j.model.gml.feature.AbstractFeature;
-import org.citygml4j.tools.common.helper.CityModelInfoHelper;
-import org.citygml4j.tools.common.log.Logger;
+import org.citygml4j.core.model.core.AbstractFeature;
+import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
+import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.util.Util;
-import org.citygml4j.util.walker.FeatureWalker;
-import org.citygml4j.xml.io.reader.CityGMLReadException;
-import org.citygml4j.xml.io.reader.CityGMLReader;
-import org.citygml4j.xml.io.writer.CityGMLWriteException;
-import org.citygml4j.xml.io.writer.CityModelWriter;
+import org.citygml4j.tools.option.OverwriteInputOption;
+import org.citygml4j.tools.util.AppearanceRemover;
+import org.citygml4j.tools.util.InputFiles;
+import org.citygml4j.xml.reader.ChunkOptions;
+import org.citygml4j.xml.reader.CityGMLInputFactory;
+import org.citygml4j.xml.reader.CityGMLReadException;
+import org.citygml4j.xml.reader.CityGMLReader;
+import org.citygml4j.xml.writer.CityGMLChunkWriter;
+import org.citygml4j.xml.writer.CityGMLOutputFactory;
+import org.citygml4j.xml.writer.CityGMLWriteException;
 import picocli.CommandLine;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @CommandLine.Command(name = "remove-apps",
         description = "Removes appearances from city objects.")
 public class RemoveAppsCommand extends CityGMLTool {
-    @CommandLine.Option(names = "--theme", paramLabel = "<name>", split = ",", description = "Only remove appearances of the given theme(s). Use 'null' as name for the null theme.")
-    private List<String> theme;
+    @CommandLine.Option(names = {"-t", "--theme"}, split = ",", paramLabel = "<name>",
+            description = "Only remove appearances of the given theme(s). Use '" + AppearanceRemover.NULL_THEME +
+                    "' to remove appearances without a theme attribute.")
+    private Set<String> themes;
 
-    @CommandLine.Option(names = "--only-textures", description = "Only remove textures.")
+    @CommandLine.Option(names = "--only-textures",
+            description = "Just remove textures.")
     private boolean onlyTextures;
 
-    @CommandLine.Option(names = "--only-materials", description = "Only remove materials.")
+    @CommandLine.Option(names = "--only-materials",
+            description = "Just remove materials.")
     private boolean onlyMaterials;
 
-    @CommandLine.Option(names = "--only-global", description = "Only remove global appearances.")
-    private boolean onlyGlobal;
-
-    @CommandLine.Option(names = "--overwrite-files", description = "Overwrite input file(s).")
-    private boolean overwriteInputFiles;
+    @CommandLine.Mixin
+    private CityGMLOutputVersion version;
 
     @CommandLine.Mixin
-    private CityGMLOutputOptions cityGMLOutput;
+    private CityGMLOutputOptions outputOptions;
 
     @CommandLine.Mixin
-    private InputOptions input;
+    OverwriteInputOption overwriteOption;
+
+    @CommandLine.Mixin
+    private InputOptions inputOptions;
+
+    private final String suffix = "__removed_apps";
 
     @Override
-    public Integer call() throws Exception {
-        Logger log = Logger.getInstance();
-        String fileNameSuffix = "_wo-app";
-
+    public Integer call() throws ExecutionException {
         log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles;
-        try {
-            inputFiles = new ArrayList<>(Util.listFiles(input.getFile(), "**.{gml,xml}", fileNameSuffix));
-            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
-        } catch (IOException e) {
-            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
+        List<Path> inputFiles = InputFiles.of(inputOptions.getFiles())
+                .withFilter(path -> !stripFileExtension(path).endsWith(suffix))
+                .find();
+
+        if (inputFiles.isEmpty()) {
+            log.warn("No files found at " + inputOptions.joinFiles() + ".");
             return 0;
         }
 
+        log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
+
+        CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
+        CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
+
+        AppearanceRemover remover = AppearanceRemover.newInstance()
+                .withThemes(themes)
+                .onlyTextures(onlyTextures)
+                .onlyMaterials(onlyMaterials);
+
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
-            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file '" + inputFile.toAbsolutePath() + "'.");
+            Path outputFile = getOutputFile(inputFile, suffix, overwriteOption.isOverwrite());
 
-            Path outputFile;
-            if (!overwriteInputFiles) {
-                outputFile = Util.addFileNameSuffix(inputFile, fileNameSuffix);
-                log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
-            } else {
-                outputFile = inputFile.resolveSibling("tmp-" + UUID.randomUUID());
-                log.debug("Writing temporary output file '" + outputFile.toAbsolutePath() + "'.");
-            }
+            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            log.debug("Reading city objects from input file and removing appearances.");
+            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions)) {
+                if (!version.isSetVersion()) {
+                    setCityGMLVersion(reader, out);
+                }
 
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, input.createSkipFilter("CityModel"));
-                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile)) {
-                boolean isInitialized = false;
-                Map<Class<?>, Integer> counter = new HashMap<>();
+                if (overwriteOption.isOverwrite()) {
+                    log.debug("Writing temporary output file " + outputFile.toAbsolutePath() + ".");
+                } else {
+                    log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
+                }
 
-                while (reader.hasNext()) {
-                    CityGML cityGML = reader.nextFeature();
+                try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
+                        .withCityModelInfo(getFeatureInfo(reader))) {
+                    String themes = this.themes != null ? " with theme(s) " + this.themes.stream()
+                            .map(theme -> "'" + theme + "'")
+                            .collect(Collectors.joining(", ")) : "";
+                    log.debug("Reading city objects and removing appearances" + themes + ".");
 
-                    // write city model
-                    if (!isInitialized) {
-                        writer.setCityModelInfo(CityModelInfoHelper.getCityModelInfo(cityGML, reader.getParentInfo()));
-                        writer.writeStartDocument();
-                        isInitialized = true;
-                    }
-
-                    if (cityGML instanceof AbstractCityObject) {
-                        AbstractCityObject cityObject = (AbstractCityObject) cityGML;
-
-                        if (!onlyGlobal) {
-                            cityObject.accept(new FeatureWalker() {
-                                public void visit(AbstractCityObject cityObject) {
-                                    cityObject.getAppearance().removeIf(p -> process(p.getAppearance(), counter));
-                                    super.visit(cityObject);
-                                }
-                            });
+                    while (reader.hasNext()) {
+                        AbstractFeature feature = reader.next();
+                        if (remover.removeAppearance(feature)) {
+                            writer.writeMember(feature);
                         }
-
-                        writer.writeFeatureMember(cityObject);
                     }
 
-                    else if (cityGML instanceof Appearance) {
-                        Appearance appearance = (Appearance) cityGML;
-                        if (!process(appearance, counter))
-                            writer.writeFeatureMember(appearance);
+                    if (!remover.getCounter().isEmpty()) {
+                        remover.getCounter().forEach((key, value) -> log.debug("Removed " + key + " element(s): " + value));
+                    } else {
+                        log.debug("No appearance elements removed based on input parameters.");
                     }
-
-                    else if (cityGML instanceof AbstractFeature)
-                        writer.writeFeatureMember((AbstractFeature) cityGML);
                 }
-
-                if (onlyTextures) {
-                    log.debug("Removed ParameterizedTexture elements: " + counter.getOrDefault(ParameterizedTexture.class, 0));
-                    log.debug("Removed GeoreferencedTexture elements: " + counter.getOrDefault(GeoreferencedTexture.class, 0));
-                }
-
-                if (onlyMaterials)
-                    log.debug("Removed X3DMaterial elements: " + counter.getOrDefault(X3DMaterial.class, 0));
-
-                log.debug("Removed Appearance elements: " + counter.getOrDefault(Appearance.class, 0));
-
-            } catch (CityGMLBuilderException | CityGMLReadException e) {
-                log.error("Failed to read city objects.", e);
-                return 1;
+            } catch (CityGMLReadException e) {
+                throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
             } catch (CityGMLWriteException e) {
-                log.error("Failed to write city objects.", e);
-                return 1;
+                throw new ExecutionException("Failed to write file " + outputFile.toAbsolutePath() + ".", e);
+            } finally {
+                remover.reset();
             }
 
-            if (overwriteInputFiles) {
-                try {
-                    log.debug("Replacing input file with temporary file.");
-                    Files.delete(inputFile);
-                    Files.move(outputFile, outputFile.resolveSibling(inputFile.getFileName()));
-                } catch (IOException e) {
-                    log.error("Failed to overwrite input file.", e);
-                    return 1;
-                }
+            if (overwriteOption.isOverwrite()) {
+                log.debug("Replacing input file with temporary output file.");
+                replaceInputFile(inputFile, outputFile);
             }
         }
 
         return 0;
     }
 
-    private boolean process(Appearance appearance, Map<Class<?>, Integer> counter) {
-        if (appearance != null && satisfiesTheme(appearance)) {
-            if (onlyMaterials == onlyTextures) {
-                counter.merge(Appearance.class, 1, Integer::sum);
-                return true;
-            }
-
-            for (Iterator<SurfaceDataProperty> iter = appearance.getSurfaceDataMember().iterator(); iter.hasNext(); ) {
-                SurfaceDataProperty property = iter.next();
-                if (onlyTextures && property.getSurfaceData() instanceof AbstractTexture) {
-                    counter.merge(property.getSurfaceData().getClass(), 1, Integer::sum);
-                    iter.remove();
-                } else if (onlyMaterials && property.getSurfaceData() instanceof X3DMaterial) {
-                    counter.merge(X3DMaterial.class, 1, Integer::sum);
-                    iter.remove();
-                }
-            }
-
-            if (!appearance.isSetSurfaceDataMember()) {
-                counter.merge(Appearance.class, 1, Integer::sum);
-                return true;
-            }
+    @Override
+    public void preprocess(CommandLine commandLine) {
+        if (onlyTextures && onlyMaterials) {
+            throw new CommandLine.ParameterException(commandLine,
+                    "Error: --only-textures and --only-materials are mutually exclusive (specify only one)");
         }
-
-        return false;
-    }
-
-    private boolean satisfiesTheme(Appearance appearance) {
-        return theme == null
-                || (!appearance.isSetTheme() && theme.contains("null"))
-                || theme.contains(appearance.getTheme());
     }
 }

@@ -19,32 +19,15 @@
  * limitations under the License.
  */
 
-package org.citygml4j.tools.option;
+package org.citygml4j.tools.command;
 
+import org.citygml4j.tools.ExecutionException;
 import picocli.CommandLine;
 
-public class InputOptions implements Option {
-    @CommandLine.Parameters(paramLabel = "<file>", arity = "1",
-            description = "One or more files and directories to process (glob patterns allowed).")
-    private String[] files;
+import java.util.concurrent.Callable;
 
-    @CommandLine.Option(names = "--input-encoding",
-            description = "Encoding of input file(s).")
-    private String encoding;
-
-    public String[] getFiles() {
-        return files;
-    }
-
-    public String joinFiles() {
-        return String.join(", ", files);
-    }
-
-    public boolean isSetEncoding() {
-        return encoding != null;
-    }
-
-    public String getEncoding() {
-        return encoding;
-    }
+public interface Command extends Callable<Integer> {
+    @Override
+    Integer call() throws ExecutionException;
+    default void preprocess(CommandLine commandLine) throws Exception {}
 }

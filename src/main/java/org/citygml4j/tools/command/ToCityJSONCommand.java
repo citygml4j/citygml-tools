@@ -21,180 +21,160 @@
 
 package org.citygml4j.tools.command;
 
-import org.citygml4j.builder.cityjson.json.io.writer.CityJSONWriteException;
-import org.citygml4j.builder.cityjson.json.io.writer.CityJSONWriter;
-import org.citygml4j.builder.cityjson.marshal.util.DefaultTextureVerticesBuilder;
-import org.citygml4j.builder.cityjson.marshal.util.DefaultVerticesBuilder;
-import org.citygml4j.builder.cityjson.marshal.util.DefaultVerticesTransformer;
-import org.citygml4j.builder.jaxb.CityGMLBuilderException;
-import org.citygml4j.cityjson.metadata.MetadataType;
-import org.citygml4j.model.citygml.CityGML;
-import org.citygml4j.model.citygml.core.AbstractCityObject;
-import org.citygml4j.model.citygml.core.CityModel;
-import org.citygml4j.model.citygml.core.CityObjectMember;
-import org.citygml4j.tools.common.log.Logger;
-import org.citygml4j.tools.common.srs.SrsNameParser;
-import org.citygml4j.tools.common.srs.SrsParseException;
+import org.citygml4j.cityjson.adapter.appearance.serializer.AppearanceSerializer;
+import org.citygml4j.cityjson.adapter.geometry.serializer.GeometrySerializer;
+import org.citygml4j.cityjson.model.metadata.Metadata;
+import org.citygml4j.cityjson.model.metadata.ReferenceSystem;
+import org.citygml4j.cityjson.writer.AbstractCityJSONWriter;
+import org.citygml4j.cityjson.writer.CityJSONOutputFactory;
+import org.citygml4j.cityjson.writer.CityJSONWriteException;
+import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.option.CityJSONOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.option.OutputOptions;
-import org.citygml4j.tools.util.Util;
-import org.citygml4j.xml.io.reader.CityGMLReadException;
-import org.citygml4j.xml.io.reader.CityGMLReader;
+import org.citygml4j.tools.util.GlobalObjects;
+import org.citygml4j.tools.util.GlobalObjectsReader;
+import org.citygml4j.tools.util.InputFiles;
+import org.citygml4j.xml.reader.*;
+import org.xmlobjects.gml.model.geometry.Envelope;
 import picocli.CommandLine;
 
-import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 
 @CommandLine.Command(name = "to-cityjson",
         description = "Converts CityGML files into CityJSON.")
 public class ToCityJSONCommand extends CityGMLTool {
-    @CommandLine.Option(names = "--epsg", paramLabel = "<code>", description = "EPSG code to be used as CRS metadata.")
-    private int epsg = 0;
+    @CommandLine.Option(names = "--epsg", paramLabel = "<code>",
+            description = "EPSG code to use as CRS in the metadata.")
+    private int epsg;
 
-    @CommandLine.Option(names = "--vertices-digits", paramLabel = "<digits>", description = "Number of digits to keep for geometry vertices (default: ${DEFAULT-VALUE}).")
-    private int verticesDigites = 3;
+    @CommandLine.Option(names = "--compute-extent",
+            description = "Compute city model extent to use in the metadata.")
+    private boolean computeExtent;
 
-    @CommandLine.Option(names = "--template-digits", paramLabel = "<digits>", description = "Number of digits to keep for template vertices (default: ${DEFAULT-VALUE}).")
-    private int templateDigites = 3;
+    @CommandLine.Option(names = "--vertex-precision", paramLabel = "<digits>",
+            description = "Number of decimal places to keep for geometry vertices (default: ${DEFAULT-VALUE}).")
+    private int vertexPrecision = GeometrySerializer.DEFAULT_VERTEX_PRECISION;
 
-    @CommandLine.Option(names = "--texture-vertices-digits", paramLabel = "<digits>", description = "Number of digits to keep for texture vertices (default: ${DEFAULT-VALUE}).")
-    private int textureVerticesDigites = 7;
+    @CommandLine.Option(names = "--template-precision", paramLabel = "<digits>",
+            description = "Number of decimal places to keep for template vertices (default: ${DEFAULT-VALUE}).")
+    private int templatePrecision = GeometrySerializer.DEFAULT_TEMPLATE_PRECISION;
 
-    @CommandLine.Option(names = {"-c", "--compress"}, description = "Compress file by storing vertices with integers.")
-    private boolean compress;
+    @CommandLine.Option(names = "--texture-vertex-precision", paramLabel = "<digits>",
+            description = "Number of decimal places to keep for texture vertices (default: ${DEFAULT-VALUE}).")
+    private int textureVertexPrecision = AppearanceSerializer.DEFAULT_TEXTURE_VERTEX_PRECISION;
 
-    @CommandLine.Option(names = "--compress-digits", paramLabel = "<digits>", description = "Number of digits to keep in compression (default: ${DEFAULT-VALUE}).")
-    private int compressDigits = 3;
+    @CommandLine.Option(names = {"-t", "--transform-coordinates"},
+            description = "Transform the coordinates of vertices to integers to reduce the file size. The " +
+                    "transformation is always applied for CityJSON 1.1.")
+    private boolean transformCoordinates;
 
-    @CommandLine.Option(names = "--no-material-defaults", negatable = true, description = "Use CityGML default values for X3D material properties (default: ${DEFAULT-VALUE}).")
-    private boolean useMaterialDefaults = true;
+    @CommandLine.Option(names = {"-r", "--replace-implicit-geometries"},
+            description = "Replace implicit geometries with their absolute coordinates.")
+    private boolean replaceImplicitGeometries;
 
-    @CommandLine.Option(names = "--fallback-theme", paramLabel = "<theme>", description = "Theme to use for materials and textures if not defined in the input file(s) (default: ${DEFAULT-VALUE}).")
-    private String fallbackTheme = "unnamed";
+    @CommandLine.Option(names = "--no-material-defaults", negatable = true, defaultValue = "true",
+            description = "Use CityGML default values for material properties (default: ${DEFAULT-VALUE}).")
+    private boolean useMaterialDefaults;
 
-    @CommandLine.Option(names = {"--remove-duplicate-child-geometries"}, description = "Remove child geometries if they are duplicate. If no child geometries remain, the child object is skipped.")
-    private boolean removeDuplicateChildGeometries;
+    @CommandLine.Option(names = "--fallback-theme", paramLabel = "<theme>",
+            description = "Theme to use for materials and textures if not defined in the input file(s) " +
+                    "(default: ${DEFAULT-VALUE}).")
+    private String fallbackTheme = AppearanceSerializer.FALLBACK_THEME;
 
-    @CommandLine.Option(names = {"--pretty-print"}, description = "Format and indent CityJSON file.")
-    private boolean prettyPrint;
+    @CommandLine.Option(names = "--add-generic-attribute-types",
+            description = "Add data types of generic attributes as extension property.")
+    private boolean addGenericAttributeTypes;
 
     @CommandLine.Mixin
-    private InputOptions input;
+    private CityJSONOutputOptions outputOptions;
 
     @CommandLine.Mixin
-    private OutputOptions output;
+    private InputOptions inputOptions;
 
     @Override
-    public Integer call() throws Exception {
-        Logger log = Logger.getInstance();
-
+    public Integer call() throws ExecutionException {
         log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles;
-        try {
-            inputFiles = new ArrayList<>(Util.listFiles(input.getFile(), "**.{gml,xml}"));
-            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
-        } catch (IOException e) {
-            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
+        List<Path> inputFiles = InputFiles.of(inputOptions.getFiles()).find();
+
+        if (inputFiles.isEmpty()) {
+            log.warn("No files found at " + inputOptions.joinFiles() + ".");
             return 0;
         }
 
+        log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
+        log.debug("Using CityJSON " + outputOptions.getVersion() + " for the output file(s).");
+
+        CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
+        CityJSONOutputFactory out = createCityJSONOutputFactory(outputOptions.getVersion())
+                .computeCityModelExtent(computeExtent)
+                .withVertexPrecision(vertexPrecision)
+                .withTemplatePrecision(templatePrecision)
+                .withTextureVertexPrecision(textureVertexPrecision)
+                .applyTransformation(transformCoordinates)
+                .transformTemplateGeometries(replaceImplicitGeometries)
+                .useMaterialDefaults(useMaterialDefaults)
+                .withFallbackTheme(fallbackTheme)
+                .writeGenericAttributeTypes(addGenericAttributeTypes);
+
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
-            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file '" + inputFile.toAbsolutePath() + "'.");
+            Path outputFile = inputFile.resolveSibling(replaceFileExtension(inputFile, "json"));
 
-            Path outputFile = Util.replaceFileExtension(inputFile, ".json");
-            log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
+            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            CityGML cityGML;
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, false)) {
-                log.debug("Reading CityJSON input file into main memory.");
-                cityGML = reader.nextFeature();
-            } catch (CityGMLBuilderException | CityGMLReadException e) {
-                log.error("Failed to read CityGML file.", e);
-                return 1;
-            }
+            log.debug("Reading global appearances, groups and implicit geometries from input file.");
+            GlobalObjects globalObjects = GlobalObjectsReader.defaults()
+                    .read(inputFile, getCityGMLContext());
 
-            if (cityGML instanceof CityModel) {
-                try (CityJSONWriter writer = output.createCityJSONWriter(outputFile,
-                        removeDuplicateChildGeometries,
-                        useMaterialDefaults,
-                        fallbackTheme)) {
-                    CityModel cityModel = (CityModel) cityGML;
-
-                    // set builder for geometry, template and texture vertices
-                    writer.setVerticesBuilder(new DefaultVerticesBuilder().withSignificantDigits(verticesDigites));
-                    writer.setTemplatesVerticesBuilder(new DefaultVerticesBuilder().withSignificantDigits(templateDigites));
-                    writer.setTextureVerticesBuilder(new DefaultTextureVerticesBuilder().withSignificantDigits(textureVerticesDigites));
-
-                    // apply compression if requested
-                    if (compress)
-                        writer.setVerticesTransformer(new DefaultVerticesTransformer().withSignificantDigits(compressDigits));
-
-                    // pretty print
-                    if (prettyPrint)
-                        writer.setIndent("  ");
-
-                    // retrieve metadata
-                    writer.setMetadata(getMetadata(cityModel, log));
-
-                    // convert and write city model
-                    writer.write(cityModel);
-                    log.debug("Successfully converted CityGML file into CityJSON.");
-                } catch (CityJSONWriteException e) {
-                    log.error("Failed to write CityJSON file.", e);
-                    return 1;
+            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions,
+                    "CityObjectGroup", "Appearance")) {
+                Metadata metadata = new Metadata();
+                if (reader.hasNext()) {
+                    populateMetadata(metadata, reader.getParentInfo());
                 }
-            } else
-                log.error("Failed to find a root CityModel element. Skipping CityGML file.");
+
+                log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
+
+                try (AbstractCityJSONWriter<?> writer = createCityJSONWriter(out, outputFile, outputOptions)
+                        .withMetadata(metadata)) {
+                    log.debug("Reading city objects and converting them into CityJSON " + outputOptions.getVersion() + ".");
+                    globalObjects.getAppearances().forEach(writer::withGlobalAppearance);
+                    globalObjects.getCityObjectGroups().forEach(writer::withGlobalCityObjectGroup);
+                    globalObjects.getTemplateGeometries().forEach(writer::withGlobalTemplateGeometry);
+
+                    while (reader.hasNext()) {
+                        writer.writeCityObject(reader.next());
+                    }
+                }
+            } catch (CityGMLReadException e) {
+                throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
+            } catch (CityJSONWriteException e) {
+                throw new ExecutionException("Failed to write file " + outputFile.toAbsolutePath() + ".", e);
+            }
         }
 
         return 0;
     }
 
-    private MetadataType getMetadata(CityModel cityModel, Logger log) {
-        MetadataType metadata = new MetadataType();
-
-        if (epsg > 0)
-            metadata.setReferenceSystem(epsg);
-        else {
-            String srsName = null;
-
-            if (cityModel.isSetBoundedBy()
-                    && cityModel.getBoundedBy().isSetEnvelope()
-                    && cityModel.getBoundedBy().getEnvelope().isSetSrsName()) {
-                srsName = cityModel.getBoundedBy().getEnvelope().getSrsName();
-            } else {
-                for (CityObjectMember member : cityModel.getCityObjectMember()) {
-                    if (member.isSetCityObject()) {
-                        AbstractCityObject cityObject = member.getCityObject();
-                        if (cityObject.isSetBoundedBy()
-                                && cityObject.getBoundedBy().isSetEnvelope()
-                                && cityObject.getBoundedBy().getEnvelope().isSetSrsName()) {
-                            String tmp = cityObject.getBoundedBy().getEnvelope().getSrsName();
-                            if (srsName == null)
-                                srsName = tmp;
-                            else if (!srsName.equals(tmp)) {
-                                log.debug("Failed to retrieve EPSG code due to multiple CRSs used in the input file.");
-                                srsName = null;
-                                break;
-                            }
-                        }
-                    }
-                }
+    private void populateMetadata(Metadata metadata, FeatureInfo info) {
+        if (info != null) {
+            if (info.getId() != null) {
+                metadata.setIdentifier(info.getId());
             }
 
-            if (srsName != null) {
-                try {
-                    log.debug("Found CRS name '" + srsName + "'.");
-                    metadata.setReferenceSystem(new SrsNameParser().getEPSGCode(srsName));
-                } catch (SrsParseException e) {
-                    log.warn("Failed to retrieve EPSG code from the CRS name '" + srsName + "'.", e);
-                }
+            if (info.getDescription() != null) {
+                metadata.setTitle(info.getDescription().getValue());
+            }
+
+            if (info.getBoundedBy() != null
+                    && info.getBoundedBy().getEnvelope() != null) {
+                Envelope envelope = info.getBoundedBy().getEnvelope();
+                metadata.setGeographicalExtent(envelope);
+                metadata.setReferenceSystem(epsg > 0 ?
+                        new ReferenceSystem(epsg) :
+                        ReferenceSystem.parse(envelope.getSrsName()));
             }
         }
-
-        return metadata;
     }
 }

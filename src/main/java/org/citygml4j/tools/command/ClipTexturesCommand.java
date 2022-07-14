@@ -21,130 +21,133 @@
 
 package org.citygml4j.tools.command;
 
-import org.citygml4j.builder.jaxb.CityGMLBuilder;
-import org.citygml4j.model.module.citygml.CityGMLVersion;
-import org.citygml4j.tools.common.log.Logger;
+import org.citygml4j.core.model.core.AbstractFeature;
+import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
+import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.textureclipper.TextureClipper;
-import org.citygml4j.tools.textureclipper.TextureClippingException;
-import org.citygml4j.tools.util.Constants;
-import org.citygml4j.tools.util.ObjectRegistry;
-import org.citygml4j.tools.util.Util;
+import org.citygml4j.tools.option.OverwriteInputOption;
+import org.citygml4j.tools.util.InputFiles;
+import org.citygml4j.tools.util.TextureClipper;
+import org.citygml4j.xml.reader.ChunkOptions;
+import org.citygml4j.xml.reader.CityGMLInputFactory;
+import org.citygml4j.xml.reader.CityGMLReadException;
+import org.citygml4j.xml.reader.CityGMLReader;
+import org.citygml4j.xml.writer.CityGMLChunkWriter;
+import org.citygml4j.xml.writer.CityGMLOutputFactory;
+import org.citygml4j.xml.writer.CityGMLWriteException;
 import picocli.CommandLine;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Stream;
 
 @CommandLine.Command(name = "clip-textures",
         description = "Clips texture images to the extent of the target surface.")
 public class ClipTexturesCommand extends CityGMLTool {
-    @CommandLine.Option(names = {"-o", "--output"}, required = true, paramLabel = "<dir>", description = "Output directory where to write the result files.")
-    private String output;
+    @CommandLine.Option(names = {"-j", "--force-jpeg"},
+            description = "Force JPEG as format for the texture images.")
+    private boolean forceJpeg;
 
-    @CommandLine.Option(names = "--clean-output", description = "Clean output directory before processing input files.")
-    private boolean cleanOutput;
+    @CommandLine.Option(names = {"-q", "--jpeg-compression-quality"}, paramLabel = "<0..1>", defaultValue = "1.0",
+            description = "Compression quality to use for JPEG images (default: ${DEFAULT-VALUE}).")
+    private float jpegCompressionQuality;
 
-    @CommandLine.Option(names = "--jpeg-compression", paramLabel = "<float>", description = "Compression quality for JPEG files: value between 0.0 and 1.0 (default: ${DEFAULT-VALUE}).")
-    private float jpegCompression = 1.0f;
+    @CommandLine.Option(names = {"-c", "--clamp-texture-coordinates"},
+            description = "Clamp texture coordinates to lie within [0, 1].")
+    private boolean clampTextureCoordinates;
 
-    @CommandLine.Option(names = "--force-jpeg", description = "Force JPEG as output format for clipped texture files.")
-    private boolean forceJPEG;
+    @CommandLine.Option(names = "--texture-vertex-precision", paramLabel = "<digits>", defaultValue = "7",
+            description = "Number of decimal places to keep for texture vertices (default: ${DEFAULT-VALUE}).")
+    private int textureVertexPrecision;
 
-    @CommandLine.Option(names = "--adapt-texture-coords", description = "Adapt texture coordinates to lie within [0, 1].")
-    private boolean adaptTexCoords;
+    @CommandLine.Option(names = {"-f", "--texture-folder"}, paramLabel = "<name>", defaultValue = "clipped_textures",
+            description = "Name of the relative folder where to save the texture files (default: ${DEFAULT-VALUE}).")
+    private String textureFolder;
 
-    @CommandLine.Option(names = "--texture-coords-digits", paramLabel = "<digits>", description = "Number of digits to keep for texture coordinates (default: ${DEFAULT-VALUE}).")
-    private int texCoordsDigits = 7;
+    @CommandLine.Option(names = "--texture-prefix", paramLabel = "<prefix>", defaultValue = "tex",
+            description = "Prefix to use for texture file names (default: ${DEFAULT-VALUE}).")
+    private String texturePrefix;
 
-    @CommandLine.Option(names = "--appearance-dir", paramLabel = "<path>", description = "Relative path to be used as appearance directory (default: ${DEFAULT-VALUE}).")
-    private String appearanceDir = "appearance";
-
-    @CommandLine.Option(names = "--appearance-subdirs", paramLabel = "<int>", description = "Number of appearance subdirs to create (default: ${DEFAULT-VALUE}).")
-    private int noOfBuckets = 10;
-
-    @CommandLine.Option(names = "--texture-prefix", paramLabel = "<prefix>", description = "Prefix to be used for texture file names (default: ${DEFAULT-VALUE}).")
-    private String texturePrefix = "tex";
+    @CommandLine.Option(names = "--texture-buckets", paramLabel = "<number>",
+            description = "Number of subfolders (\"buckets\") to create under the texture folder" +
+                    " (default: ${DEFAULT-VALUE}).")
+    private int textureBuckets = 10;
 
     @CommandLine.Mixin
-    private CityGMLOutputOptions cityGMLOutput;
+    private CityGMLOutputVersion version;
 
     @CommandLine.Mixin
-    private InputOptions input;
+    private CityGMLOutputOptions outputOptions;
 
-    @CommandLine.Spec
-    private CommandLine.Model.CommandSpec spec;
+    @CommandLine.Mixin
+    OverwriteInputOption overwriteOption;
+
+    @CommandLine.Mixin
+    private InputOptions inputOptions;
+
+    private final String suffix = "__clipped_textures";
 
     @Override
-    public Integer call() throws Exception {
-        Logger log = Logger.getInstance();
-        CityGMLBuilder cityGMLBuilder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
-
-        CityGMLVersion targetVersion = cityGMLOutput.getVersion();
-
+    public Integer call() throws ExecutionException {
         log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles;
-        try {
-            inputFiles = new ArrayList<>(Util.listFiles(input.getFile(), "**.{gml,xml}"));
-            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
-        } catch (IOException e) {
-            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
+        List<Path> inputFiles = InputFiles.of(inputOptions.getFiles())
+                .withFilter(path -> !stripFileExtension(path).endsWith(suffix))
+                .find();
+
+        if (inputFiles.isEmpty()) {
+            log.warn("No files found at " + inputOptions.joinFiles() + ".");
             return 0;
         }
 
-        // check output directory
-        Path outputDir = Constants.WORKING_DIR.resolve(Paths.get(output));
-        if (Files.isRegularFile(outputDir)) {
-            log.error("The output '" + output + "' is a file but must be a directory.");
-            return 1;
-        }
+        log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
 
-        // check that output and input directories are different
-        Path rootDir = Util.getRootDirectory(input.getFile());
-        if (outputDir.startsWith(rootDir)) {
-            log.error("The output directory must not be a subfolder of or equal to the input directory.");
-            return 1;
-        }
-
-        // clean output folder
-        if (cleanOutput && Files.exists(outputDir)) {
-            log.debug("Cleaning output directory '" + output + "'.");
-            try (Stream<Path> paths = Files.walk(outputDir).sorted(Comparator.reverseOrder())) {
-                paths.map(Path::toFile).forEach(File::delete);
-            }
-        }
-
-        TextureClipper clipper = TextureClipper.defaults(cityGMLBuilder)
-                .withJPEGCompression(jpegCompression)
-                .forceJPEG(forceJPEG)
-                .adaptTextureCoordinates(adaptTexCoords)
-                .withSignificantDigits(texCoordsDigits)
-                .withAppearanceDirectory(appearanceDir)
-                .withNumberOfBuckets(noOfBuckets)
-                .withTextureFileNamePrefix(texturePrefix)
-                .withTargetVersion(targetVersion)
-                .withInputEncoding(input.getEncoding())
-                .withOutputEncoding(cityGMLOutput.getEncoding());
+        CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
+        CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
-            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file '" + inputFile.toAbsolutePath() + "'.");
+            Path outputFile = getOutputFile(inputFile, suffix, overwriteOption.isOverwrite());
 
-            Path outputFile = outputDir.resolve(rootDir.relativize(inputFile));
-            log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
+            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            try {
-                clipper.clipTextures(inputFile, outputFile);
-            } catch (TextureClippingException e) {
-                log.error("Failed to clip textures.", e);
+            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions)) {
+                if (!version.isSetVersion()) {
+                    setCityGMLVersion(reader, out);
+                }
+
+                if (overwriteOption.isOverwrite()) {
+                    log.debug("Writing temporary output file " + outputFile.toAbsolutePath() + ".");
+                } else {
+                    log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
+                }
+
+                TextureClipper textureClipper = TextureClipper.of(inputFile.getParent(), out.getVersion())
+                        .forceJpeg(forceJpeg)
+                        .withJpegCompressionQuality(jpegCompressionQuality)
+                        .clampTextureCoordinates(clampTextureCoordinates)
+                        .withTextureVertexPrecision(textureVertexPrecision)
+                        .withTextureFolder(textureFolder)
+                        .withTexturePrefix(texturePrefix)
+                        .withTextureBuckets(textureBuckets);
+
+                try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
+                        .withCityModelInfo(getFeatureInfo(reader))) {
+                    log.debug("Reading city objects and clipping texture images.");
+                    while (reader.hasNext()) {
+                        AbstractFeature feature = reader.next();
+                        textureClipper.clipTextures(feature);
+                        writer.writeMember(feature);
+                    }
+                }
+            } catch (CityGMLReadException e) {
+                throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
+            } catch (CityGMLWriteException e) {
+                throw new ExecutionException("Failed to write file " + outputFile.toAbsolutePath() + ".", e);
+            }
+
+            if (overwriteOption.isOverwrite()) {
+                log.debug("Replacing input file with temporary output file.");
+                replaceInputFile(inputFile, outputFile);
             }
         }
 
@@ -152,22 +155,27 @@ public class ClipTexturesCommand extends CityGMLTool {
     }
 
     @Override
-    public void preprocess() throws CommandLine.ParameterException {
-        try {
-            Paths.get(output);
-        } catch (InvalidPathException e) {
-            throw new CommandLine.ParameterException(spec.commandLine(), "The output directory '" + output + "' is not a valid path.", e);
+    public void preprocess(CommandLine commandLine) throws Exception {
+        if (jpegCompressionQuality < 0 || jpegCompressionQuality > 1) {
+            throw new CommandLine.ParameterException(commandLine,
+                    "Error: The JPEG compression quality must be between 0 and 1 " +
+                            "but was '" + jpegCompressionQuality + "'");
         }
 
-        try {
-            Path path = Paths.get(appearanceDir);
-            if (path.isAbsolute())
-                throw new CommandLine.ParameterException(spec.commandLine(), "The appearance directory must be given by a local path.");
-        } catch (InvalidPathException e) {
-            throw new CommandLine.ParameterException(spec.commandLine(), "The appearance directory '" + appearanceDir + "' is not a valid path.", e);
+        if (textureFolder.isEmpty()) {
+            throw new CommandLine.ParameterException(commandLine,
+                    "Error: The texture folder must not be empty");
         }
 
-        if (jpegCompression < 0 || jpegCompression > 1)
-            throw new CommandLine.ParameterException(spec.commandLine(), "The JPEG compression must be a value between 0.0 and 1.0.");
+        if (texturePrefix.isEmpty()) {
+            throw new CommandLine.ParameterException(commandLine,
+                    "Error: The texture prefix must not be empty");
+        }
+
+        if (textureBuckets < 0) {
+            throw new CommandLine.ParameterException(commandLine,
+                    "Error: The number of texture buckets must be a non-negative integer " +
+                            "but was '" + textureBuckets + "'");
+        }
     }
 }

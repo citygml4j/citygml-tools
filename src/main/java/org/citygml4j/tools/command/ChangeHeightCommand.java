@@ -21,160 +21,115 @@
 
 package org.citygml4j.tools.command;
 
-import org.citygml4j.builder.jaxb.CityGMLBuilder;
-import org.citygml4j.builder.jaxb.CityGMLBuilderException;
-import org.citygml4j.geometry.BoundingBox;
-import org.citygml4j.model.citygml.CityGML;
-import org.citygml4j.model.citygml.appearance.Appearance;
-import org.citygml4j.model.gml.feature.AbstractFeature;
-import org.citygml4j.tools.common.helper.CityModelInfoHelper;
-import org.citygml4j.tools.common.helper.ImplicitGeometryReader;
-import org.citygml4j.tools.common.log.Logger;
-import org.citygml4j.tools.heightchanger.ChangeHeightException;
-import org.citygml4j.tools.heightchanger.HeightChanger;
-import org.citygml4j.tools.heightchanger.HeightMode;
+import org.citygml4j.core.model.appearance.Appearance;
+import org.citygml4j.core.model.core.AbstractFeature;
+import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
+import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.util.ObjectRegistry;
-import org.citygml4j.tools.util.Util;
-import org.citygml4j.xml.io.reader.CityGMLReadException;
-import org.citygml4j.xml.io.reader.CityGMLReader;
-import org.citygml4j.xml.io.writer.CityGMLWriteException;
-import org.citygml4j.xml.io.writer.CityModelInfo;
-import org.citygml4j.xml.io.writer.CityModelWriter;
+import org.citygml4j.tools.option.OverwriteInputOption;
+import org.citygml4j.tools.util.GlobalObjectsReader;
+import org.citygml4j.tools.util.HeightChanger;
+import org.citygml4j.tools.util.InputFiles;
+import org.citygml4j.xml.reader.ChunkOptions;
+import org.citygml4j.xml.reader.CityGMLInputFactory;
+import org.citygml4j.xml.reader.CityGMLReadException;
+import org.citygml4j.xml.reader.CityGMLReader;
+import org.citygml4j.xml.writer.CityGMLChunkWriter;
+import org.citygml4j.xml.writer.CityGMLOutputFactory;
+import org.citygml4j.xml.writer.CityGMLWriteException;
 import picocli.CommandLine;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @CommandLine.Command(name = "change-height",
         description = "Changes the height values of city objects by a given offset.")
 public class ChangeHeightCommand extends CityGMLTool {
-    @CommandLine.Option(names = "--offset", paramLabel = "<double>", required =  true, description = "Offset to add to height values.")
+    @CommandLine.Option(names = {"-o", "--offset"}, paramLabel = "<double>", required = true,
+            description = "Offset to add to height values.")
     private double offset;
 
-    @CommandLine.Option(names = "--height-mode", paramLabel = "<mode>", description = "Height mode: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
-    private HeightMode heightMode = HeightMode.RELATIVE;
-
-    @CommandLine.Option(names = "--overwrite-files", description = "Overwrite input file(s).")
-    private boolean overwriteInputFiles;
+    @CommandLine.Option(names = {"-m", "--mode"}, defaultValue = "relative",
+            description = "Height mode: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
+    private HeightChanger.Mode mode;
 
     @CommandLine.Mixin
-    private CityGMLOutputOptions cityGMLOutput;
+    private CityGMLOutputVersion version;
 
     @CommandLine.Mixin
-    private InputOptions input;
+    private CityGMLOutputOptions outputOptions;
+
+    @CommandLine.Mixin
+    OverwriteInputOption overwriteOption;
+
+    @CommandLine.Mixin
+    private InputOptions inputOptions;
+
+    private final String suffix = "__changed_height";
 
     @Override
-    public Integer call() throws Exception {
-        Logger log = Logger.getInstance();
-        String fileNameSuffix = "_adapted-height";
-
-        CityGMLBuilder cityGMLBuilder = ObjectRegistry.getInstance().get(CityGMLBuilder.class);
-        ImplicitGeometryReader implicitGeometryReader = new ImplicitGeometryReader(cityGMLBuilder);
-
+    public Integer call() throws ExecutionException {
         log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles;
-        try {
-            inputFiles = new ArrayList<>(Util.listFiles(input.getFile(), "**.{gml,xml}", fileNameSuffix));
-            log.info("Found " + inputFiles.size() + " file(s) at '" + input.getFile() + "'.");
-        } catch (IOException e) {
-            log.warn("Failed to find file(s) at '" + input.getFile() + "'.");
+        List<Path> inputFiles = InputFiles.of(inputOptions.getFiles())
+                .withFilter(path -> !stripFileExtension(path).endsWith(suffix))
+                .find();
+
+        if (inputFiles.isEmpty()) {
+            log.warn("No files found at " + inputOptions.joinFiles() + ".");
             return 0;
         }
 
+        log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
+
+        CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
+        CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
+
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
-            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file '" + inputFile.toAbsolutePath() + "'.");
+            Path outputFile = getOutputFile(inputFile, suffix, overwriteOption.isOverwrite());
 
-            Path outputFile;
-            if (!overwriteInputFiles) {
-                outputFile = Util.addFileNameSuffix(inputFile, fileNameSuffix);
-                log.info("Writing output to file '" + outputFile.toAbsolutePath() + "'.");
-            } else {
-                outputFile = inputFile.resolveSibling("tmp-" + UUID.randomUUID());
-                log.debug("Writing temporary output file '" + outputFile.toAbsolutePath() + "'.");
-            }
+            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            HeightChanger heightChanger = HeightChanger.defaults()
-                    .withHeightMode(heightMode);
+            HeightChanger heightChanger = HeightChanger.of(offset).withMode(mode);
 
-            if (heightMode == HeightMode.ABSOLUTE) {
-                log.debug("Reading implicit geometries from input file.");
-                try {
-                    heightChanger.withImplicitGeometries(implicitGeometryReader.readImplicitGeometries(inputFile));
-                } catch (CityGMLReadException e) {
-                    log.error("Failed to parse implicit geometries.", e);
-                    return 1;
-                }
-            }
+            log.debug("Reading implicit geometries from input file.");
+            heightChanger.withImplicitGeometries(GlobalObjectsReader.onlyImplicitGeometries()
+                    .read(inputFile, getCityGMLContext())
+                    .getImplicitGeometries());
 
-            log.debug("Reading city objects from input file and changing height values.");
-
-            try (CityGMLReader reader = input.createCityGMLReader(inputFile, input.createSkipFilter("CityModel"));
-                 CityModelWriter writer = cityGMLOutput.createCityModelWriter(outputFile)) {
-                boolean isInitialized = false;
-
-                while (reader.hasNext()) {
-                    CityGML cityGML = reader.nextFeature();
-
-                    // write city model
-                    if (!isInitialized) {
-                        CityModelInfo cityModelInfo = CityModelInfoHelper.getCityModelInfo(cityGML, reader.getParentInfo());
-
-                        if (cityModelInfo.isSetBoundedBy() && cityModelInfo.getBoundedBy().isSetEnvelope()) {
-                            BoundingBox bbox = cityModelInfo.getBoundedBy().getEnvelope().toBoundingBox();
-                            if (bbox != null) {
-                                double correction = heightMode == HeightMode.ABSOLUTE ?
-                                        offset - bbox.getLowerCorner().getZ() : offset;
-
-                                bbox.getLowerCorner().setZ(bbox.getLowerCorner().getZ() + correction);
-                                bbox.getUpperCorner().setZ(bbox.getUpperCorner().getZ() + correction);
-                                cityModelInfo.getBoundedBy().setEnvelope(bbox);
-                            }
-                        }
-
-                        writer.setCityModelInfo(cityModelInfo);
-                        writer.writeStartDocument();
-                        isInitialized = true;
-                    }
-
-                    if (cityGML instanceof AbstractFeature) {
-                        AbstractFeature feature = (AbstractFeature) cityGML;
-
-                        try {
-                            if (!(feature instanceof Appearance))
-                                heightChanger.changeHeight(feature, offset);
-                        } catch (ChangeHeightException e) {
-                            log.warn("Not changing height for " + cityGML.getCityGMLClass() + " with gml:id '" +
-                                    feature.getId() + "'.", e);
-                        }
-
-                        writer.writeFeatureMember(feature);
-                    }
+            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions)) {
+                if (!version.isSetVersion()) {
+                    setCityGMLVersion(reader, out);
                 }
 
-            } catch (CityGMLBuilderException | CityGMLReadException e) {
-                log.error("Failed to read city objects.", e);
-                return 1;
+                if (overwriteOption.isOverwrite()) {
+                    log.debug("Writing temporary output file " + outputFile.toAbsolutePath() + ".");
+                } else {
+                    log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
+                }
+
+                try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
+                        .withCityModelInfo(getFeatureInfo(reader))) {
+                    log.debug("Reading city objects and changing their height values.");
+                    while (reader.hasNext()) {
+                        AbstractFeature feature = reader.next();
+                        if (!(feature instanceof Appearance)) {
+                            heightChanger.changeHeight(feature);
+                        }
+
+                        writer.writeMember(feature);
+                    }
+                }
+            } catch (CityGMLReadException e) {
+                throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
             } catch (CityGMLWriteException e) {
-                log.error("Failed to write city objects.", e);
-                return 1;
+                throw new ExecutionException("Failed to write file " + outputFile.toAbsolutePath() + ".", e);
             }
 
-            if (overwriteInputFiles) {
-                try {
-                    log.debug("Replacing input file with temporary file.");
-                    Files.delete(inputFile);
-                    Files.move(outputFile, outputFile.resolveSibling(inputFile.getFileName()));
-                } catch (IOException e) {
-                    log.error("Failed to overwrite input file.", e);
-                    return 1;
-                }
+            if (overwriteOption.isOverwrite()) {
+                log.debug("Replacing input file with temporary output file.");
+                replaceInputFile(inputFile, outputFile);
             }
         }
 

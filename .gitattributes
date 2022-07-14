@@ -1,7 +1,4 @@
-# Always convert line endings in shell scripts (.bat and .sh)
-*.bat 		eol=crlf
-*.sh 		eol=lf
-
-# Convert line endings for specific scripts
-Dockerfile	eol=lf
-gradlew		eol=lf
+*.bat           text eol=crlf
+*.sh            text eol=lf
+Dockerfile	    text eol=lf
+gradlew		    text eol=lf

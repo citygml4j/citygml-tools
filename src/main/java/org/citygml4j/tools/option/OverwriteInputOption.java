@@ -23,28 +23,12 @@ package org.citygml4j.tools.option;
 
 import picocli.CommandLine;
 
-public class InputOptions implements Option {
-    @CommandLine.Parameters(paramLabel = "<file>", arity = "1",
-            description = "One or more files and directories to process (glob patterns allowed).")
-    private String[] files;
+public class OverwriteInputOption implements Option {
+    @CommandLine.Option(names = {"-O", "--overwrite"},
+            description = "Overwrite input file(s).")
+    private boolean overwrite;
 
-    @CommandLine.Option(names = "--input-encoding",
-            description = "Encoding of input file(s).")
-    private String encoding;
-
-    public String[] getFiles() {
-        return files;
-    }
-
-    public String joinFiles() {
-        return String.join(", ", files);
-    }
-
-    public boolean isSetEncoding() {
-        return encoding != null;
-    }
-
-    public String getEncoding() {
-        return encoding;
+    public boolean isOverwrite() {
+        return overwrite;
     }
 }
