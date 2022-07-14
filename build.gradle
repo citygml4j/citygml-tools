@@ -9,6 +9,10 @@ group 'org.citygml4j.tools'
 version '2.0.0-rc.1'
 description 'Collection of tools for processing CityGML files'
 
+ext {
+    date = new Date()
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(11)
@@ -71,6 +75,15 @@ application {
 }
 
 distributions.main.contents {
+    from('resources/README') {
+        filter(ReplaceTokens, tokens: [
+                name: project.name,
+                version: project.version,
+                date: date.format('yyyy-MM-dd'),
+                copyright: date.format('yyyy'),
+                javaCompatibility: java.sourceCompatibility.toString()
+        ])
+    }
     into('license') {
         from 'LICENSE'
     }
