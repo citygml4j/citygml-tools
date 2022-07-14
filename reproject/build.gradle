@@ -1,6 +1,0 @@
-dependencies {
-    implementation project(':citygml-tools-common')
-    implementation 'org.geotools:gt-epsg-extension:26.4'
-    implementation 'org.geotools:gt-epsg-hsql:26.4'
-    implementation 'org.geotools:gt-referencing:26.4'
-}
