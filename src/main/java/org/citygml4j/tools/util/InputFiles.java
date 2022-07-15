@@ -33,6 +33,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class InputFiles {
@@ -105,13 +107,20 @@ public class InputFiles {
     }
 
     private LinkedList<String> parse(String file) {
+        Matcher matcher = Pattern.compile("[^*?{}!\\[\\]]+").matcher("");
         LinkedList<String> elements = new LinkedList<>();
         Path path = null;
 
         do {
-            try {
-                path = Paths.get(file);
-            } catch (Exception e) {
+            if (matcher.reset(file).matches()) {
+                try {
+                    path = Paths.get(file);
+                } catch (Exception e) {
+                    //
+                }
+            }
+
+            if (path == null) {
                 // the file is not a valid path, possibly because of glob patterns.
                 // so, let's iteratively truncate the last path element and try again.
                 int index = file.lastIndexOf(File.separator);
