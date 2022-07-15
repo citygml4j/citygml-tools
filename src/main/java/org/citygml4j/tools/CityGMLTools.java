@@ -228,6 +228,12 @@ public class CityGMLTools implements Command, CommandLine.IVersionProvider {
                 throw new ExecutionException("Failed to create log file " + logFile.toAbsolutePath() + ".", e);
             }
         }
+
+        // load logging configuration for all external loggers
+        Path loggingProperties = APP_HOME.resolve("lib").resolve("logging.properties");
+        if (Files.exists(APP_HOME.resolve(loggingProperties))) {
+            System.setProperty("java.util.logging.config.file", loggingProperties.toString());
+        }
     }
 
     private void loadADEExtensions(Path extensionsDir) throws ExecutionException {

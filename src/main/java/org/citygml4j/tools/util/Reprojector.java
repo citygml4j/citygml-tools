@@ -43,8 +43,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -66,11 +64,6 @@ public class Reprojector {
     }
 
     public static Reprojector of(String name, boolean forceLongitudeFirst) throws ExecutionException {
-        // set HSQLDB logging to severe
-        Logger logger = Logger.getLogger("hsqldb.db");
-        logger.setUseParentHandlers(false);
-        logger.setLevel(Level.SEVERE);
-
         return new Reprojector().withTargetCRS(name, forceLongitudeFirst);
     }
 
