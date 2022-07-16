@@ -208,7 +208,7 @@ public class CityGMLTools implements Command, CommandLine.IVersionProvider {
         createPidFile();
 
         log.info("Executing '" + subCommandName + "' command.");
-        return 0;
+        return CommandLine.ExitCode.OK;
     }
 
     private void initializeLogging() throws ExecutionException {

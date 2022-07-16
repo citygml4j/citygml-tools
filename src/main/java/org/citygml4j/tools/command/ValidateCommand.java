@@ -65,7 +65,7 @@ public class ValidateCommand extends CityGMLTool {
         List<Path> inputFiles = InputFiles.of(inputOptions.getFiles()).find();
         if (inputFiles.isEmpty()) {
             log.warn("No files found at " + inputOptions.joinFiles() + ".");
-            return 0;
+            return CommandLine.ExitCode.OK;
         }
 
         log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
@@ -126,7 +126,7 @@ public class ValidateCommand extends CityGMLTool {
 
         if (invalid == 0) {
             log.info("Validation complete. All files are valid.");
-            return 0;
+            return CommandLine.ExitCode.OK;
         } else {
             log.warn("Validation complete. Found " + invalid + " invalid file(s).");
             return 3;

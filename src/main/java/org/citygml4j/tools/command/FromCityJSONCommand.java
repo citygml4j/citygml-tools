@@ -95,7 +95,7 @@ public class FromCityJSONCommand extends CityGMLTool {
 
         if (inputFiles.isEmpty()) {
             log.warn("No files found at " + inputOptions.joinFiles() + ".");
-            return 0;
+            return CommandLine.ExitCode.OK;
         }
 
         log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
@@ -142,7 +142,7 @@ public class FromCityJSONCommand extends CityGMLTool {
             }
         }
 
-        return 0;
+        return CommandLine.ExitCode.OK;
     }
 
     private CityModel createCityModel(Metadata metadata) {

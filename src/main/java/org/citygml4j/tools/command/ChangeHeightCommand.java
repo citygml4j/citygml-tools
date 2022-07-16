@@ -77,7 +77,7 @@ public class ChangeHeightCommand extends CityGMLTool {
 
         if (inputFiles.isEmpty()) {
             log.warn("No files found at " + inputOptions.joinFiles() + ".");
-            return 0;
+            return CommandLine.ExitCode.OK;
         }
 
         log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
@@ -133,6 +133,6 @@ public class ChangeHeightCommand extends CityGMLTool {
             }
         }
 
-        return 0;
+        return CommandLine.ExitCode.OK;
     }
 }
