@@ -57,6 +57,7 @@ import java.util.stream.Stream;
         subcommands = {
                 CommandLine.HelpCommand.class,
                 ValidateCommand.class,
+                ApplyXSLTCommand.class,
                 ChangeHeightCommand.class,
                 RemoveAppsCommand.class,
                 ToLocalAppsCommand.class,
