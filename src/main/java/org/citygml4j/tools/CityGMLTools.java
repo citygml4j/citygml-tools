@@ -229,9 +229,12 @@ public class CityGMLTools implements Command, CommandLine.IVersionProvider {
             }
         }
 
-        // load logging configuration for all external loggers
-        Path loggingProperties = APP_HOME.resolve("lib").resolve("logging.properties");
-        if (Files.exists(APP_HOME.resolve(loggingProperties))) {
+        // use default logging configuration for external loggers
+        Path loggingProperties = Files.exists(APP_HOME.resolve("lib")) ?
+                APP_HOME.resolve("lib").resolve("logging.properties") :
+                APP_HOME.resolve("resources").resolve("logging.properties");
+
+        if (Files.exists(loggingProperties)) {
             System.setProperty("java.util.logging.config.file", loggingProperties.toString());
         }
     }
