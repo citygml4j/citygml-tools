@@ -119,7 +119,7 @@ public class ReprojectCommand extends CityGMLTool {
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions)) {
+            try (CityGMLReader reader = createCityGMLReader(in, inputFile, inputOptions)) {
                 FeatureInfo cityModelInfo = getFeatureInfo(reader);
                 if (cityModelInfo != null) {
                     reprojector.withCityModelInfo(cityModelInfo);

@@ -99,7 +99,7 @@ public class UpgradeCommand extends CityGMLTool {
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions)) {
+            try (CityGMLReader reader = createCityGMLReader(in, inputFile, inputOptions)) {
                 if (reader.hasNext()) {
                     CityGMLVersion version = CityGMLModules.getCityGMLVersion(reader.getName().getNamespaceURI());
                     if (version == CityGMLVersion.v3_0) {

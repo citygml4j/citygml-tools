@@ -98,7 +98,7 @@ public class ChangeHeightCommand extends CityGMLTool {
                     .read(inputFile, getCityGMLContext())
                     .getImplicitGeometries());
 
-            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions)) {
+            try (CityGMLReader reader = createCityGMLReader(in, inputFile, inputOptions)) {
                 if (!version.isSetVersion()) {
                     setCityGMLVersion(reader, out);
                 }

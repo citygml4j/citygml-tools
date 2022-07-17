@@ -110,7 +110,7 @@ public class ClipTexturesCommand extends CityGMLTool {
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions)) {
+            try (CityGMLReader reader = createCityGMLReader(in, inputFile, inputOptions)) {
                 if (!version.isSetVersion()) {
                     setCityGMLVersion(reader, out);
                 }
