@@ -88,9 +88,9 @@ An official image can be pulled from Docker Hub as shown below.
 
     > docker pull citygml4j/citygml-tools:TAG
 
-Replace the `TAG` label with the version of citygml-tools you want to use. The `latest` tag refers to the latest
-stable release and is also the _default value_ if no tag is specified. If you want to pull the most recent unreleased
-snapshot of citygml-tools, use `edge` as tag.
+Replace the `TAG` label with the version of citygml-tools you want to use such as `v1.4.5`. The `latest` tag
+refers to the latest stable release and is also the _default value_ if no tag is specified. If you want to pull the
+most recent unreleased snapshot of citygml-tools, use `edge` as tag.
 
 #### How to use the image
 Using citygml-tools via Docker is simple:
