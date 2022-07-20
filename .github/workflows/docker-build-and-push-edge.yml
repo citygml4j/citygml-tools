@@ -24,7 +24,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: citygml4j/citygml-tools:latest
+          tags: citygml4j/citygml-tools:edge
       -
         name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
