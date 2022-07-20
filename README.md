@@ -120,6 +120,14 @@ a different path inside the container, you must specify the full path to your in
 Use the `-u` parameter to pass the username or UID of your current host's user to set the correct file permissions on
 generated files in the mounted directory.
 
+#### Technical details
+The citygml-tools image uses [Eclipse Temurin](https://hub.docker.com/_/eclipse-temurin) OpenJDK binaries for Alpine
+Linux to keep the resulting images small. Additionally, it is written as multi-stage image, which means the "JDK image"
+is only used for building, while the final application gets wrapped in a smaller "JRE image".
+
+By default, the container process is executed as non-root user. The default working directory inside the container
+is `/data`.
+
 ## Building
 citygml-tools uses [Gradle](https://gradle.org/) as build system. To build the program from source, clone the
 repository to your local machine and run the following command from the root of the repository.
