@@ -1,5 +1,6 @@
 # citygml-tools
-citygml-tools is a command line utility that bundles several operations for processing CityGML files.
+citygml-tools is a command line utility that bundles several operations for processing
+[CityGML](https://www.ogc.org/standards/citygml) files.
 
 ## License
 citygml-tools is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
@@ -13,7 +14,8 @@ Download the citygml-tools 1.4.5 release binaries
 are available from the [releases section](https://github.com/citygml4j/citygml-tools/releases).
 
 Note that [citygml-tools v1](https://github.com/citygml4j/citygml-tools/tree/v1) is in _maintenance mode_, and we
-are focusing all of our attention on the [**next major version 2.0**](https://github.com/citygml4j/citygml-tools/releases/tag/v2.0.0-rc.1) with support for [**CityGML 3.0**](https://docs.ogc.org/is/20-010/20-010.html). This means that v1 is not
+are focusing all of our attention on the [**next major version 2.0**](https://github.com/citygml4j/citygml-tools/releases/tag/v2.0.0-rc.1)
+with support for [**CityGML 3.0**](https://docs.ogc.org/is/20-010/20-010.html). This means that v1 is not
 updated with new features but at most receives critical bug fixes. A **release candidate** of the
 upcoming v2 is available from [here](https://github.com/citygml4j/citygml-tools/releases/tag/v2.0.0-rc.1).
 
@@ -66,9 +68,16 @@ the command you want to learn more about:
 
     > citygml-tools help COMMAND
 
-The following example shows how to use the `to-cityjson` command to convert a CityGML file into CityJSON:
+The following example shows how to use the `stats` command to generate and print statistics about the content
+of the specified CityGML file:
 
-    > citygml-tools to-cityjson /path/to/your/CityGML.gml
+    > citygml-tools stats /path/to/your/CityGML.gml
+
+## Supported CityGML versions
+You can process CityGML 3.0, 2.0, and 1.0 files with citygml-tools. The `upgrade` command provides an
+easy way to convert your existing CityGML 2.0 and 1.0 datasets into the latest version 3.0 of CityGML.
+
+The `from-cityjson` and `to-cityjson` commands support [CityJSON](https://www.cityjson.org/) 1.1 and 1.0 files.
 
 ## System requirements
 * Java 11 or higher
@@ -100,7 +109,7 @@ Using citygml-tools via Docker is simple:
 This will show the help message and all available commands of citygml-tools.
 
 The following command mounts a local directory at `/data` using the `-v` parameter and runs the `to-cityjson` command
-of citygml-tools on all CityGML files in the mounted volume.
+of citygml-tools to convert all CityGML files in the mounted volume into CityJSON.
 
     > docker run --rm -u 1000 -v /path/to/your/data:/data citygml-tools to-cityjson *.gml
 
