@@ -47,7 +47,9 @@ Collection of tools for processing CityGML files.
   -V, --version             Print version information and exit.
 Commands:
   help           Displays help information about the specified command
+  stats          Generates statistics about the content of CityGML files.
   validate       Validates CityGML files against the CityGML XML schemas.
+  apply-xslt     Transforms city objects based on XSLT stylesheets.
   change-height  Changes the height values of city objects by a given offset.
   remove-apps    Removes appearances from city objects.
   to-local-apps  Converts global appearances into local ones.
@@ -74,7 +76,6 @@ The following example shows how to use the `to-cityjson` command to convert a Ci
 citygml-tools can be run on any platform providing appropriate Java support.
 
 ## Docker image
-
 citygml-tools is also available as Docker image. You can either build the image yourself using the provided `Dockerfile`
 or use a pre-built image from Docker Hub: https://hub.docker.com/r/citygml4j/citygml-tools.
 
@@ -83,18 +84,29 @@ repository:
 
     > docker build -t citygml-tools .
 
-### How to use the image
+An official image can be pulled from Docker Hub as shown below.
 
-Using citygml-tools via docker is simple:
+    > docker pull citygml4j/citygml-tools:TAG
+
+Replace the `TAG` label with the version of citygml-tools you want to use. The `latest` tag refers to the latest
+stable release and is also the _default value_ if no tag is specified. If you want to pull the most recent unreleased
+snapshot of citygml-tools, use `edge` as tag.
+
+#### How to use the image
+Using citygml-tools via Docker is simple:
 
      > docker run --rm citygml-tools
 
 This will show the help message and all available commands of citygml-tools.
 
-The following command mounts a volume and runs the `to-cityjson` command of citygml-tools on all CityGML files
-in the mounted volume.
+The following command mounts a local directory at `/data` using the `-v` parameter and runs the `to-cityjson` command
+of citygml-tools on all CityGML files in the mounted volume.
 
-    > docker run --rm -u 1000 -v /path/to/your/data:/data citygml-tools to-cityjson /data
+    > docker run --rm -u 1000 -v /path/to/your/data:/data citygml-tools to-cityjson *.gml
+
+Note that `/data` is the _default working directory_ inside the container. Relative paths to input files like
+in the above example are automatically resolved against `/data` by citygml-tools. If you mount your local directory at
+a different path inside the container, you must specify the full path to your input files, of course. 
 
 Use the `-u` parameter to pass the username or UID of your current host's user to set the correct file permissions on
 generated files in the mounted directory.
