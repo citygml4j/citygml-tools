@@ -60,7 +60,7 @@ public class FilterLodsCommand extends CityGMLTool {
 
     @CommandLine.Option(names = {"-m", "--mode"}, defaultValue = "keep",
             description = "Filter mode: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}). The matching " +
-                    "minimum or maximum LoD is determined per top-level object.")
+                    "minimum or maximum LoD is determined per top-level city object.")
     private LodFilter.Mode mode;
 
     @CommandLine.Option(names = {"-k", "--keep-empty-objects"},

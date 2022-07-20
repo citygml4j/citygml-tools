@@ -57,11 +57,11 @@ public class UpgradeCommand extends CityGMLTool {
     private boolean mapLod1MultiSurfaces;
 
     @CommandLine.Option(names = {"-r", "--resolve-geometry-references"},
-            description = "Resolve geometry references between top-level features.")
+            description = "Resolve geometry references between top-level city objects.")
     private boolean resolveGeometryReferences;
 
     @CommandLine.Option(names = {"-l", "--add-object-links"},
-            description = "Add CityObjectRelation links between top-level features sharing a common geometry. " +
+            description = "Add CityObjectRelation links between top-level city objects sharing a common geometry. " +
                     "Use only when resolving of geometry references is enabled.")
     private boolean createCityObjectRelations;
 

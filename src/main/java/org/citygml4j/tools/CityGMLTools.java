@@ -56,6 +56,7 @@ import java.util.stream.Stream;
         sortOptions = false,
         subcommands = {
                 CommandLine.HelpCommand.class,
+                StatsCommand.class,
                 ValidateCommand.class,
                 ApplyXSLTCommand.class,
                 ChangeHeightCommand.class,

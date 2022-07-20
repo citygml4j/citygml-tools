@@ -44,11 +44,11 @@ import java.util.List;
 @CommandLine.Command(name = "to-cityjson",
         description = "Converts CityGML files into CityJSON.")
 public class ToCityJSONCommand extends CityGMLTool {
-    @CommandLine.Option(names = "--epsg", paramLabel = "<code>",
+    @CommandLine.Option(names = {"-e", "--epsg"}, paramLabel = "<code>",
             description = "EPSG code to use as CRS in the metadata.")
     private int epsg;
 
-    @CommandLine.Option(names = "--compute-extent",
+    @CommandLine.Option(names = {"-c", "--compute-extent"},
             description = "Compute city model extent to use in the metadata.")
     private boolean computeExtent;
 
