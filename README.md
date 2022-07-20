@@ -118,7 +118,7 @@ repository to your local machine and run the following command from the root of 
     > gradlew installDist
 
 The script automatically downloads all required dependencies for building and running citygml-tools. So make sure you
-are connected to the internet. The build process runs on all major operating systems and only requires a Java 8 JDK or
+are connected to the internet. The build process runs on all major operating systems and only requires a Java 11 JDK or
 higher to run.
 
 If the build was successful, you will find the citygml-tools package under `citygml-tools/build/install`.
