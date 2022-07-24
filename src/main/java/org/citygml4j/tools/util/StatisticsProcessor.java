@@ -147,9 +147,9 @@ public class StatisticsProcessor {
         }
     }
 
-    public void process(QName element, AbstractGenericAttribute<?> genericAttribute) {
+    public void process(AbstractGenericAttribute<?> genericAttribute) {
         if (genericAttribute != null) {
-            statistics.addGenericAttribute(genericAttribute.getName(), element.getLocalPart());
+            statistics.addGenericAttribute(genericAttribute.getName(), genericAttribute.getClass().getSimpleName());
         }
     }
 

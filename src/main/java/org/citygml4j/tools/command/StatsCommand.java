@@ -124,7 +124,7 @@ public class StatsCommand extends CityGMLTool {
                             } else if (schemaHelper.isImplicitGeometry(element)) {
                                 processor.process(element, reader.getObject(ImplicitGeometry.class), elements.peek());
                             } else if (schemaHelper.isGenericAttribute(element)) {
-                                processor.process(element, reader.getObject(AbstractGenericAttribute.class));
+                                processor.process(reader.getObject(AbstractGenericAttribute.class));
                             } else if (schemaHelper.isEnvelope(element)) {
                                 processor.process(reader.getObject(Envelope.class), statistics);
                             }
