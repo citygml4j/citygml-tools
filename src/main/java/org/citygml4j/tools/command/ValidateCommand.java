@@ -21,6 +21,7 @@
 
 package org.citygml4j.tools.command;
 
+import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.log.LogLevel;
 import org.citygml4j.tools.option.InputOptions;
@@ -81,9 +82,10 @@ public class ValidateCommand extends CityGMLTool {
         if (schemas != null) {
             for (String schema : schemas) {
                 try {
-                    log.debug("Loading additional XML schema from " + schema + ".");
+                    Path schemaFile = CityGMLTools.WORKING_DIR.resolve(schema).toAbsolutePath();
+                    log.debug("Loading additional XML schema from " + schemaFile + ".");
                     schemaHandler.parseSchema(schema);
-                } catch (SchemaHandlerException e) {
+                } catch (Exception e) {
                     throw new ExecutionException("Failed to load XML schema from " + schema + ".", e);
                 }
             }
