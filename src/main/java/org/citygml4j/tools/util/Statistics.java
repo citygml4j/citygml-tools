@@ -228,7 +228,10 @@ public class Statistics {
         ObjectNode appearance = statistics.putObject("appearance");
         appearance.put("hasTextures", hasTextures);
         appearance.put("hasMaterials", hasMaterials);
-        appearance.put("hasGlobalAppearances", hasGlobalAppearances);
+
+        if (hasTextures || hasMaterials) {
+            appearance.put("hasGlobalAppearances", hasGlobalAppearances);
+        }
 
         if (!themes.isEmpty() || hasNullTheme) {
             ArrayNode themes = appearance.putArray("themes");
@@ -326,7 +329,10 @@ public class Statistics {
             printer.accept("=== Appearance ===================");
             printer.accept("hasTextures: " + appearance.path("hasTextures").asBoolean());
             printer.accept("hasMaterials: " + appearance.path("hasMaterials").asBoolean());
-            printer.accept("hasGlobalAppearances: " + appearance.path("hasGlobalAppearances").asBoolean());
+
+            if (appearance.path("hasTextures").asBoolean() || appearance.path("hasMaterials").asBoolean()) {
+                printer.accept("hasGlobalAppearances: " + appearance.path("hasGlobalAppearances").asBoolean());
+            }
 
             if (appearance.has("themes")) {
                 printer.accept("Themes: " + appearance.get("themes"));
