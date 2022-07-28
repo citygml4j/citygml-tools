@@ -1,3 +1,7 @@
+![build](https://img.shields.io/github/workflow/status/citygml4j/citygml-tools/citygml-tools-build?logo=Gradle)
+![edge](https://img.shields.io/github/workflow/status/citygml4j/citygml-tools/docker-build-and-push-edge?label=edge&logo=Docker&logoColor=white)
+![release](https://img.shields.io/github/v/release/citygml4j/citygml-tools?display_name=tag)
+
 # citygml-tools
 citygml-tools is a command line utility that bundles several operations for processing
 [CityGML](https://www.ogc.org/standards/citygml) files.
