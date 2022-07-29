@@ -29,6 +29,7 @@ public class Statistics {
     private final Set<CityGMLVersion> versions = new TreeSet<>();
     private final Set<String> referenceSystems = new LinkedHashSet<>();
     private final Envelope extent = new Envelope();
+    private final Map<String, Envelope> extents = new LinkedHashMap<>();
     private final Set<Integer> lods = new TreeSet<>();
     private final Set<String> themes = new TreeSet<>();
     private boolean hasImplicitGeometries;
@@ -63,6 +64,12 @@ public class Statistics {
         if (referenceSystem != null) {
             referenceSystems.add(referenceSystem);
         }
+    }
+
+    private String getDefaultReferenceSystem() {
+        return !referenceSystems.isEmpty() ?
+                referenceSystems.iterator().next() :
+                "unknown";
     }
 
     public Envelope getExtent() {
@@ -157,7 +164,6 @@ public class Statistics {
         files.addAll(other.files);
         versions.addAll(other.versions);
         referenceSystems.addAll(other.referenceSystems);
-        extent.include(other.extent);
         lods.addAll(other.lods);
         themes.addAll(other.themes);
         hasImplicitGeometries = other.hasImplicitGeometries || hasImplicitGeometries;
@@ -165,6 +171,9 @@ public class Statistics {
         hasMaterials = other.hasMaterials || hasMaterials;
         hasGlobalAppearances = other.hasGlobalAppearances || hasGlobalAppearances;
         hasNullTheme = other.hasNullTheme || hasNullTheme;
+
+        extents.putIfAbsent(getDefaultReferenceSystem(), extent);
+        extents.computeIfAbsent(other.getDefaultReferenceSystem(), v -> new Envelope()).include(other.extent);
 
         for (Map.Entry<ModuleType, Map<String, String>> entry : other.modules.entrySet()) {
             entry.getValue().forEach((prefix, namespaceURI) -> addModule(entry.getKey(), prefix, namespaceURI));
@@ -212,9 +221,17 @@ public class Statistics {
             this.referenceSystems.forEach(referenceSystems::add);
         }
 
-        if (extent.isValid()) {
-            ArrayNode extent = statistics.putArray("extent");
-            this.extent.toCoordinateList3D().forEach(extent::add);
+        if (extents.isEmpty()) {
+            if (extent.isValid()) {
+                ArrayNode extent = statistics.putArray("extent");
+                this.extent.toCoordinateList3D().forEach(extent::add);
+            }
+        } else {
+            ObjectNode extents = statistics.putObject("extents");
+            for (Map.Entry<String, Envelope> entry : this.extents.entrySet()) {
+                ArrayNode extent = extents.putArray(entry.getKey());
+                entry.getValue().toCoordinateList3D().forEach(extent::add);
+            }
         }
 
         ObjectNode geometry = statistics.putObject("geometry");
@@ -312,6 +329,10 @@ public class Statistics {
 
         if (statistics.has("extent")) {
             printer.accept("Extent: " + statistics.get("extent"));
+        } else if (statistics.path("extents").isObject()) {
+            ObjectNode extents = (ObjectNode) statistics.get("extents");
+            extents.fields().forEachRemaining(field -> printer.accept("Extent (\"" + field.getKey() + "\"): " +
+                    field.getValue()));
         }
 
         if (statistics.path("geometry").isObject()) {
