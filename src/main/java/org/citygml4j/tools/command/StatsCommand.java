@@ -44,7 +44,7 @@ public class StatsCommand extends CityGMLTool {
     private boolean onlyTopLevelFeatures;
 
     @CommandLine.Option(names = {"-H", "--object-hierarchy"},
-            description = "Generate an aggregated overview of the city object hierarchies.")
+            description = "Generate an aggregated overview of the nested hierarchies of the city objects.")
     private boolean generateObjectHierarchy;
 
     @CommandLine.Option(names = "--no-json-report", negatable = true, defaultValue = "true",
@@ -87,7 +87,7 @@ public class StatsCommand extends CityGMLTool {
         ChunkOptions chunkOptions = ChunkOptions.defaults();
         SchemaHelper schemaHelper = SchemaHelper.of(schemaHandler);
 
-        Statistics summaryStatistics = null;
+        Statistics summary = null;
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
@@ -150,20 +150,20 @@ public class StatsCommand extends CityGMLTool {
                 writeStatistics(outputFile, statistics, objectMapper);
             }
 
-            if (summaryStatistics == null) {
-                summaryStatistics = statistics;
+            if (summary == null) {
+                summary = statistics;
             } else {
-                summaryStatistics.merge(statistics);
+                summary.merge(statistics);
             }
         }
 
-        if (summaryStatistics != null) {
+        if (summary != null) {
             if (summaryFile != null) {
                 log.info("Writing overall statistics over all input file(s) as JSON report to file " + summaryFile + ".");
-                writeStatistics(summaryFile, summaryStatistics, objectMapper);
+                writeStatistics(summaryFile, summary, objectMapper);
             }
 
-            summaryStatistics.print(objectMapper, (msg) -> log.print(LogLevel.INFO, msg));
+            summary.print(objectMapper, (msg) -> log.print(LogLevel.INFO, msg));
         }
 
         return CommandLine.ExitCode.OK;
@@ -175,6 +175,14 @@ public class StatsCommand extends CityGMLTool {
             writer.writeObject(statistics.toJson(objectMapper));
         } catch (Exception e) {
             throw new ExecutionException("Failed to write JSON file " + outputFile.toAbsolutePath() + ".", e);
+        }
+    }
+
+    @Override
+    public void preprocess(CommandLine commandLine) throws Exception {
+        if (onlyTopLevelFeatures && generateObjectHierarchy) {
+            throw new CommandLine.ParameterException(commandLine,
+                    "Error: --only-top-level and --object-hierarchy are mutually exclusive (specify only one)");
         }
     }
 }
