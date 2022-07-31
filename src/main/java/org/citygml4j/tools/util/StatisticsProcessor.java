@@ -14,9 +14,11 @@ import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.module.Module;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.module.citygml.CoreModule;
+import org.xmlobjects.gml.model.feature.BoundingShape;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.Envelope;
 import org.xmlobjects.gml.model.geometry.GeometryProperty;
+import org.xmlobjects.gml.model.geometry.SRSReference;
 
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
@@ -29,7 +31,9 @@ public class StatisticsProcessor {
     private final CityGMLContext context;
     private final StatisticsWalker statisticsWalker = new StatisticsWalker();
     private final Deque<FeatureInfo> featureInfos = new ArrayDeque<>();
+    private final Deque<SrsInfo> srsInfos = new ArrayDeque<>();
     private final Matcher lodMatcher = CityGMLPatterns.LOD_FROM_PROPERTY_NAME.matcher("");
+    private final String DEFAULT_SRS_NAME = "unknown";
 
     private boolean computeEnvelope;
     private boolean onlyTopLevelFeatures;
@@ -70,7 +74,7 @@ public class StatisticsProcessor {
             return;
         }
 
-        if (!statistics.getExtent().isValid()) {
+        if (!statistics.hasValidExtent()) {
             computeEnvelope = true;
         }
 
@@ -112,7 +116,7 @@ public class StatisticsProcessor {
             getLodFromPropertyName(parent);
 
             if (computeEnvelope) {
-                statistics.getExtent().include(geometry.computeEnvelope());
+                statistics.getExtent(getSrsName(geometry)).include(geometry.computeEnvelope());
             }
 
             geometry.accept(statisticsWalker);
@@ -139,7 +143,12 @@ public class StatisticsProcessor {
                     }
                 }
 
-                statistics.getExtent().include(implicitGeometry.computeEnvelope());
+                String srsName = implicitGeometry.getReferencePoint() != null
+                        && implicitGeometry.getReferencePoint().getObject() != null ?
+                        getSrsName(implicitGeometry.getReferencePoint().getObject()) :
+                        getCurrentSrsName();
+
+                statistics.getExtent(srsName).include(implicitGeometry.computeEnvelope());
             }
 
             statistics.setHasImplicitGeometries(true);
@@ -153,20 +162,31 @@ public class StatisticsProcessor {
         }
     }
 
-    public void process(Envelope envelope, Statistics statistics) {
-        if (envelope != null) {
-            statistics.addReferenceSystem(envelope.getSrsName());
+    public void process(BoundingShape boundingShape, int depth, Statistics statistics) {
+        if (boundingShape != null && boundingShape.isSetEnvelope()) {
+            Envelope envelope = boundingShape.getEnvelope();
+
+            if (envelope.getSrsName() != null) {
+                srsInfos.push(new SrsInfo(envelope.getSrsName(), depth));
+                statistics.addReferenceSystem(envelope.getSrsName());
+            }
+
             if (!computeEnvelope && !statistics.hasObjects(Statistics.ObjectType.FEATURE)) {
-                statistics.getExtent().include(envelope);
+                statistics.getExtent(getSrsName(envelope)).include(envelope);
             }
         }
     }
 
-    public void updateFeatureHierarchy(int depth) {
+    public void updateDepth(int depth) {
         if (generateObjectHierarchy
                 && !featureInfos.isEmpty()
                 && featureInfos.peek().getDepth() == depth + 1) {
             featureInfos.pop();
+        }
+
+        if (!srsInfos.isEmpty()
+                && srsInfos.peek().getDepth() == depth + 1) {
+            srsInfos.pop();
         }
     }
 
@@ -191,6 +211,20 @@ public class StatisticsProcessor {
     private String getPrefix(String namespaceURI, String defaultPrefix) {
         Module module = CityGMLModules.getModuleFor(namespaceURI);
         return module != null ? module.getNamespacePrefix() : defaultPrefix;
+    }
+
+    private String getCurrentSrsName() {
+        return !srsInfos.isEmpty() ? srsInfos.peek().getSrsName() : DEFAULT_SRS_NAME;
+    }
+
+    private String getSrsName(SRSReference srsReference) {
+        if (srsReference != null && srsReference.getSrsName() != null) {
+            return srsReference.getSrsName();
+        } else if (!srsInfos.isEmpty()) {
+            return srsInfos.peek().getSrsName();
+        } else {
+            return DEFAULT_SRS_NAME;
+        }
     }
 
     private void lazyLoadTemplates() throws ExecutionException {
@@ -247,6 +281,24 @@ public class StatisticsProcessor {
 
         public String getName() {
             return name;
+        }
+
+        public int getDepth() {
+            return depth;
+        }
+    }
+
+    private static class SrsInfo {
+        private final String srsName;
+        private final int depth;
+
+        SrsInfo(String srsName, int depth) {
+            this.srsName = srsName;
+            this.depth = depth;
+        }
+
+        public String getSrsName() {
+            return srsName;
         }
 
         public int getDepth() {

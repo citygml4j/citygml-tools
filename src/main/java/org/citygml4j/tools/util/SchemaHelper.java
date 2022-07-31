@@ -64,8 +64,8 @@ public class SchemaHelper {
         }
     }
 
-    public boolean isEnvelope(QName element) {
-        return "Envelope".equals(element.getLocalPart())
+    public boolean isBoundingShape(QName element) {
+        return "boundedBy".equals(element.getLocalPart())
                 && CityGMLModules.isGMLNamespace(element.getNamespaceURI());
     }
 

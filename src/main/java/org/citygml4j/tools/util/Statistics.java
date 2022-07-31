@@ -28,7 +28,6 @@ public class Statistics {
     private final List<Path> files = new ArrayList<>();
     private final Set<CityGMLVersion> versions = new TreeSet<>();
     private final Set<String> referenceSystems = new LinkedHashSet<>();
-    private final Envelope extent = new Envelope();
     private final Map<String, Envelope> extents = new LinkedHashMap<>();
     private final Set<Integer> lods = new TreeSet<>();
     private final Set<String> themes = new TreeSet<>();
@@ -66,14 +65,12 @@ public class Statistics {
         }
     }
 
-    private String getDefaultReferenceSystem() {
-        return !referenceSystems.isEmpty() ?
-                referenceSystems.iterator().next() :
-                "unknown";
+    public Envelope getExtent(String referenceSystem) {
+        return extents.computeIfAbsent(referenceSystem, v -> new Envelope());
     }
 
-    public Envelope getExtent() {
-        return extent;
+    public boolean hasValidExtent() {
+        return extents.values().stream().anyMatch(Envelope::isValid);
     }
 
     public void addLod(int lod) {
@@ -172,8 +169,9 @@ public class Statistics {
         hasGlobalAppearances = other.hasGlobalAppearances || hasGlobalAppearances;
         hasNullTheme = other.hasNullTheme || hasNullTheme;
 
-        extents.putIfAbsent(getDefaultReferenceSystem(), extent);
-        extents.computeIfAbsent(other.getDefaultReferenceSystem(), v -> new Envelope()).include(other.extent);
+        for (Map.Entry<String, Envelope> entry : other.extents.entrySet()) {
+            getExtent(entry.getKey()).include(entry.getValue());
+        }
 
         for (Map.Entry<ModuleType, Map<String, String>> entry : other.modules.entrySet()) {
             entry.getValue().forEach((prefix, namespaceURI) -> addModule(entry.getKey(), prefix, namespaceURI));
@@ -221,16 +219,12 @@ public class Statistics {
             this.referenceSystems.forEach(referenceSystems::add);
         }
 
-        if (extents.isEmpty()) {
-            if (extent.isValid()) {
-                ArrayNode extent = statistics.putArray("extent");
-                this.extent.toCoordinateList3D().forEach(extent::add);
-            }
+        if (referenceSystems.size() == 1) {
+            toJson(extents.get(referenceSystems.iterator().next()), "extent", statistics);
         } else {
             ObjectNode extents = statistics.putObject("extents");
             for (Map.Entry<String, Envelope> entry : this.extents.entrySet()) {
-                ArrayNode extent = extents.putArray(entry.getKey());
-                entry.getValue().toCoordinateList3D().forEach(extent::add);
+                toJson(entry.getValue(), entry.getKey(), extents);
             }
         }
 
@@ -294,6 +288,13 @@ public class Statistics {
         }
 
         return statistics;
+    }
+
+    private void toJson(Envelope extent, String propertyName, ObjectNode node) {
+        if (extent != null && extent.isValid()) {
+            ArrayNode target = node.putArray(propertyName);
+            extent.toCoordinateList3D().forEach(target::add);
+        }
     }
 
     private void addHierarchies(Map<String, FeatureHierarchy> hierarchies, ArrayNode target) {

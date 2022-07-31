@@ -16,8 +16,9 @@ import org.citygml4j.tools.util.Statistics;
 import org.citygml4j.tools.util.StatisticsProcessor;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.schema.CityGMLSchemaHandler;
+import org.xmlobjects.gml.adapter.feature.BoundingShapeAdapter;
+import org.xmlobjects.gml.model.feature.BoundingShape;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
-import org.xmlobjects.gml.model.geometry.Envelope;
 import org.xmlobjects.schema.SchemaHandler;
 import org.xmlobjects.stream.EventType;
 import org.xmlobjects.stream.XMLReader;
@@ -125,8 +126,9 @@ public class StatsCommand extends CityGMLTool {
                                 processor.process(element, reader.getObject(ImplicitGeometry.class), elements.peek());
                             } else if (schemaHelper.isGenericAttribute(element)) {
                                 processor.process(reader.getObject(AbstractGenericAttribute.class));
-                            } else if (schemaHelper.isEnvelope(element)) {
-                                processor.process(reader.getObject(Envelope.class), statistics);
+                            } else if (schemaHelper.isBoundingShape(element)) {
+                                BoundingShape boundingShape = reader.getObjectUsingBuilder(BoundingShapeAdapter.class);
+                                processor.process(boundingShape, reader.getDepth(), statistics);
                             }
 
                             isTopLevel = false;
@@ -134,7 +136,7 @@ public class StatsCommand extends CityGMLTool {
 
                         elements.push(element);
                     } else if (event == EventType.END_ELEMENT) {
-                        processor.updateFeatureHierarchy(reader.getDepth());
+                        processor.updateDepth(reader.getDepth());
                         elements.pop();
                     }
                 }
