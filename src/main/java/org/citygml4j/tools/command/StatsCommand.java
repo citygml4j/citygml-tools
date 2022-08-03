@@ -139,7 +139,7 @@ public class StatsCommand extends CityGMLTool {
                             elements.push(element);
                         }
                     } else if (event == EventType.END_ELEMENT) {
-                        processor.updateDepth(reader.getDepth());
+                        processor.updateDepth(depth);
                         elements.pop();
                     }
                 }
