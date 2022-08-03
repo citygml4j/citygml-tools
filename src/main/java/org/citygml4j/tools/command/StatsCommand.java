@@ -111,6 +111,7 @@ public class StatsCommand extends CityGMLTool {
 
                 while (reader.hasNext()) {
                     EventType event = reader.nextTag();
+                    int depth = reader.getDepth();
                     if (event == EventType.START_ELEMENT) {
                         QName element = reader.getName();
                         if (chunkOptions.containsProperty(element)) {
@@ -119,7 +120,7 @@ public class StatsCommand extends CityGMLTool {
                             if (schemaHelper.isAppearance(element)) {
                                 processor.process(element, reader.getObject(Appearance.class), isTopLevel);
                             } else if (schemaHelper.isFeature(element)) {
-                                processor.process(element, reader.getPrefix(), isTopLevel, reader.getDepth(), statistics);
+                                processor.process(element, reader.getPrefix(), isTopLevel, depth, statistics);
                             } else if (schemaHelper.isGeometry(element)) {
                                 processor.process(element, reader.getObject(AbstractGeometry.class), elements.peek());
                             } else if (schemaHelper.isImplicitGeometry(element)) {
@@ -128,13 +129,15 @@ public class StatsCommand extends CityGMLTool {
                                 processor.process(reader.getObject(AbstractGenericAttribute.class));
                             } else if (schemaHelper.isBoundingShape(element)) {
                                 BoundingShape boundingShape = reader.getObjectUsingBuilder(BoundingShapeAdapter.class);
-                                processor.process(boundingShape, reader.getDepth(), statistics);
+                                processor.process(boundingShape, depth, statistics);
                             }
 
                             isTopLevel = false;
                         }
 
-                        elements.push(element);
+                        if (reader.getDepth() == depth) {
+                            elements.push(element);
+                        }
                     } else if (event == EventType.END_ELEMENT) {
                         processor.updateDepth(reader.getDepth());
                         elements.pop();

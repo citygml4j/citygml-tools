@@ -221,34 +221,38 @@ public class Statistics {
 
         if (referenceSystems.size() == 1) {
             toJson(extents.get(referenceSystems.iterator().next()), "extent", statistics);
-        } else {
+        } else if (!extents.isEmpty()) {
             ObjectNode extents = statistics.putObject("extents");
             for (Map.Entry<String, Envelope> entry : this.extents.entrySet()) {
                 toJson(entry.getValue(), entry.getKey(), extents);
             }
         }
 
-        ObjectNode geometry = statistics.putObject("geometry");
-        if (!lods.isEmpty()) {
-            ArrayNode lods = geometry.putArray("lods");
-            this.lods.forEach(lods::add);
+        if (hasObjects(ObjectType.GEOMETRY)) {
+            ObjectNode geometry = statistics.putObject("geometry");
+            if (!lods.isEmpty()) {
+                ArrayNode lods = geometry.putArray("lods");
+                this.lods.forEach(lods::add);
+            }
+
+            geometry.put("hasImplicitGeometries", hasImplicitGeometries);
         }
 
-        geometry.put("hasImplicitGeometries", hasImplicitGeometries);
+        if (hasObjects(ObjectType.FEATURE)) {
+            ObjectNode appearance = statistics.putObject("appearance");
+            appearance.put("hasTextures", hasTextures);
+            appearance.put("hasMaterials", hasMaterials);
 
-        ObjectNode appearance = statistics.putObject("appearance");
-        appearance.put("hasTextures", hasTextures);
-        appearance.put("hasMaterials", hasMaterials);
+            if (hasTextures || hasMaterials) {
+                appearance.put("hasGlobalAppearances", hasGlobalAppearances);
+            }
 
-        if (hasTextures || hasMaterials) {
-            appearance.put("hasGlobalAppearances", hasGlobalAppearances);
-        }
-
-        if (!themes.isEmpty() || hasNullTheme) {
-            ArrayNode themes = appearance.putArray("themes");
-            this.themes.forEach(themes::add);
-            if (hasNullTheme) {
-                themes.add(NullNode.getInstance());
+            if (!themes.isEmpty() || hasNullTheme) {
+                ArrayNode themes = appearance.putArray("themes");
+                this.themes.forEach(themes::add);
+                if (hasNullTheme) {
+                    themes.add(NullNode.getInstance());
+                }
             }
         }
 
