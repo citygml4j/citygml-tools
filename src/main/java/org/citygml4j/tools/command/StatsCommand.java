@@ -129,7 +129,8 @@ public class StatsCommand extends CityGMLTool {
                                 processor.process(reader.getObject(AbstractGenericAttribute.class));
                             } else if (schemaHelper.isBoundingShape(element)) {
                                 BoundingShape boundingShape = reader.getObjectUsingBuilder(BoundingShapeAdapter.class);
-                                processor.process(boundingShape, depth, statistics);
+                                boolean isCityModel = !elements.isEmpty() && schemaHelper.isCityModel(elements.peek());
+                                processor.process(boundingShape, depth - 1, isCityModel, statistics);
                             }
 
                             isTopLevel = false;

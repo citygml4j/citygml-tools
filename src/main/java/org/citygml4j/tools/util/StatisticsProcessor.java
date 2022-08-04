@@ -162,7 +162,7 @@ public class StatisticsProcessor {
         }
     }
 
-    public void process(BoundingShape boundingShape, int depth, Statistics statistics) {
+    public void process(BoundingShape boundingShape, int depth, boolean isCityModel, Statistics statistics) {
         if (boundingShape != null && boundingShape.isSetEnvelope()) {
             Envelope envelope = boundingShape.getEnvelope();
 
@@ -171,7 +171,7 @@ public class StatisticsProcessor {
                 statistics.addReferenceSystem(envelope.getSrsName());
             }
 
-            if (!computeEnvelope && !statistics.hasObjects(Statistics.ObjectType.FEATURE)) {
+            if (isCityModel && !computeEnvelope) {
                 statistics.getExtent(getSrsName(envelope)).include(envelope);
             }
         }

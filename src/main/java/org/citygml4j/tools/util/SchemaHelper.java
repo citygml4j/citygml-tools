@@ -30,6 +30,11 @@ public class SchemaHelper {
         return new SchemaHelper(schemaHandler);
     }
 
+    public boolean isCityModel(QName element) {
+        return "CityModel".equals(element.getLocalPart())
+                && CityGMLModules.isCityGMLNamespace(element.getNamespaceURI());
+    }
+
     public boolean isFeature(QName element) throws ExecutionException {
         return isDerivedFrom(element, featureTypes, features);
     }
