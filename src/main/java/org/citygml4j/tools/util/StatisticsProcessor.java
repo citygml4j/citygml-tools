@@ -215,17 +215,18 @@ public class StatisticsProcessor {
     }
 
     private String getCurrentSrsName() {
-        return !srsInfos.isEmpty() ? srsInfos.peek().getSrsName() : DEFAULT_SRS_NAME;
+        if (!srsInfos.isEmpty()) {
+            return srsInfos.peek().getSrsName();
+        } else {
+            statistics.addReferenceSystem(DEFAULT_SRS_NAME);
+            return DEFAULT_SRS_NAME;
+        }
     }
 
     private String getSrsName(SRSReference srsReference) {
-        if (srsReference != null && srsReference.getSrsName() != null) {
-            return srsReference.getSrsName();
-        } else if (!srsInfos.isEmpty()) {
-            return srsInfos.peek().getSrsName();
-        } else {
-            return DEFAULT_SRS_NAME;
-        }
+        return srsReference != null && srsReference.getSrsName() != null ?
+                srsReference.getSrsName() :
+                getCurrentSrsName();
     }
 
     private void lazyLoadTemplates() throws ExecutionException {
