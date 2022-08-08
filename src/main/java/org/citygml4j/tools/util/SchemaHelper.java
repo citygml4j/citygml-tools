@@ -6,6 +6,7 @@ import com.sun.xml.xsom.XSType;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.module.gml.GMLCoreModule;
+import org.xmlobjects.gml.util.GMLConstants;
 import org.xmlobjects.schema.SchemaHandler;
 
 import javax.xml.namespace.QName;
@@ -20,10 +21,10 @@ public class SchemaHelper {
 
     private SchemaHelper(SchemaHandler schemaHandler) {
         this.schemaHandler = schemaHandler;
-        featureTypes.add(new QName(GMLCoreModule.v3_2.getNamespaceURI(), "AbstractFeatureType"));
-        featureTypes.add(new QName(GMLCoreModule.v3_1.getNamespaceURI(), "AbstractFeatureType"));
-        geometryTypes.add(new QName(GMLCoreModule.v3_2.getNamespaceURI(), "AbstractGeometryType"));
-        geometryTypes.add(new QName(GMLCoreModule.v3_1.getNamespaceURI(), "AbstractGeometryType"));
+        featureTypes.add(new QName(GMLConstants.GML_3_2_NAMESPACE, "AbstractFeatureType"));
+        featureTypes.add(new QName(GMLConstants.GML_3_1_NAMESPACE, "AbstractFeatureType"));
+        geometryTypes.add(new QName(GMLConstants.GML_3_2_NAMESPACE, "AbstractGeometryType"));
+        geometryTypes.add(new QName(GMLConstants.GML_3_1_NAMESPACE, "AbstractGeometryType"));
     }
 
     public static SchemaHelper of(SchemaHandler schemaHandler) {
