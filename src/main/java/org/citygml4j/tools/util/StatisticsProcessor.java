@@ -104,9 +104,10 @@ public class StatisticsProcessor {
                 statistics.setHasGlobalAppearances(true);
             }
 
-            addObjectAndModule(element, getPrefix(element.getNamespaceURI(), "app"), statistics::addAppearance);
+            String prefix = getPrefix(element.getNamespaceURI(), "app");
+            addObjectAndModule(element, prefix, statistics::addAppearance);
             statistics.addTheme(appearance.getTheme());
-            appearance.accept(statisticsWalker);
+            appearance.accept(statisticsWalker.withAppearancePrefix(prefix));
         }
     }
 
@@ -245,6 +246,12 @@ public class StatisticsProcessor {
     }
 
     private class StatisticsWalker extends ObjectWalker {
+        private String appearancePrefix;
+
+        public StatisticsWalker withAppearancePrefix(String appearancePrefix) {
+            this.appearancePrefix = appearancePrefix;
+            return this;
+        }
 
         @Override
         public void visit(AbstractGeometry geometry) {
@@ -254,7 +261,7 @@ public class StatisticsProcessor {
 
         @Override
         public void visit(AbstractSurfaceData surfaceData) {
-            statistics.addAppearance("app:" + surfaceData.getClass().getSimpleName());
+            statistics.addAppearance(appearancePrefix + ":" + surfaceData.getClass().getSimpleName());
         }
 
         @Override
