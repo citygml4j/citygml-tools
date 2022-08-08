@@ -26,6 +26,7 @@ public class Statistics {
     }
 
     private final List<Path> files = new ArrayList<>();
+    private final Set<String> cityObjectIds = new LinkedHashSet<>();
     private final Set<CityGMLVersion> versions = new TreeSet<>();
     private final Set<String> referenceSystems = new LinkedHashSet<>();
     private final Map<String, Envelope> extents = new LinkedHashMap<>();
@@ -51,6 +52,14 @@ public class Statistics {
 
     public Path getFile() {
         return files.get(0);
+    }
+
+    public Statistics withCityObjectIds(Set<String> cityObjectIds) {
+        if (cityObjectIds != null) {
+            this.cityObjectIds.addAll(cityObjectIds);
+        }
+
+        return this;
     }
 
     public void addVersion(CityGMLVersion version) {
@@ -159,6 +168,7 @@ public class Statistics {
 
     public void merge(Statistics other) {
         files.addAll(other.files);
+        cityObjectIds.addAll(other.cityObjectIds);
         versions.addAll(other.versions);
         referenceSystems.addAll(other.referenceSystems);
         lods.addAll(other.lods);
@@ -205,6 +215,11 @@ public class Statistics {
         } else if (!files.isEmpty()) {
             ArrayNode files = statistics.putArray("files");
             this.files.stream().map(Path::toString).forEach(files::add);
+        }
+
+        if (!cityObjectIds.isEmpty()) {
+            ArrayNode cityObjectIds = statistics.putArray("cityObjectIds");
+            this.cityObjectIds.forEach(cityObjectIds::add);
         }
 
         if (versions.size() == 1) {
@@ -320,6 +335,10 @@ public class Statistics {
             printer.accept("File: " + statistics.get("file"));
         } else if (statistics.has("files")) {
             printer.accept("Files: " + statistics.get("files"));
+        }
+
+        if (statistics.has("cityObjectIds")) {
+            printer.accept("City objects: " + statistics.get("cityObjectIds"));
         }
 
         if (statistics.has("version")) {

@@ -10,26 +10,24 @@ import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.log.LogLevel;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.util.InputFiles;
-import org.citygml4j.tools.util.SchemaHelper;
-import org.citygml4j.tools.util.Statistics;
-import org.citygml4j.tools.util.StatisticsProcessor;
+import org.citygml4j.tools.util.*;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.schema.CityGMLSchemaHandler;
 import org.xmlobjects.gml.adapter.feature.BoundingShapeAdapter;
 import org.xmlobjects.gml.model.feature.BoundingShape;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
+import org.xmlobjects.gml.util.GMLConstants;
 import org.xmlobjects.schema.SchemaHandler;
 import org.xmlobjects.stream.EventType;
+import org.xmlobjects.stream.XMLReadException;
 import org.xmlobjects.stream.XMLReader;
 import org.xmlobjects.stream.XMLReaderFactory;
+import org.xmlobjects.xml.Attributes;
 import picocli.CommandLine;
 
 import javax.xml.namespace.QName;
 import java.nio.file.Path;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.List;
+import java.util.*;
 
 @CommandLine.Command(name = "stats",
         description = "Generates statistics about the content of CityGML files.")
@@ -39,6 +37,10 @@ public class StatsCommand extends CityGMLTool {
                     "the CityModel and calculated only as fallback. No coordinate transformation is applied in " +
                     "the calculation.")
     private boolean computeEnvelope;
+
+    @CommandLine.Option(names = {"-i", "--id"}, split = ",", paramLabel = "<id>",
+            description = "Only generate statistics for city objects with a matching gml:id.")
+    private Set<String> ids;
 
     @CommandLine.Option(names = {"-t", "--only-top-level"},
             description = "Only count top-level city objects.")
@@ -87,7 +89,6 @@ public class StatsCommand extends CityGMLTool {
         ObjectMapper objectMapper = new ObjectMapper();
         ChunkOptions chunkOptions = ChunkOptions.defaults();
         SchemaHelper schemaHelper = SchemaHelper.of(schemaHandler);
-
         Statistics summary = null;
 
         for (int i = 0; i < inputFiles.size(); i++) {
@@ -95,11 +96,19 @@ public class StatsCommand extends CityGMLTool {
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            Statistics statistics = Statistics.of(inputFile);
+            Statistics statistics = Statistics.of(inputFile)
+                    .withCityObjectIds(ids);
             StatisticsProcessor processor = StatisticsProcessor.of(statistics, getCityGMLContext())
                     .computeEnvelope(computeEnvelope)
                     .onlyTopLevelFeatures(onlyTopLevelFeatures)
                     .generateObjectHierarchy(generateObjectHierarchy);
+
+            if (ids != null) {
+                log.debug("Reading global appearances from input file.");
+                processor.withGlobalAppearances(GlobalObjectsReader.onlyAppearances()
+                        .read(inputFile, getCityGMLContext())
+                        .getAppearances());
+            }
 
             log.debug("Reading city objects and generating statistics.");
 
@@ -107,30 +116,41 @@ public class StatsCommand extends CityGMLTool {
                     .withSchemaHandler(schemaHandler)
                     .createReader(inputFile, inputOptions.getEncoding())) {
                 Deque<QName> elements = new ArrayDeque<>();
+                Deque<Integer> features = new ArrayDeque<>();
                 boolean isTopLevel = false;
 
                 while (reader.hasNext()) {
                     EventType event = reader.nextTag();
+                    QName lastElement = elements.peek();
                     int depth = reader.getDepth();
+                    int lastFeature = Objects.requireNonNullElseGet(features.peek(),
+                            () -> ids == null ? 0 : Integer.MAX_VALUE);
+
                     if (event == EventType.START_ELEMENT) {
                         QName element = reader.getName();
                         if (chunkOptions.containsProperty(element)) {
                             isTopLevel = true;
                         } else {
-                            if (schemaHelper.isAppearance(element)) {
+                            if (schemaHelper.isAppearance(element) && depth > lastFeature) {
                                 processor.process(element, reader.getObject(Appearance.class), isTopLevel);
-                            } else if (schemaHelper.isFeature(element)) {
+                            } else if (schemaHelper.isFeature(element)
+                                    && (ids == null || depth > lastFeature || hasMatchingIdentifier(reader))) {
                                 processor.process(element, reader.getPrefix(), isTopLevel, depth, statistics);
-                            } else if (schemaHelper.isGeometry(element)) {
-                                processor.process(element, reader.getObject(AbstractGeometry.class), elements.peek());
-                            } else if (schemaHelper.isImplicitGeometry(element)) {
-                                processor.process(element, reader.getObject(ImplicitGeometry.class), elements.peek());
-                            } else if (schemaHelper.isGenericAttribute(element)) {
-                                processor.process(reader.getObject(AbstractGenericAttribute.class));
+                                features.push(depth);
                             } else if (schemaHelper.isBoundingShape(element)) {
-                                BoundingShape boundingShape = reader.getObjectUsingBuilder(BoundingShapeAdapter.class);
-                                boolean isCityModel = !elements.isEmpty() && schemaHelper.isCityModel(elements.peek());
-                                processor.process(boundingShape, depth - 1, isCityModel, statistics);
+                                boolean isCityModel = lastElement != null && schemaHelper.isCityModel(lastElement);
+                                if (isCityModel || depth > lastFeature) {
+                                    BoundingShape boundedBy = reader.getObjectUsingBuilder(BoundingShapeAdapter.class);
+                                    processor.process(boundedBy, depth - 1, isCityModel, statistics);
+                                }
+                            } else if (depth > lastFeature) {
+                                if (schemaHelper.isGeometry(element)) {
+                                    processor.process(element, reader.getObject(AbstractGeometry.class), lastElement);
+                                } else if (schemaHelper.isImplicitGeometry(element)) {
+                                    processor.process(element, reader.getObject(ImplicitGeometry.class), lastElement);
+                                } else if (schemaHelper.isGenericAttribute(element)) {
+                                    processor.process(reader.getObject(AbstractGenericAttribute.class));
+                                }
                             }
 
                             isTopLevel = false;
@@ -142,6 +162,9 @@ public class StatsCommand extends CityGMLTool {
                     } else if (event == EventType.END_ELEMENT) {
                         processor.updateDepth(depth);
                         elements.pop();
+                        if (lastFeature == depth + 1) {
+                            features.pop();
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -173,6 +196,20 @@ public class StatsCommand extends CityGMLTool {
         }
 
         return CommandLine.ExitCode.OK;
+    }
+
+    private boolean hasMatchingIdentifier(XMLReader reader) {
+        try {
+            Attributes attributes = reader.getAttributes();
+            String id = attributes.getValue(GMLConstants.GML_3_2_NAMESPACE, "id").get();
+            if (id == null) {
+                id = attributes.getValue(GMLConstants.GML_3_1_NAMESPACE, "id").get();
+            }
+
+            return id != null && ids.contains(id);
+        } catch (XMLReadException e) {
+            return false;
+        }
     }
 
     private void writeStatistics(Path outputFile, Statistics statistics, ObjectMapper objectMapper) throws ExecutionException {

@@ -1,9 +1,6 @@
 package org.citygml4j.tools.util;
 
-import org.citygml4j.core.model.appearance.AbstractSurfaceData;
-import org.citygml4j.core.model.appearance.AbstractTexture;
-import org.citygml4j.core.model.appearance.Appearance;
-import org.citygml4j.core.model.appearance.X3DMaterial;
+import org.citygml4j.core.model.appearance.*;
 import org.citygml4j.core.model.core.AbstractGenericAttribute;
 import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.citygml4j.core.util.CityGMLPatterns;
@@ -14,6 +11,7 @@ import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.module.Module;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.module.citygml.CoreModule;
+import org.xmlobjects.gml.model.base.AbstractReference;
 import org.xmlobjects.gml.model.feature.BoundingShape;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.Envelope;
@@ -38,6 +36,7 @@ public class StatisticsProcessor {
     private boolean computeEnvelope;
     private boolean onlyTopLevelFeatures;
     private boolean generateObjectHierarchy;
+    private List<Appearance> globalAppearances;
     private Map<String, AbstractGeometry> templates;
 
     private StatisticsProcessor(Statistics statistics, CityGMLContext context) {
@@ -61,6 +60,11 @@ public class StatisticsProcessor {
 
     public StatisticsProcessor generateObjectHierarchy(boolean generateObjectHierarchy) {
         this.generateObjectHierarchy = generateObjectHierarchy;
+        return this;
+    }
+
+    public StatisticsProcessor withGlobalAppearances(List<Appearance> globalAppearances) {
+        this.globalAppearances = globalAppearances;
         return this;
     }
 
@@ -120,6 +124,10 @@ public class StatisticsProcessor {
                 statistics.getExtent(getSrsName(geometry)).include(geometry.computeEnvelope());
             }
 
+            if (globalAppearances != null) {
+                processGlobalAppearances(geometry);
+            }
+
             geometry.accept(statisticsWalker);
         }
     }
@@ -141,6 +149,9 @@ public class StatisticsProcessor {
                     AbstractGeometry template = templates.get(CityObjects.getIdFromReference(property.getHref()));
                     if (template != null) {
                         property.setReferencedObjectIfValid(template);
+                        if (globalAppearances != null) {
+                            processGlobalAppearances(template);
+                        }
                     }
                 }
 
@@ -246,6 +257,17 @@ public class StatisticsProcessor {
         }
     }
 
+    private void processGlobalAppearances(AbstractGeometry geometry) {
+        GlobalAppearanceResolver resolver = GlobalAppearanceResolver.of(geometry);
+        for (Appearance globalAppearance : globalAppearances) {
+            Appearance appearance = resolver.resolve(globalAppearance);
+            if (appearance != null) {
+                QName name = globalAppearance.getLocalProperties().get(GlobalObjects.NAME, QName.class);
+                process(name, appearance, true);
+            }
+        }
+    }
+
     private class StatisticsWalker extends ObjectWalker {
         private String appearancePrefix;
 
@@ -275,6 +297,51 @@ public class StatisticsProcessor {
         public void visit(X3DMaterial x3dMaterial) {
             statistics.setHasMaterials(true);
             super.visit(x3dMaterial);
+        }
+    }
+
+    private static class GlobalAppearanceResolver extends ObjectWalker {
+        private final Set<String> targets = new HashSet<>();
+        private final Set<AbstractSurfaceData> surfaceData = Collections.newSetFromMap(new IdentityHashMap<>());
+
+        public static GlobalAppearanceResolver of(AbstractGeometry geometry) {
+            GlobalAppearanceResolver resolver = new GlobalAppearanceResolver();
+            geometry.accept(resolver);
+            return resolver;
+        }
+
+        public Appearance resolve(Appearance globalAppearance) {
+            globalAppearance.accept(this);
+            if (!surfaceData.isEmpty()) {
+                Appearance appearance = new Appearance();
+                appearance.setTheme(globalAppearance.getTheme());
+                surfaceData.stream()
+                        .map(AbstractSurfaceDataProperty::new)
+                        .forEach(appearance.getSurfaceData()::add);
+
+                surfaceData.clear();
+                return appearance;
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public void visit(AbstractGeometry geometry) {
+            if (geometry.getId() != null) {
+                targets.add(geometry.getId());
+                targets.add("#" + geometry.getId());
+            }
+        }
+
+        @Override
+        public void visit(AbstractReference<?> reference) {
+            if (reference.getHref() != null && targets.contains(reference.getHref())) {
+                AbstractSurfaceData surfaceData = reference.getParent(AbstractSurfaceData.class);
+                if (surfaceData != null) {
+                    this.surfaceData.add(surfaceData);
+                }
+            }
         }
     }
 
