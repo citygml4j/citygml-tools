@@ -85,11 +85,11 @@ public class GlobalObjectsReader {
                         if (types.contains(GlobalObjects.Type.APPEARANCE)
                                 && "Appearance".equals(name.getLocalPart())
                                 && CityGMLModules.isCityGMLNamespace(name.getNamespaceURI())) {
-                            globalObjects.add(reader.getObject(Appearance.class));
+                            globalObjects.add(reader.getObject(Appearance.class), name);
                         } else if (types.contains(GlobalObjects.Type.CITY_OBJECT_GROUP)
                                 && "CityObjectGroup".equals(name.getLocalPart())
                                 && CityGMLModules.isCityGMLNamespace(name.getNamespaceURI())) {
-                            globalObjects.add(reader.getObject(CityObjectGroup.class));
+                            globalObjects.add(reader.getObject(CityObjectGroup.class), name);
                         }
                         isTopLevel = false;
                     } else if (types.contains(GlobalObjects.Type.IMPLICIT_GEOMETRY)
@@ -99,7 +99,7 @@ public class GlobalObjectsReader {
                         if (implicitGeometry.getRelativeGeometry() != null
                                 && implicitGeometry.getRelativeGeometry().isSetInlineObject()
                                 && implicitGeometry.getRelativeGeometry().getObject().getId() != null) {
-                            globalObjects.add(implicitGeometry);
+                            globalObjects.add(implicitGeometry, name);
                         }
                     }
                 }

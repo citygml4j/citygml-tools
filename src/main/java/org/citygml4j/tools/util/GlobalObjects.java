@@ -27,6 +27,7 @@ import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.GeometryProperty;
 
+import javax.xml.namespace.QName;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -34,6 +35,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class GlobalObjects {
+    public static final String NAME = "name";
+
     public enum Type {
         APPEARANCE,
         CITY_OBJECT_GROUP,
@@ -70,15 +73,18 @@ public class GlobalObjects {
                 .collect(Collectors.toList());
     }
 
-    void add(Appearance appearance) {
+    void add(Appearance appearance, QName name) {
+        appearance.getLocalProperties().set(NAME, name);
         appearances.add(appearance);
     }
 
-    void add(CityObjectGroup cityObjectGroup) {
+    void add(CityObjectGroup cityObjectGroup, QName name) {
+        cityObjectGroup.getLocalProperties().set(NAME, name);
         cityObjectGroups.add(cityObjectGroup);
     }
 
-    void add(ImplicitGeometry implicitGeometry) {
+    void add(ImplicitGeometry implicitGeometry, QName name) {
+        implicitGeometry.getLocalProperties().set(NAME, name);
         implicitGeometries.add(implicitGeometry);
     }
 }
