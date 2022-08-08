@@ -5,7 +5,6 @@ import com.sun.xml.xsom.XSSchemaSet;
 import com.sun.xml.xsom.XSType;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
-import org.citygml4j.xml.module.gml.GMLCoreModule;
 import org.xmlobjects.gml.util.GMLConstants;
 import org.xmlobjects.schema.SchemaHandler;
 
