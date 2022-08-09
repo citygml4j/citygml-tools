@@ -43,10 +43,8 @@ import picocli.CommandLine;
 import java.nio.file.Path;
 import java.util.List;
 
-@CommandLine.Command(
-        name = "upgrade",
-        description = "Upgrades CityGML files to version 3.0."
-)
+@CommandLine.Command(name = "upgrade",
+        description = "Upgrades CityGML files to version 3.0.")
 public class UpgradeCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-u", "--use-lod4-as-lod3"},
             description = "Use the LoD4 representation of city objects as LoD3, replacing an existing LoD3.")
