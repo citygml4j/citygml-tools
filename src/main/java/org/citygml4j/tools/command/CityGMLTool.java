@@ -48,7 +48,6 @@ import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
 
 import javax.xml.XMLConstants;
-import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -93,13 +92,6 @@ public abstract class CityGMLTool implements Command {
 
     CityGMLReader createCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options) throws ExecutionException, CityGMLReadException {
         return createCityGMLReader(in, file, options, null);
-    }
-
-    CityGMLReader createFilteredCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options, Set<QName> names) throws ExecutionException, CityGMLReadException {
-        return createCityGMLReader(in, file, options,
-                name -> names == null
-                        || names.isEmpty()
-                        || names.contains(name));
     }
 
     CityGMLReader createSkippingCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options, String... localNames) throws ExecutionException, CityGMLReadException {

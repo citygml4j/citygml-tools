@@ -42,7 +42,7 @@ public class StatsCommand extends CityGMLTool {
                     "the calculation.")
     private boolean computeEnvelope;
 
-    @CommandLine.Mixin
+    @CommandLine.ArgGroup
     private IdOption idOption;
 
     @CommandLine.Option(names = {"-t", "--only-top-level"},
@@ -99,14 +99,15 @@ public class StatsCommand extends CityGMLTool {
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            Statistics statistics = Statistics.of(inputFile)
-                    .withCityObjectIds(idOption != null ? idOption.getIds() : null);
+            Statistics statistics = Statistics.of(inputFile);
             StatisticsProcessor processor = StatisticsProcessor.of(statistics, getCityGMLContext())
                     .computeEnvelope(computeEnvelope)
                     .onlyTopLevelFeatures(onlyTopLevelFeatures)
                     .generateObjectHierarchy(generateObjectHierarchy);
 
             if (idOption != null) {
+                statistics.withCityObjectIds(idOption.getIds());
+
                 log.debug("Reading global appearances from input file.");
                 processor.withGlobalAppearances(GlobalObjectsReader.onlyAppearances()
                         .read(inputFile, getCityGMLContext())

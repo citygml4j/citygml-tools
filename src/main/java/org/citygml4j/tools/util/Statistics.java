@@ -55,7 +55,7 @@ public class Statistics {
     }
 
     public Statistics withCityObjectIds(Set<String> cityObjectIds) {
-        if (cityObjectIds != null) {
+        if (cityObjectIds != null && !cityObjectIds.isEmpty()) {
             this.cityObjectIds.addAll(cityObjectIds);
         }
 
