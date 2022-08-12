@@ -113,7 +113,7 @@ public class FilterLodsCommand extends CityGMLTool {
                     .withGlobalAppearances(appearances)
                     .keepEmptyObjects(keepEmptyObjects);
 
-            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions, "Appearance")) {
+            try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions, "Appearance")) {
                 if (!version.isSetVersion()) {
                     setCityGMLVersion(reader, out);
                 }

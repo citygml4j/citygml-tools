@@ -42,22 +42,17 @@ import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.CityGMLContextException;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.module.citygml.CoreModule;
-import org.citygml4j.xml.reader.CityGMLInputFactory;
-import org.citygml4j.xml.reader.CityGMLReadException;
-import org.citygml4j.xml.reader.CityGMLReader;
-import org.citygml4j.xml.reader.FeatureInfo;
+import org.citygml4j.xml.reader.*;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
 
 import javax.xml.XMLConstants;
+import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public abstract class CityGMLTool implements Command {
     final Logger log = Logger.getInstance();
@@ -97,26 +92,40 @@ public abstract class CityGMLTool implements Command {
     }
 
     CityGMLReader createCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options) throws ExecutionException, CityGMLReadException {
+        return createCityGMLReader(in, file, options, null);
+    }
+
+    CityGMLReader createFilteredCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options, Set<QName> names) throws ExecutionException, CityGMLReadException {
+        return createCityGMLReader(in, file, options,
+                name -> names == null
+                        || names.isEmpty()
+                        || names.contains(name));
+    }
+
+    CityGMLReader createSkippingCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options, String... localNames) throws ExecutionException, CityGMLReadException {
+        CityGMLInputFilter filter = null;
+        if (localNames != null) {
+            Set<String> names = new HashSet<>(Arrays.asList(localNames));
+            filter = name -> !names.contains(name.getLocalPart())
+                    || !CityGMLModules.isCityGMLNamespace(name.getNamespaceURI());
+        }
+
+        return createCityGMLReader(in, file, options, filter);
+    }
+
+    private CityGMLReader createCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options, CityGMLInputFilter filter) throws ExecutionException, CityGMLReadException {
         CityGMLReader reader;
         try {
             reader = in.createCityGMLReader(file, options.getEncoding());
+            if (filter != null) {
+                reader = in.createFilteredCityGMLReader(reader, filter);
+            }
         } catch (CityGMLReadException e) {
             throw new ExecutionException("Failed to create CityGML reader.", e);
         }
 
         reportUnsupportedNamespaces(reader);
         return reader;
-    }
-
-    CityGMLReader createFilteredCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options, String... localNames) throws ExecutionException, CityGMLReadException {
-        CityGMLReader reader = createCityGMLReader(in, file, options);
-        if (localNames != null) {
-            Set<String> names = new HashSet<>(Arrays.asList(localNames));
-            return in.createFilteredCityGMLReader(reader, name -> !names.contains(name.getLocalPart())
-                    || !CityGMLModules.isCityGMLNamespace(name.getNamespaceURI()));
-        } else {
-            return reader;
-        }
     }
 
     CityGMLOutputFactory createCityGMLOutputFactory(CityGMLVersion version) throws ExecutionException {
@@ -167,48 +176,52 @@ public abstract class CityGMLTool implements Command {
     }
 
     void setCityGMLVersion(CityGMLReader reader, CityGMLOutputFactory out) throws CityGMLReadException {
-        if (reader.hasNext()) {
-            CityGMLVersion version = CityGMLModules.getCityGMLVersion(reader.getName().getNamespaceURI());
-            if (version != null) {
-                log.debug("Using CityGML " + version + " for the output file.");
-                out.withCityGMLVersion(version);
-            } else {
-                log.warn("Failed to detect CityGML version from input file. " +
-                        "Using CityGML " + out.getVersion() + " for the output file.");
-            }
+        reader.hasNext();
+        CityGMLVersion version = reader.getNamespaces().get().stream()
+                .filter(CityGMLModules::isCityGMLNamespace)
+                .map(CityGMLModules::getCityGMLVersion)
+                .filter(Objects::nonNull)
+                .findFirst().orElse(null);
+
+        if (version != null) {
+            log.debug("Using CityGML " + version + " for the output file.");
+            out.withCityGMLVersion(version);
+        } else {
+            log.warn("Failed to detect CityGML version from input file. " +
+                    "Using CityGML " + out.getVersion() + " for the output file.");
         }
     }
 
     FeatureInfo getFeatureInfo(CityGMLReader reader) throws CityGMLReadException {
-        return reader.hasNext() ? reader.getParentInfo() : null;
+        reader.hasNext();
+        return reader.getParentInfo();
     }
 
     private void reportUnsupportedNamespaces(CityGMLReader reader) throws CityGMLReadException {
-        if (reader.hasNext()) {
-            Set<String> namespaces = CityGMLModules.of(CityGMLVersion.v3_0).getNamespaces();
-            namespaces.addAll(CityGMLModules.of(CityGMLVersion.v2_0).getNamespaces());
-            namespaces.addAll(CityGMLModules.of(CityGMLVersion.v1_0).getNamespaces());
-            namespaces.add("http://www.opengis.net/citygml/texturedsurface/2.0");
-            namespaces.add("http://www.opengis.net/citygml/texturedsurface/1.0");
+        reader.hasNext();
+        Set<String> namespaces = CityGMLModules.of(CityGMLVersion.v3_0).getNamespaces();
+        namespaces.addAll(CityGMLModules.of(CityGMLVersion.v2_0).getNamespaces());
+        namespaces.addAll(CityGMLModules.of(CityGMLVersion.v1_0).getNamespaces());
+        namespaces.add("http://www.opengis.net/citygml/texturedsurface/2.0");
+        namespaces.add("http://www.opengis.net/citygml/texturedsurface/1.0");
 
-            CityGMLADELoader loader = ADERegistry.getInstance().getADELoader(CityGMLADELoader.class);
-            Set<String> unsupported = new HashSet<>();
-            for (String namespace : reader.getNamespaces().get()) {
-                if (!XMLConstants.W3C_XML_SCHEMA_NS_URI.equals(namespace)
-                        && !XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI.equals(namespace)
-                        && !XMLConstants.XMLNS_ATTRIBUTE_NS_URI.equals(namespace)
-                        && !XMLConstants.XML_NS_URI.equals(namespace)
-                        && !namespaces.contains(namespace)
-                        && loader.getADEModule(namespace) == null) {
-                    unsupported.add(namespace);
-                }
+        CityGMLADELoader loader = ADERegistry.getInstance().getADELoader(CityGMLADELoader.class);
+        Set<String> unsupported = new HashSet<>();
+        for (String namespace : reader.getNamespaces().get()) {
+            if (!XMLConstants.W3C_XML_SCHEMA_NS_URI.equals(namespace)
+                    && !XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI.equals(namespace)
+                    && !XMLConstants.XMLNS_ATTRIBUTE_NS_URI.equals(namespace)
+                    && !XMLConstants.XML_NS_URI.equals(namespace)
+                    && !namespaces.contains(namespace)
+                    && loader.getADEModule(namespace) == null) {
+                unsupported.add(namespace);
             }
+        }
 
-            if (!unsupported.isEmpty()) {
-                log.warn("The input file uses unsupported non-CityGML namespace(s): " +
-                        String.join(", ", unsupported) + ".");
-                log.info("Non-CityGML content is skipped unless a matching ADE extension has been loaded.");
-            }
+        if (!unsupported.isEmpty()) {
+            log.warn("The input file uses unsupported non-CityGML namespace(s): " +
+                    String.join(", ", unsupported) + ".");
+            log.info("Non-CityGML content is skipped unless a matching ADE extension has been loaded.");
         }
     }
 

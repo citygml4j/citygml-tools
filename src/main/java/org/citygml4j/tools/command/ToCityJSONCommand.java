@@ -127,7 +127,7 @@ public class ToCityJSONCommand extends CityGMLTool {
             GlobalObjects globalObjects = GlobalObjectsReader.defaults()
                     .read(inputFile, getCityGMLContext());
 
-            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions,
+            try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions,
                     "CityObjectGroup", "Appearance")) {
                 Metadata metadata = new Metadata();
                 if (reader.hasNext()) {

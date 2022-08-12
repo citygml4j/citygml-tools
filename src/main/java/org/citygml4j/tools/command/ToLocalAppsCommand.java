@@ -105,7 +105,7 @@ public class ToLocalAppsCommand extends CityGMLTool {
                 log.debug("Found " + appearances.size() + " global appearance(s).");
             }
 
-            try (CityGMLReader reader = createFilteredCityGMLReader(in, inputFile, inputOptions, "Appearance")) {
+            try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions, "Appearance")) {
                 if (!version.isSetVersion()) {
                     setCityGMLVersion(reader, out);
                 }
