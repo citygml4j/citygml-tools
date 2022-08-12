@@ -9,6 +9,7 @@ import org.citygml4j.core.model.core.AbstractGenericAttribute;
 import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.log.LogLevel;
+import org.citygml4j.tools.option.IdOption;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.util.*;
 import org.citygml4j.xml.reader.ChunkOptions;
@@ -27,7 +28,10 @@ import picocli.CommandLine;
 
 import javax.xml.namespace.QName;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
+import java.util.Objects;
 
 @CommandLine.Command(name = "stats",
         description = "Generates statistics about the content of CityGML files.")
@@ -38,9 +42,8 @@ public class StatsCommand extends CityGMLTool {
                     "the calculation.")
     private boolean computeEnvelope;
 
-    @CommandLine.Option(names = {"-i", "--id"}, split = ",", paramLabel = "<id>",
-            description = "Only generate statistics for city objects with a matching gml:id.")
-    private Set<String> ids;
+    @CommandLine.Mixin
+    private IdOption idOption;
 
     @CommandLine.Option(names = {"-t", "--only-top-level"},
             description = "Only count top-level city objects.")
@@ -97,13 +100,13 @@ public class StatsCommand extends CityGMLTool {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
             Statistics statistics = Statistics.of(inputFile)
-                    .withCityObjectIds(ids);
+                    .withCityObjectIds(idOption != null ? idOption.getIds() : null);
             StatisticsProcessor processor = StatisticsProcessor.of(statistics, getCityGMLContext())
                     .computeEnvelope(computeEnvelope)
                     .onlyTopLevelFeatures(onlyTopLevelFeatures)
                     .generateObjectHierarchy(generateObjectHierarchy);
 
-            if (ids != null) {
+            if (idOption != null) {
                 log.debug("Reading global appearances from input file.");
                 processor.withGlobalAppearances(GlobalObjectsReader.onlyAppearances()
                         .read(inputFile, getCityGMLContext())
@@ -124,7 +127,7 @@ public class StatsCommand extends CityGMLTool {
                     QName lastElement = elements.peek();
                     int depth = reader.getDepth();
                     int lastFeature = Objects.requireNonNullElseGet(features.peek(),
-                            () -> ids == null ? 0 : Integer.MAX_VALUE);
+                            () -> idOption == null ? 0 : Integer.MAX_VALUE);
 
                     if (event == EventType.START_ELEMENT) {
                         QName element = reader.getName();
@@ -134,7 +137,7 @@ public class StatsCommand extends CityGMLTool {
                             if (schemaHelper.isAppearance(element) && depth > lastFeature) {
                                 processor.process(element, reader.getObject(Appearance.class), isTopLevel);
                             } else if (schemaHelper.isFeature(element)
-                                    && (ids == null || depth > lastFeature || hasMatchingIdentifier(reader))) {
+                                    && (idOption == null || depth > lastFeature || hasMatchingIdentifier(reader))) {
                                 processor.process(element, reader.getPrefix(), isTopLevel, depth, statistics);
                                 features.push(depth);
                             } else if (schemaHelper.isBoundingShape(element)) {
@@ -206,7 +209,7 @@ public class StatsCommand extends CityGMLTool {
                 id = attributes.getValue(GMLConstants.GML_3_1_NAMESPACE, "id").get();
             }
 
-            return id != null && ids.contains(id);
+            return id != null && idOption.getIds().contains(id);
         } catch (XMLReadException e) {
             return false;
         }
