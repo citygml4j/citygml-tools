@@ -41,6 +41,13 @@ public class LodMapper implements org.citygml4j.cityjson.util.lod.LodMapper {
         }
     }
 
+    private LodMapper() {
+    }
+
+    public static LodMapper newInstance() {
+        return new LodMapper();
+    }
+
     public LodMapper withMode(Mode mode) {
         lodMapper.withMappingStrategy(mode == Mode.MINIMUM ?
                 DefaultLodMapper.Strategy.MINIMUM_LOD :

@@ -101,7 +101,7 @@ public class FromCityJSONCommand extends CityGMLTool {
         log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
         log.debug("Using CityGML " + versionOption + " for the output file(s).");
 
-        LodMapper lodMapper = new LodMapper()
+        LodMapper lodMapper = LodMapper.newInstance()
                 .withMode(mode)
                 .withMapping(lodMappings);
 
