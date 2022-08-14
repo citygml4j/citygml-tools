@@ -23,7 +23,6 @@ package org.citygml4j.tools.command;
 
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.core.AbstractFeature;
-import org.citygml4j.core.util.reference.DefaultReferenceResolver;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
@@ -39,7 +38,6 @@ import org.citygml4j.xml.reader.CityGMLReader;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
-import org.xmlobjects.gml.util.reference.ReferenceResolver;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
@@ -83,9 +81,6 @@ public class ToLocalAppsCommand extends CityGMLTool {
 
         CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
         CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
-
-        ReferenceResolver resolver = DefaultReferenceResolver.newInstance()
-                .storeRefereesWithReferencedObject(true);
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
