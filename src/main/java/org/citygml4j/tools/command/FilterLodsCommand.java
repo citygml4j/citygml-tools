@@ -145,10 +145,8 @@ public class FilterLodsCommand extends CityGMLTool {
                         }
                     }
 
-                    if (!appearances.isEmpty()) {
-                        for (Appearance appearance : appearances) {
-                            writer.writeMember(appearance);
-                        }
+                    for (Appearance appearance : appearances) {
+                        writer.writeMember(appearance);
                     }
                 }
             } catch (CityGMLReadException e) {

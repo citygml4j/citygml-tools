@@ -50,6 +50,7 @@ public class SubsetProcessor {
     private final Map<String, List<GeometryReference>> georeferencedTextures = new HashMap<>();
     private final Map<String, List<GeometryReference>> materials = new HashMap<>();
     private final Map<String, AbstractGeometry> templates = new HashMap<>();
+    private final Map<String, Integer> counter = new TreeMap<>();
     private final String TEMPLATE_ASSIGNED = "templateAssigned";
 
     private GlobalObjects globalObjects = new GlobalObjects();
@@ -106,7 +107,11 @@ public class SubsetProcessor {
         return this;
     }
 
-    public boolean filter(AbstractFeature feature, QName name) {
+    public Map<String, Integer> getCounter() {
+        return counter;
+    }
+
+    public boolean filter(AbstractFeature feature, QName name, String prefix) {
         boolean filter = true;
         if (typeNames != null) {
             filter = typeNames.contains(name);
@@ -130,6 +135,7 @@ public class SubsetProcessor {
 
         if (filter) {
             templatesProcessor.postprocess(feature);
+            counter.merge(prefix + ":" + name.getLocalPart(), 1, Integer::sum);
         } else {
             feature.accept(skippedFeatureProcessor);
         }
@@ -184,7 +190,7 @@ public class SubsetProcessor {
 
             for (CityObjectGroup group : globalObjects.getCityObjectGroups()) {
                 if (group.isSetGroupMembers()) {
-                    if (!filter(group, name)) {
+                    if (!filter(group, name, "grp")) {
                         group.setGroupMembers(null);
                     }
                 }

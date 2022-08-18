@@ -133,7 +133,7 @@ public class SubsetCommand extends CityGMLTool {
                     log.debug("Reading and filtering city objects based on the specified filter criteria.");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
-                        if (subsetProcessor.filter(feature, reader.getName())) {
+                        if (subsetProcessor.filter(feature, reader.getName(), reader.getPrefix())) {
                             writer.writeMember(feature);
                         }
                     }
@@ -146,6 +146,13 @@ public class SubsetCommand extends CityGMLTool {
 
                     for (Appearance appearance : globalObjects.getAppearances()) {
                         writer.writeMember(appearance);
+                    }
+
+                    if (!subsetProcessor.getCounter().isEmpty()) {
+                        log.debug("The following top-level city objects satisfied the filter criteria.");
+                        subsetProcessor.getCounter().forEach((key, value) -> log.debug(key + ": " + value));
+                    } else {
+                        log.debug("No top-level city object satisfies the filter criteria.");
                     }
                 }
             } catch (CityGMLReadException e) {
