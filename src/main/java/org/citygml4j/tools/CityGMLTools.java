@@ -63,6 +63,7 @@ import java.util.stream.Stream;
                 RemoveAppsCommand.class,
                 ToLocalAppsCommand.class,
                 ClipTexturesCommand.class,
+                SubsetCommand.class,
                 FilterLodsCommand.class,
                 ReprojectCommand.class,
                 FromCityJSONCommand.class,
