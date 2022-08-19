@@ -23,7 +23,8 @@ jobs:
         java-version: 11
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-    - name: Setup Gradle
+    - name: Setup Gradle execute Gradle 'build' task
       uses: gradle/gradle-build-action@v2
-    - name: Execute Gradle build
-      run: ./gradlew build
+      with:
+        arguments: build
+        cache-disabled: true
