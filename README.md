@@ -60,6 +60,7 @@ Commands:
   remove-apps    Removes appearances from city objects.
   to-local-apps  Converts global appearances into local ones.
   clip-textures  Clips texture images to the extent of the target surface.
+  subset         Creates a subset of city objects based on filter criteria.
   filter-lods    Filters LoD representations of city objects.
   reproject      Reprojects city objects to a new coordinate reference system.
   from-cityjson  Converts CityJSON files into CityGML.
