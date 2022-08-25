@@ -17,11 +17,11 @@ Download the citygml-tools 1.4.5 release binaries
 [here](https://github.com/citygml4j/citygml-tools/releases/download/v1.4.5/citygml-tools-1.4.5.zip). Previous releases
 are available from the [releases section](https://github.com/citygml4j/citygml-tools/releases).
 
-Note that [citygml-tools v1](https://github.com/citygml4j/citygml-tools/tree/v1) is in _maintenance mode_, and we
-are focusing all of our attention on the [**next major version 2.0**](https://github.com/citygml4j/citygml-tools/releases/tag/v2.0.0-rc.1)
-with support for [**CityGML 3.0**](https://docs.ogc.org/is/20-010/20-010.html). This means that v1 is not
-updated with new features but at most receives critical bug fixes. A **release candidate** of the
-upcoming v2 is available from [here](https://github.com/citygml4j/citygml-tools/releases/tag/v2.0.0-rc.1).
+:information_source: [citygml-tools v1](https://github.com/citygml4j/citygml-tools/tree/v1) is in _maintenance mode_.
+Existing bugs will be fixed, but large new features will likely not be added. We focus all of our attention on the
+[**next major version 2.0**](https://github.com/citygml4j/citygml-tools/releases/tag/v2.0.0-rc.1)
+with support for [**CityGML 3.0**](https://docs.ogc.org/is/20-010/20-010.html). A **release candidate** of the
+upcoming v2 is available [here](https://github.com/citygml4j/citygml-tools/releases/tag/v2.0.0-rc.1).
 
 ## Contributing
 * To file bugs found in the software create a GitHub issue.
