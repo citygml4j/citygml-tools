@@ -55,6 +55,9 @@ public class SubsetCommand extends CityGMLTool {
             description = "Invert the filter criteria.")
     private boolean invert;
 
+    @CommandLine.ArgGroup(exclusive = false)
+    private CounterOption counterOption;
+
     @CommandLine.Option(names = "--no-remove-group-members", negatable = true, defaultValue = "true",
             description = "Remove group members that do not satisfy the filter criteria from city object groups " +
                     "(default: ${DEFAULT-VALUE}).")
@@ -109,6 +112,7 @@ public class SubsetCommand extends CityGMLTool {
                             boundingBoxOption.toBoundingBoxFilter() :
                             null)
                     .invertFilterCriteria(invert)
+                    .withCounterOption(counterOption)
                     .removeGroupMembers(removeGroupMembers);
 
             try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions,

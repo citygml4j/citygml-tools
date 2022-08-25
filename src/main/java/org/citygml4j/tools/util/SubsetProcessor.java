@@ -28,6 +28,7 @@ import org.citygml4j.core.model.core.AbstractCityObjectReference;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.citygml4j.core.visitor.ObjectWalker;
+import org.citygml4j.tools.option.CounterOption;
 import org.citygml4j.tools.option.IdOption;
 import org.citygml4j.tools.option.TypeNamesOption;
 import org.citygml4j.xml.CityGMLContext;
@@ -58,7 +59,11 @@ public class SubsetProcessor {
     private Set<String> ids;
     private BoundingBoxFilter boundingBoxFilter;
     private boolean invert;
+    private CounterOption counterOption;
     private boolean removeGroupMembers;
+
+    private long count;
+    private long index;
 
     private SubsetProcessor() {
     }
@@ -102,6 +107,11 @@ public class SubsetProcessor {
         return this;
     }
 
+    public SubsetProcessor withCounterOption(CounterOption counterOption) {
+        this.counterOption = counterOption;
+        return this;
+    }
+
     public SubsetProcessor removeGroupMembers(boolean removeGroupMembers) {
         this.removeGroupMembers = removeGroupMembers;
         return this;
@@ -112,35 +122,46 @@ public class SubsetProcessor {
     }
 
     public boolean filter(AbstractFeature feature, QName name, String prefix) {
-        boolean filter = true;
+        boolean satisfiesFilter = true;
         if (typeNames != null) {
-            filter = typeNames.contains(name);
+            satisfiesFilter = typeNames.contains(name);
         }
 
-        if (filter && ids != null) {
-            filter = feature.getId() != null && ids.contains(feature.getId());
+        if (satisfiesFilter && ids != null) {
+            satisfiesFilter = feature.getId() != null && ids.contains(feature.getId());
         }
 
-        if (filter && boundingBoxFilter != null) {
+        if (satisfiesFilter && boundingBoxFilter != null) {
             if (!globalObjects.getImplicitGeometries().isEmpty()) {
                 templatesProcessor.preprocess(feature);
             }
 
-            filter = boundingBoxFilter.filter(feature);
+            satisfiesFilter = boundingBoxFilter.filter(feature);
         }
 
         if (invert) {
-            filter = !filter;
+            satisfiesFilter = !satisfiesFilter;
         }
 
-        if (filter) {
+        if (satisfiesFilter && counterOption != null) {
+            if (index < counterOption.getStartIndex()) {
+                index++;
+                satisfiesFilter = false;
+            } else {
+                count++;
+            }
+
+            satisfiesFilter = satisfiesFilter && count <= counterOption.getCount();
+        }
+
+        if (satisfiesFilter) {
             templatesProcessor.postprocess(feature);
             counter.merge(prefix + ":" + name.getLocalPart(), 1, Integer::sum);
         } else {
             feature.accept(skippedFeatureProcessor);
         }
 
-        return filter;
+        return satisfiesFilter;
     }
 
     public void postprocess() {
