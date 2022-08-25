@@ -151,13 +151,6 @@ public class SubsetCommand extends CityGMLTool {
                     for (Appearance appearance : globalObjects.getAppearances()) {
                         writer.writeMember(appearance);
                     }
-
-                    if (!subsetProcessor.getCounter().isEmpty()) {
-                        log.debug("The following top-level city objects satisfied the filter criteria.");
-                        subsetProcessor.getCounter().forEach((key, value) -> log.debug(key + ": " + value));
-                    } else {
-                        log.debug("No top-level city object satisfies the filter criteria.");
-                    }
                 }
             } catch (CityGMLReadException e) {
                 throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
@@ -168,6 +161,13 @@ public class SubsetCommand extends CityGMLTool {
             if (overwriteOption.isOverwrite()) {
                 log.debug("Replacing input file with temporary output file.");
                 replaceInputFile(inputFile, outputFile);
+            }
+
+            if (!subsetProcessor.getCounter().isEmpty()) {
+                log.debug("The following top-level city objects satisfied the filter criteria.");
+                subsetProcessor.getCounter().forEach((key, value) -> log.debug(key + ": " + value));
+            } else {
+                log.debug("No top-level city object satisfies the filter criteria.");
             }
         }
 
