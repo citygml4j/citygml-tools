@@ -32,7 +32,7 @@ import org.xmlobjects.model.Child;
 
 import java.util.*;
 
-public class AppearanceRemover {
+public class AppearanceFilter {
     public static final String NULL_THEME = "null";
     private final AppearanceProcessor appearanceProcessor = new AppearanceProcessor();
     private final Map<String, Integer> counter = new TreeMap<>();
@@ -42,29 +42,29 @@ public class AppearanceRemover {
     private boolean onlyMaterials;
     private boolean keep;
 
-    private AppearanceRemover() {
+    private AppearanceFilter() {
     }
 
-    public static AppearanceRemover newInstance() {
-        return new AppearanceRemover();
+    public static AppearanceFilter newInstance() {
+        return new AppearanceFilter();
     }
 
-    public AppearanceRemover withThemes(Set<String> themes) {
+    public AppearanceFilter withThemes(Set<String> themes) {
         this.themes = themes;
         return this;
     }
 
-    public AppearanceRemover onlyTextures(boolean onlyTextures) {
+    public AppearanceFilter onlyTextures(boolean onlyTextures) {
         this.onlyTextures = onlyTextures;
         return this;
     }
 
-    public AppearanceRemover onlyMaterials(boolean onlyMaterials) {
+    public AppearanceFilter onlyMaterials(boolean onlyMaterials) {
         this.onlyMaterials = onlyMaterials;
         return this;
     }
 
-    public boolean removeAppearance(AbstractFeature feature) {
+    public boolean filter(AbstractFeature feature) {
         keep = true;
         feature.accept(appearanceProcessor);
         return !(feature instanceof Appearance) || keep;

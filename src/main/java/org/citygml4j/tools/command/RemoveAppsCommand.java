@@ -27,7 +27,7 @@ import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOption;
-import org.citygml4j.tools.util.AppearanceRemover;
+import org.citygml4j.tools.util.AppearanceFilter;
 import org.citygml4j.tools.util.InputFiles;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
         description = "Removes appearances from city objects.")
 public class RemoveAppsCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-t", "--theme"}, split = ",", paramLabel = "<name>",
-            description = "Only remove appearances of the given theme(s). Use '" + AppearanceRemover.NULL_THEME +
+            description = "Only remove appearances of the given theme(s). Use '" + AppearanceFilter.NULL_THEME +
                     "' to remove appearances without a theme attribute.")
     private Set<String> themes;
 
@@ -90,7 +90,7 @@ public class RemoveAppsCommand extends CityGMLTool {
         CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
         CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
 
-        AppearanceRemover remover = AppearanceRemover.newInstance()
+        AppearanceFilter remover = AppearanceFilter.newInstance()
                 .withThemes(themes)
                 .onlyTextures(onlyTextures)
                 .onlyMaterials(onlyMaterials);
@@ -121,7 +121,7 @@ public class RemoveAppsCommand extends CityGMLTool {
 
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
-                        if (remover.removeAppearance(feature)) {
+                        if (remover.filter(feature)) {
                             writer.writeMember(feature);
                         }
                     }
