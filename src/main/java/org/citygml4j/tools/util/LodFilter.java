@@ -165,7 +165,7 @@ public class LodFilter {
 
         if (empty) {
             GeometryInfo geometryInfo = feature.getGeometryInfo(true);
-            if (!geometryInfo.hasGeometries() && !geometryInfo.hasImplicitGeometries()) {
+            if (!geometryInfo.hasLodGeometries() && !geometryInfo.hasLodImplicitGeometries()) {
                 if (feature.getParent() != null && feature.getParent().getParent() instanceof GMLObject) {
                     GMLObject parent = (GMLObject) feature.getParent().getParent();
                     parent.unsetProperty(feature.getParent(), true);
