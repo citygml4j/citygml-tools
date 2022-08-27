@@ -21,7 +21,6 @@
 
 package org.citygml4j.tools.util;
 
-import org.citygml4j.core.model.appearance.*;
 import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.cityobjectgroup.RoleProperty;
 import org.citygml4j.core.model.core.AbstractCityObjectReference;
@@ -36,8 +35,6 @@ import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.module.citygml.CityObjectGroupModule;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.GeometryProperty;
-import org.xmlobjects.gml.model.geometry.aggregates.MultiSurface;
-import org.xmlobjects.gml.model.geometry.primitives.AbstractSurface;
 
 import javax.xml.namespace.QName;
 import java.util.*;
@@ -47,14 +44,12 @@ public class SubsetProcessor {
     private final TemplatesProcessor templatesProcessor = new TemplatesProcessor();
     private final Map<String, List<AbstractCityObjectReference>> groupParents = new HashMap<>();
     private final Map<String, List<RoleProperty>> groupMembers = new HashMap<>();
-    private final Map<String, List<TextureAssociationProperty>> parameterizedTextures = new HashMap<>();
-    private final Map<String, List<GeometryReference>> georeferencedTextures = new HashMap<>();
-    private final Map<String, List<GeometryReference>> materials = new HashMap<>();
     private final Map<String, AbstractGeometry> templates = new HashMap<>();
     private final Map<String, Integer> counter = new TreeMap<>();
     private final String TEMPLATE_ASSIGNED = "templateAssigned";
 
     private GlobalObjects globalObjects = new GlobalObjects();
+    private AppearanceRemover appearanceRemover;
     private Set<QName> typeNames;
     private Set<String> ids;
     private BoundingBoxFilter boundingBoxFilter;
@@ -75,9 +70,9 @@ public class SubsetProcessor {
     public SubsetProcessor withGlobalObjects(GlobalObjects globalObjects) {
         if (globalObjects != null) {
             this.globalObjects = globalObjects;
+            appearanceRemover = AppearanceRemover.of(globalObjects.getAppearances());
             preprocessGroups();
             preprocessImplicitGeometries();
-            preprocessAppearances();
         }
 
         return this;
@@ -167,7 +162,9 @@ public class SubsetProcessor {
     public void postprocess() {
         postprocessGroups();
         postprocessImplicitGeometries();
-        postprocessAppearances();
+        if (appearanceRemover != null) {
+            appearanceRemover.postprocess();
+        }
     }
 
     private void preprocessGroups() {
@@ -237,73 +234,7 @@ public class SubsetProcessor {
         }
     }
 
-    private void preprocessAppearances() {
-        int capacity = (int) Math.min(10, globalObjects.getAppearances().stream()
-                .map(Appearance::getTheme)
-                .distinct().count());
-
-        for (Appearance appearance : globalObjects.getAppearances()) {
-            appearance.accept(new ObjectWalker() {
-                @Override
-                public void visit(ParameterizedTexture texture) {
-                    if (texture.isSetTextureParameterizations()) {
-                        for (TextureAssociationProperty property : texture.getTextureParameterizations()) {
-                            if (property.getObject() != null
-                                    && property.getObject().getTarget() != null
-                                    && property.getObject().getTarget().getHref() != null) {
-                                String id = CityObjects.getIdFromReference(property.getObject().getTarget().getHref());
-                                parameterizedTextures.computeIfAbsent(id, v -> new ArrayList<>(capacity)).add(property);
-                            }
-                        }
-                    }
-                }
-
-                @Override
-                public void visit(GeoreferencedTexture texture) {
-                    if (texture.isSetTargets()) {
-                        process(texture.getTargets(), georeferencedTextures);
-                    }
-                }
-
-                @Override
-                public void visit(X3DMaterial material) {
-                    if (material.isSetTargets()) {
-                        process(material.getTargets(), materials);
-                    }
-                }
-
-                private void process(List<GeometryReference> references, Map<String, List<GeometryReference>> dest) {
-                    for (GeometryReference reference : references) {
-                        if (reference.getHref() != null) {
-                            String id = CityObjects.getIdFromReference(reference.getHref());
-                            dest.computeIfAbsent(id, v -> new ArrayList<>(capacity)).add(reference);
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    private void postprocessAppearances() {
-        if (!globalObjects.getAppearances().isEmpty()) {
-            if (!skippedFeatureProcessor.getSurfaceDataIds().isEmpty()) {
-                for (Appearance appearance : globalObjects.getAppearances()) {
-                    appearance.getSurfaceData().removeIf(property -> property.getHref() != null
-                            && skippedFeatureProcessor.surfaceDataIds.contains(
-                            CityObjects.getIdFromReference(property.getHref())));
-                }
-            }
-
-            globalObjects.getAppearances().removeIf(appearance -> !appearance.isSetSurfaceData());
-        }
-    }
-
     private class SkippedFeatureProcessor extends ObjectWalker {
-        private final Set<String> surfaceDataIds = new HashSet<>();
-
-        public Set<String> getSurfaceDataIds() {
-            return surfaceDataIds;
-        }
 
         @Override
         public void visit(AbstractFeature feature) {
@@ -327,64 +258,14 @@ public class SubsetProcessor {
         }
 
         @Override
-        public void visit(AbstractSurface surface) {
-            process(surface);
-            super.visit(surface);
-        }
-
-        @Override
-        public void visit(MultiSurface multiSurface) {
-            process(multiSurface);
-            super.visit(multiSurface);
+        public void visit(AbstractGeometry geometry) {
+            if (appearanceRemover != null) {
+                appearanceRemover.removeTarget(geometry);
+            }
         }
 
         @Override
         public void visit(ImplicitGeometry implicitGeometry) {
-        }
-
-        private void process(AbstractGeometry geometry) {
-            if (geometry.getId() != null) {
-                List<TextureAssociationProperty> properties = parameterizedTextures.remove(geometry.getId());
-                if (properties != null) {
-                    for (TextureAssociationProperty property : properties) {
-                        ParameterizedTexture texture = property.getParent(ParameterizedTexture.class);
-                        texture.getTextureParameterizations().remove(property);
-                        if (!texture.isSetTextureParameterizations()) {
-                            removeSurfaceData(texture);
-                        }
-                    }
-                }
-
-                List<GeometryReference> references = georeferencedTextures.remove(geometry.getId());
-                if (references != null) {
-                    for (GeometryReference reference : references) {
-                        GeoreferencedTexture texture = reference.getParent(GeoreferencedTexture.class);
-                        texture.getTargets().remove(reference);
-                        if (!texture.isSetTargets()) {
-                            removeSurfaceData(texture);
-                        }
-                    }
-                }
-
-                references = materials.remove(geometry.getId());
-                if (references != null) {
-                    for (GeometryReference reference : references) {
-                        X3DMaterial material = reference.getParent(X3DMaterial.class);
-                        material.getTargets().remove(reference);
-                        if (!material.isSetTargets()) {
-                            removeSurfaceData(material);
-                        }
-                    }
-                }
-            }
-        }
-
-        private void removeSurfaceData(AbstractSurfaceData surfaceData) {
-            Appearance appearance = surfaceData.getParent(Appearance.class);
-            if (appearance.getSurfaceData().remove(surfaceData.getParent(AbstractSurfaceDataProperty.class))
-                    && surfaceData.getId() != null) {
-                surfaceDataIds.add(surfaceData.getId());
-            }
         }
     }
 
