@@ -138,6 +138,8 @@ public class FilterLodsCommand extends CityGMLTool {
                         }
                     }
 
+                    lodFilter.postprocess();
+
                     if (!groups.isEmpty()) {
                         postprocess(groups, lodFilter.getRemovedFeatureIds());
                         for (CityObjectGroup group : groups) {

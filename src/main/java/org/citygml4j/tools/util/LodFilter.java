@@ -21,16 +21,13 @@
 
 package org.citygml4j.tools.util;
 
-import org.citygml4j.core.model.appearance.*;
+import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.common.GeometryInfo;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.visitor.ObjectWalker;
 import org.xmlobjects.gml.model.GMLObject;
 import org.xmlobjects.gml.model.base.AbstractProperty;
 import org.xmlobjects.gml.model.feature.FeatureProperty;
-import org.xmlobjects.gml.model.geometry.AbstractGeometry;
-import org.xmlobjects.gml.model.geometry.aggregates.MultiSurface;
-import org.xmlobjects.gml.model.geometry.primitives.AbstractSurface;
 import org.xmlobjects.model.Child;
 
 import java.util.*;
@@ -40,7 +37,7 @@ public class LodFilter {
     private final Set<String> removedFeatureIds = new HashSet<>();
 
     private Mode mode = Mode.KEEP;
-    private List<Appearance> globalAppearances;
+    private AppearanceRemover globalAppearanceRemover;
     private boolean keepEmptyObjects;
     private boolean collectRemovedFeatureIds = true;
 
@@ -92,11 +89,13 @@ public class LodFilter {
     }
 
     public List<Appearance> getGlobalAppearances() {
-        return globalAppearances != null ? globalAppearances : Collections.emptyList();
+        return globalAppearanceRemover != null ?
+                globalAppearanceRemover.getAppearances() :
+                Collections.emptyList();
     }
 
     public LodFilter withGlobalAppearances(List<Appearance> globalAppearances) {
-        this.globalAppearances = globalAppearances;
+        globalAppearanceRemover = AppearanceRemover.of(globalAppearances);
         return this;
     }
 
@@ -138,6 +137,12 @@ public class LodFilter {
         }
 
         return !remove;
+    }
+
+    public void postprocess() {
+        if (globalAppearanceRemover != null) {
+            globalAppearanceRemover.postprocess();
+        }
     }
 
     private void removeGeometries(List<AbstractProperty<?>> geometries, FeatureInfo featureInfo) {
@@ -183,33 +188,14 @@ public class LodFilter {
     }
 
     private void removeAppearances(List<AbstractProperty<?>> geometries, boolean remove, AbstractFeature root) {
-        if (!remove || globalAppearances != null) {
-            SurfaceDataRemover surfaceDataRemover = new SurfaceDataRemover();
-            geometries.forEach(surfaceDataRemover::visit);
-            if (!surfaceDataRemover.getTargets().isEmpty()) {
-                if (!remove) {
-                    List<Appearance> localAppearances = new ArrayList<>();
-                    root.accept(new ObjectWalker() {
-                        @Override
-                        public void visit(Appearance appearance) {
-                            localAppearances.add(appearance);
-                        }
-                    });
+        if (!remove || globalAppearanceRemover != null) {
+            AppearanceRemover localAppearanceRemover = AppearanceRemover.of(root);
+            geometries.forEach(localAppearanceRemover::removeTarget);
+            localAppearanceRemover.postprocess();
 
-                    removeAppearances(localAppearances, surfaceDataRemover);
-                }
-
-                if (globalAppearances != null) {
-                    removeAppearances(globalAppearances, surfaceDataRemover);
-                }
+            if (globalAppearanceRemover != null) {
+                geometries.forEach(globalAppearanceRemover::removeTarget);
             }
-        }
-    }
-
-    private void removeAppearances(Collection<Appearance> appearances, SurfaceDataRemover surfaceDataRemover) {
-        if (!appearances.isEmpty()) {
-            appearances.forEach(surfaceDataRemover::visit);
-            appearances.removeIf(appearance -> !appearance.isSetSurfaceData());
         }
     }
 
@@ -274,65 +260,6 @@ public class LodFilter {
 
         Set<AbstractFeature> getChildren(AbstractFeature feature) {
             return tree.getOrDefault(feature, Collections.emptySet());
-        }
-    }
-
-    private static class SurfaceDataRemover extends ObjectWalker {
-        private final Set<String> targets = new HashSet<>();
-
-        Set<String> getTargets() {
-            return targets;
-        }
-
-        @Override
-        public void visit(AbstractSurface surface) {
-            addTarget(surface);
-            super.visit(surface);
-        }
-
-        @Override
-        public void visit(MultiSurface multiSurface) {
-            addTarget(multiSurface);
-            super.visit(multiSurface);
-        }
-
-        @Override
-        public void visit(ParameterizedTexture texture) {
-            boolean removed = texture.getTextureParameterizations().removeIf(property -> property.getObject() != null
-                    && property.getObject().getTarget() != null
-                    && targets.contains(property.getObject().getTarget().getHref()));
-            if (removed && !texture.isSetTextureParameterizations()) {
-                removeSurfaceData(texture);
-            }
-        }
-
-        @Override
-        public void visit(X3DMaterial material) {
-            boolean removed = material.getTargets().removeIf(reference -> targets.contains(reference.getHref()));
-            if (removed && !material.isSetTargets()) {
-                removeSurfaceData(material);
-            }
-        }
-
-        @Override
-        public void visit(GeoreferencedTexture texture) {
-            boolean removed = texture.getTargets().removeIf(reference -> targets.contains(reference.getHref()));
-            if (removed && !texture.isSetTargets()) {
-                removeSurfaceData(texture);
-            }
-        }
-
-        private void addTarget(AbstractGeometry geometry) {
-            if (geometry.getId() != null) {
-                targets.add(geometry.getId());
-                targets.add("#" + geometry.getId());
-            }
-        }
-
-        private void removeSurfaceData(AbstractSurfaceData surfaceData) {
-            surfaceData.getParent(Appearance.class)
-                    .getSurfaceData()
-                    .remove(surfaceData.getParent(AbstractSurfaceDataProperty.class));
         }
     }
 }

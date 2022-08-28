@@ -108,9 +108,7 @@ public class SubsetCommand extends CityGMLTool {
                     .withGlobalObjects(globalObjects)
                     .withTypeNamesFilter(typeNamesOption, getCityGMLContext())
                     .withIdFilter(idOption)
-                    .withBoundingBoxFilter(boundingBoxOption != null ?
-                            boundingBoxOption.toBoundingBoxFilter() :
-                            null)
+                    .withBoundingBoxFilter(boundingBoxOption != null ? boundingBoxOption.toBoundingBoxFilter() : null)
                     .invertFilterCriteria(invert)
                     .withCounterOption(counterOption)
                     .removeGroupMembers(removeGroupMembers);
