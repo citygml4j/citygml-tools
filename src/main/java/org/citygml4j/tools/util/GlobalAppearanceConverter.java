@@ -203,28 +203,31 @@ public class GlobalAppearanceConverter {
         @Override
         public void visit(AbstractGeometry geometry) {
             if (geometry.getId() != null) {
-                for (AbstractSurfaceData source : targets.getOrDefault(geometry.getId(), Collections.emptyList())) {
-                    Appearance appearance = source.getParent(Appearance.class);
-                    AbstractGML target = getTargetObject(geometry);
+                List<AbstractSurfaceData> sources = targets.remove(geometry.getId());
+                if (sources != null) {
+                    for (AbstractSurfaceData source : sources) {
+                        Appearance appearance = source.getParent(Appearance.class);
+                        AbstractGML target = getTargetObject(geometry);
 
-                    AbstractSurfaceData surfaceData = getOrCreateSurfaceData(target, appearance, source);
-                    if (surfaceData instanceof ParameterizedTexture) {
-                        ParameterizedTexture texture = (ParameterizedTexture) source;
-                        for (TextureAssociationProperty property : texture.getTextureParameterizations()) {
-                            GeometryReference reference = getGeometryReference(property);
-                            if (reference != null
-                                    && reference.getHref() != null
-                                    && CityObjects.getIdFromReference(reference.getHref()).equals(geometry.getId())) {
-                                ((ParameterizedTexture) surfaceData).getTextureParameterizations()
-                                        .add(property);
+                        AbstractSurfaceData surfaceData = getOrCreateSurfaceData(target, appearance, source);
+                        if (surfaceData instanceof ParameterizedTexture) {
+                            ParameterizedTexture texture = (ParameterizedTexture) source;
+                            for (TextureAssociationProperty property : texture.getTextureParameterizations()) {
+                                GeometryReference reference = getGeometryReference(property);
+                                if (reference != null
+                                        && reference.getHref() != null
+                                        && CityObjects.getIdFromReference(reference.getHref()).equals(geometry.getId())) {
+                                    ((ParameterizedTexture) surfaceData).getTextureParameterizations()
+                                            .add(property);
+                                }
                             }
+                        } else if (surfaceData instanceof X3DMaterial) {
+                            ((X3DMaterial) surfaceData).getTargets()
+                                    .add(new GeometryReference("#" + geometry.getId()));
+                        } else if (surfaceData instanceof GeoreferencedTexture) {
+                            ((GeoreferencedTexture) surfaceData).getTargets()
+                                    .add(new GeometryReference("#" + geometry.getId()));
                         }
-                    } else if (surfaceData instanceof X3DMaterial) {
-                        ((X3DMaterial) surfaceData).getTargets()
-                                .add(new GeometryReference("#" + geometry.getId()));
-                    } else if (surfaceData instanceof GeoreferencedTexture) {
-                        ((GeoreferencedTexture) surfaceData).getTargets()
-                                .add(new GeometryReference("#" + geometry.getId()));
                     }
                 }
             }

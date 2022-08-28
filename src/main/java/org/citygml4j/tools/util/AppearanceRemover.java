@@ -45,7 +45,9 @@ public class AppearanceRemover {
     }
 
     public static AppearanceRemover of(List<Appearance> appearances) {
-        return new AppearanceRemover(appearances).preprocess();
+        AppearanceRemover remover = new AppearanceRemover(appearances);
+        remover.preprocess();
+        return remover;
     }
 
     public static AppearanceRemover of(AbstractFeature feature) {
@@ -68,7 +70,7 @@ public class AppearanceRemover {
         return !appearances.isEmpty();
     }
 
-    private AppearanceRemover preprocess() {
+    private void preprocess() {
         if (!appearances.isEmpty()) {
             TargetCollector targetCollector = new TargetCollector();
             targetCollector.setCapacity((int) Math.min(10, appearances.stream()
@@ -77,8 +79,6 @@ public class AppearanceRemover {
 
             appearances.forEach(appearance -> appearance.accept(targetCollector));
         }
-
-        return this;
     }
 
     public void removeTarget(AbstractGeometry geometry) {
