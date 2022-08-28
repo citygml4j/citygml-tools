@@ -129,7 +129,7 @@ public class FilterLodsCommand extends CityGMLTool {
                     log.debug("Reading city objects and filtering LoD representations.");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
-                        boolean keep = lodFilter.apply(feature);
+                        boolean keep = lodFilter.filter(feature);
 
                         if (feature instanceof CityObjectGroup) {
                             groups.add((CityObjectGroup) feature);

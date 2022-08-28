@@ -131,13 +131,13 @@ public class DeprecatedPropertiesProcessor {
             GeometryInfo geometryInfo = feature.getGeometryInfo(true);
             if (geometryInfo.hasGeometries(4) || geometryInfo.hasImplicitGeometries(4)) {
                 if (geometryInfo.hasGeometries(3) || geometryInfo.hasImplicitGeometries(3)) {
-                    lodFilter.withLods(3).apply(feature);
+                    lodFilter.withLods(3).filter(feature);
                 }
             }
         }
 
         feature.accept(deprecatedPropertiesWalker);
-        lodFilter.withLods(4).apply(feature);
+        lodFilter.withLods(4).filter(feature);
     }
 
     public void postprocess() {

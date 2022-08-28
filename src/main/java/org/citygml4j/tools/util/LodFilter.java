@@ -109,7 +109,7 @@ public class LodFilter {
         return this;
     }
 
-    public boolean apply(AbstractFeature feature) {
+    public boolean filter(AbstractFeature feature) {
         GeometryInfo geometryInfo = feature.getGeometryInfo(true);
         boolean[] filter = createLodFilter(geometryInfo);
 
