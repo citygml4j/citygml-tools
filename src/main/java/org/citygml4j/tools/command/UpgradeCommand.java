@@ -97,7 +97,7 @@ public class UpgradeCommand extends CityGMLTool {
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            try (CityGMLReader reader = createCityGMLReader(in, inputFile, inputOptions)) {
+            try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions, "Appearance")) {
                 if (reader.hasNext()) {
                     CityGMLVersion version = CityGMLModules.getCityGMLVersion(reader.getName().getNamespaceURI());
                     if (version == CityGMLVersion.v3_0) {
@@ -112,10 +112,8 @@ public class UpgradeCommand extends CityGMLTool {
                         .resolveGeometryReferences(resolveGeometryReferences)
                         .createCityObjectRelations(createCityObjectRelations);
 
-                if (useLod4AsLod3 || resolveGeometryReferences) {
-                    log.debug("Reading global objects from input file.");
-                    processor.readGlobalObjects(inputFile, getCityGMLContext());
-                }
+                log.debug("Reading global objects from input file.");
+                processor.readGlobalObjects(inputFile, getCityGMLContext());
 
                 if (overwriteOption.isOverwrite()) {
                     log.debug("Writing temporary output file " + outputFile.toAbsolutePath() + ".");
@@ -131,15 +129,13 @@ public class UpgradeCommand extends CityGMLTool {
                         featureId++;
                         AbstractFeature feature = reader.next();
                         processor.upgrade(feature, featureId);
-                        if (!useLod4AsLod3 || !(feature instanceof Appearance)) {
-                            writer.writeMember(feature);
-                        }
+                        writer.writeMember(feature);
                     }
 
-                    if (useLod4AsLod3) {
-                        for (Appearance appearance : processor.getGlobalAppearances()) {
-                            writer.writeMember(appearance);
-                        }
+                    processor.postprocess();
+
+                    for (Appearance appearance : processor.getGlobalAppearances()) {
+                        writer.writeMember(appearance);
                     }
                 }
             } catch (CityGMLReadException e) {

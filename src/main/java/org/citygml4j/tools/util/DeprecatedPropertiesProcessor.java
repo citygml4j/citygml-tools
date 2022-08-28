@@ -140,6 +140,10 @@ public class DeprecatedPropertiesProcessor {
         lodFilter.withLods(4).apply(feature);
     }
 
+    public void postprocess() {
+        lodFilter.postprocess();
+    }
+
     private class DeprecatedPropertiesWalker extends ObjectWalker {
         private final Logger log = Logger.getInstance();
         private final CopyBuilder copyBuilder = new CopyBuilder().failOnError(true);

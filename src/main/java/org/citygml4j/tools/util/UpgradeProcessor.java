@@ -73,38 +73,34 @@ public class UpgradeProcessor {
     }
 
     public void readGlobalObjects(Path file, CityGMLContext context) throws ExecutionException {
-        if (resolveGeometryReferences || propertiesProcessor.isUseLod4AsLod3()) {
-            try {
-                try (CityGMLReader reader = createCityGMLReader(file, context, false)) {
-                    List<Appearance> appearances = new ArrayList<>();
-                    int featureId = 0;
-                    while (reader.hasNext()) {
+        try {
+            try (CityGMLReader reader = createCityGMLReader(file, context, false)) {
+                List<Appearance> appearances = new ArrayList<>();
+                int featureId = 0;
+                while (reader.hasNext()) {
+                    AbstractFeature feature = reader.next();
+                    if (feature instanceof Appearance) {
+                        appearances.add((Appearance) feature);
+                    } else if (resolveGeometryReferences) {
                         featureId++;
-                        AbstractFeature feature = reader.next();
-                        if (propertiesProcessor.isUseLod4AsLod3() && feature instanceof Appearance) {
-                            appearances.add((Appearance) feature);
-                        }
-
-                        if (resolveGeometryReferences) {
-                            referenceResolver.processGeometryReferences(feature, featureId);
-                        }
-                    }
-
-                    if (propertiesProcessor.isUseLod4AsLod3()) {
-                        propertiesProcessor.withGlobalAppearances(appearances);
+                        referenceResolver.processGeometryReferences(feature, featureId);
                     }
                 }
 
-                if (resolveGeometryReferences && referenceResolver.hasReferences()) {
-                    try (CityGMLReader reader = createCityGMLReader(file, context, true)) {
-                        while (reader.hasNext()) {
-                            referenceResolver.processReferencedGeometries(reader.next());
-                        }
-                    }
+                if (!appearances.isEmpty()) {
+                    propertiesProcessor.withGlobalAppearances(appearances);
                 }
-            } catch (CityGMLReadException e) {
-                throw new ExecutionException("Failed to read global objects.", e);
             }
+
+            if (resolveGeometryReferences && referenceResolver.hasReferences()) {
+                try (CityGMLReader reader = createCityGMLReader(file, context, true)) {
+                    while (reader.hasNext()) {
+                        referenceResolver.processReferencedGeometries(reader.next());
+                    }
+                }
+            }
+        } catch (CityGMLReadException e) {
+            throw new ExecutionException("Failed to read global objects.", e);
         }
     }
 
@@ -113,6 +109,10 @@ public class UpgradeProcessor {
         if (resolveGeometryReferences && referenceResolver.hasReferences()) {
             referenceResolver.resolveGeometryReferences(feature, featureId);
         }
+    }
+
+    public void postprocess() {
+        propertiesProcessor.postprocess();
     }
 
     private CityGMLReader createCityGMLReader(Path file, CityGMLContext context, boolean skipAppearance) throws CityGMLReadException {
