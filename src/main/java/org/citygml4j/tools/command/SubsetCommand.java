@@ -29,7 +29,7 @@ import org.citygml4j.tools.option.*;
 import org.citygml4j.tools.util.GlobalObjects;
 import org.citygml4j.tools.util.GlobalObjectsReader;
 import org.citygml4j.tools.util.InputFiles;
-import org.citygml4j.tools.util.SubsetProcessor;
+import org.citygml4j.tools.util.SubsetFilter;
 import org.citygml4j.xml.reader.*;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
@@ -104,7 +104,7 @@ public class SubsetCommand extends CityGMLTool {
             GlobalObjects globalObjects = GlobalObjectsReader.defaults()
                     .read(inputFile, getCityGMLContext());
 
-            SubsetProcessor subsetProcessor = SubsetProcessor.newInstance()
+            SubsetFilter subsetFilter = SubsetFilter.newInstance()
                     .withGlobalObjects(globalObjects)
                     .withTypeNamesFilter(typeNamesOption, getCityGMLContext())
                     .withIdFilter(idOption)
@@ -116,8 +116,8 @@ public class SubsetCommand extends CityGMLTool {
             try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions,
                     "CityObjectGroup", "Appearance")) {
                 FeatureInfo cityModelInfo = getFeatureInfo(reader);
-                if (cityModelInfo != null && subsetProcessor.getBoundingBoxFilter() != null) {
-                    subsetProcessor.getBoundingBoxFilter().withRootReferenceSystem(cityModelInfo);
+                if (cityModelInfo != null && subsetFilter.getBoundingBoxFilter() != null) {
+                    subsetFilter.getBoundingBoxFilter().withRootReferenceSystem(cityModelInfo);
                 }
 
                 if (!version.isSetVersion()) {
@@ -135,12 +135,12 @@ public class SubsetCommand extends CityGMLTool {
                     log.debug("Reading and filtering city objects based on the specified filter criteria.");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
-                        if (subsetProcessor.filter(feature, reader.getName(), reader.getPrefix())) {
+                        if (subsetFilter.filter(feature, reader.getName(), reader.getPrefix())) {
                             writer.writeMember(feature);
                         }
                     }
 
-                    subsetProcessor.postprocess();
+                    subsetFilter.postprocess();
 
                     for (CityObjectGroup group : globalObjects.getCityObjectGroups()) {
                         writer.writeMember(group);
@@ -161,9 +161,9 @@ public class SubsetCommand extends CityGMLTool {
                 replaceInputFile(inputFile, outputFile);
             }
 
-            if (!subsetProcessor.getCounter().isEmpty()) {
+            if (!subsetFilter.getCounter().isEmpty()) {
                 log.debug("The following top-level city objects satisfied the filter criteria.");
-                subsetProcessor.getCounter().forEach((key, value) -> log.debug(key + ": " + value));
+                subsetFilter.getCounter().forEach((key, value) -> log.debug(key + ": " + value));
             } else {
                 log.debug("No top-level city object satisfies the filter criteria.");
             }

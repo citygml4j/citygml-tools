@@ -39,7 +39,7 @@ import org.xmlobjects.gml.model.geometry.GeometryProperty;
 import javax.xml.namespace.QName;
 import java.util.*;
 
-public class SubsetProcessor {
+public class SubsetFilter {
     private final SkippedFeatureProcessor skippedFeatureProcessor = new SkippedFeatureProcessor();
     private final TemplatesProcessor templatesProcessor = new TemplatesProcessor();
     private final Map<String, List<AbstractCityObjectReference>> groupParents = new HashMap<>();
@@ -60,14 +60,14 @@ public class SubsetProcessor {
     private long count;
     private long index;
 
-    private SubsetProcessor() {
+    private SubsetFilter() {
     }
 
-    public static SubsetProcessor newInstance() {
-        return new SubsetProcessor();
+    public static SubsetFilter newInstance() {
+        return new SubsetFilter();
     }
 
-    public SubsetProcessor withGlobalObjects(GlobalObjects globalObjects) {
+    public SubsetFilter withGlobalObjects(GlobalObjects globalObjects) {
         if (globalObjects != null) {
             this.globalObjects = globalObjects;
             appearanceRemover = AppearanceRemover.of(globalObjects.getAppearances());
@@ -78,12 +78,12 @@ public class SubsetProcessor {
         return this;
     }
 
-    public SubsetProcessor withTypeNamesFilter(TypeNamesOption typeNamesOption, CityGMLContext context) {
+    public SubsetFilter withTypeNamesFilter(TypeNamesOption typeNamesOption, CityGMLContext context) {
         this.typeNames = typeNamesOption != null ? typeNamesOption.getTypeNames(context) : null;
         return this;
     }
 
-    public SubsetProcessor withIdFilter(IdOption idOption) {
+    public SubsetFilter withIdFilter(IdOption idOption) {
         this.ids = idOption != null ? idOption.getIds() : null;
         return this;
     }
@@ -92,22 +92,22 @@ public class SubsetProcessor {
         return boundingBoxFilter;
     }
 
-    public SubsetProcessor withBoundingBoxFilter(BoundingBoxFilter boundingBoxFilter) {
+    public SubsetFilter withBoundingBoxFilter(BoundingBoxFilter boundingBoxFilter) {
         this.boundingBoxFilter = boundingBoxFilter;
         return this;
     }
 
-    public SubsetProcessor invertFilterCriteria(boolean invert) {
+    public SubsetFilter invertFilterCriteria(boolean invert) {
         this.invert = invert;
         return this;
     }
 
-    public SubsetProcessor withCounterOption(CounterOption counterOption) {
+    public SubsetFilter withCounterOption(CounterOption counterOption) {
         this.counterOption = counterOption;
         return this;
     }
 
-    public SubsetProcessor removeGroupMembers(boolean removeGroupMembers) {
+    public SubsetFilter removeGroupMembers(boolean removeGroupMembers) {
         this.removeGroupMembers = removeGroupMembers;
         return this;
     }
