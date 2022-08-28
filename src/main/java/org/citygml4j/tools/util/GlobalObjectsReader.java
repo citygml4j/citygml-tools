@@ -24,7 +24,6 @@ package org.citygml4j.tools.util;
 import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
-import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.xml.CityGMLContext;
@@ -48,7 +47,7 @@ public class GlobalObjectsReader {
 
     private GlobalObjectsReader(EnumSet<GlobalObjects.Type> types) {
         this.types = types;
-        chunkOptions = ChunkOptions.defaults();
+        chunkOptions = ChunkOptions.empty().addCityModelMemberProperties();
     }
 
     public static GlobalObjectsReader defaults() {
@@ -99,7 +98,7 @@ public class GlobalObjectsReader {
                             if (version == CityGMLVersion.v3_0) {
                                 globalObjects.add(reader.getObject(CityObjectGroup.class), name);
                             } else {
-                                groupProcessors.push(new GroupProcessor(name));
+                                groupProcessors.push(new GroupProcessor());
                             }
                         }
                         isTopLevel = false;
@@ -119,7 +118,7 @@ public class GlobalObjectsReader {
                     GroupProcessor groupProcessor = groupProcessors.peek();
                     groupProcessor.process(streamReader);
                     if (eventType == XMLStreamConstants.END_ELEMENT && groupProcessor.isComplete()) {
-                        globalObjects.add(groupProcessor.build(context), groupProcessor.getName());
+                        groupProcessor.build(context, globalObjects);
                         groupProcessors.pop();
                     }
                 }
@@ -132,21 +131,12 @@ public class GlobalObjectsReader {
     }
 
     private static final class GroupProcessor {
-        private final QName name;
         private final StAXStream2SAX bridge = new StAXStream2SAX(new SAXBuffer());
         private final ChunkOptions groupProperties = ChunkOptions.empty().addGroupMemberProperties();
 
         private int depth = 0;
         private int skipFrom = Integer.MAX_VALUE;
         private boolean processEvent = true;
-
-        GroupProcessor(QName name) {
-            this.name = name;
-        }
-
-        QName getName() {
-            return name;
-        }
 
         void process(XMLStreamReader reader) throws SAXException {
             int eventType = reader.getEventType();
@@ -173,24 +163,19 @@ public class GlobalObjectsReader {
             return depth == 0;
         }
 
-        CityObjectGroup build(CityGMLContext context) throws CityGMLReadException {
+        void build(CityGMLContext context, GlobalObjects globalObjects) throws CityGMLReadException {
             CityGMLInputFactory in = context.createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
             try (CityGMLReader reader = in.createCityGMLReader(
                     ((SAXBuffer) bridge.getContentHandler()).toXMLStreamReader(true))) {
-                CityGMLChunk chunk = null;
                 while (reader.hasNext()) {
-                     chunk = reader.nextChunk();
-                }
-
-                if (chunk != null) {
-                    AbstractFeature feature = chunk.build();
-                    if (feature instanceof CityObjectGroup) {
-                        return (CityObjectGroup) feature;
+                    CityGMLChunk chunk = reader.nextChunk();
+                    QName element = chunk.getFirstElement();
+                    if ("CityObjectGroup".equals(element.getLocalPart())
+                            && CityGMLModules.isCityGMLNamespace(element.getNamespaceURI())) {
+                        globalObjects.add((CityObjectGroup) chunk.build(), element);
                     }
                 }
             }
-
-            throw new CityGMLReadException("Failed to read city object group.");
         }
     }
 }
