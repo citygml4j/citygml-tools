@@ -37,6 +37,7 @@ import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityJSONOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
+import org.citygml4j.tools.util.IdCreator;
 import org.citygml4j.xml.CityGMLADELoader;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.CityGMLContextException;
@@ -84,7 +85,7 @@ public abstract class CityGMLTool implements Command {
 
     CityGMLInputFactory createCityGMLInputFactory() throws ExecutionException {
         try {
-            return getCityGMLContext().createCityGMLInputFactory();
+            return getCityGMLContext().createCityGMLInputFactory().withIdCreator(new IdCreator());
         } catch (CityGMLReadException e) {
             throw new ExecutionException("Failed to create CityGML input factory.", e);
         }

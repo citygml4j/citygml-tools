@@ -24,30 +24,30 @@ package org.citygml4j.tools.util;
 import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
+import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.model.core.ImplicitGeometry;
+import org.citygml4j.core.visitor.ObjectWalker;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
-import org.citygml4j.xml.reader.*;
-import org.xml.sax.SAXException;
-import org.xmlobjects.stream.XMLReader;
-import org.xmlobjects.stream.XMLReaderFactory;
-import org.xmlobjects.util.xml.SAXBuffer;
-import org.xmlobjects.util.xml.StAXStream2SAX;
+import org.citygml4j.xml.module.citygml.CoreModule;
+import org.citygml4j.xml.reader.ChunkOptions;
+import org.citygml4j.xml.reader.CityGMLInputFactory;
+import org.citygml4j.xml.reader.CityGMLReadException;
+import org.citygml4j.xml.reader.CityGMLReader;
 
 import javax.xml.namespace.QName;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamReader;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 
 public class GlobalObjectsReader {
     private final EnumSet<GlobalObjects.Type> types;
-    private final ChunkOptions chunkOptions;
 
     private GlobalObjectsReader(EnumSet<GlobalObjects.Type> types) {
         this.types = types;
-        chunkOptions = ChunkOptions.empty().addCityModelMemberProperties();
     }
 
     public static GlobalObjectsReader defaults() {
@@ -71,112 +71,68 @@ public class GlobalObjectsReader {
     }
 
     public GlobalObjects read(Path file, CityGMLContext context) throws ExecutionException {
-        GlobalObjects globalObjects = new GlobalObjects();
-        Deque<GroupProcessor> groupProcessors = new ArrayDeque<>();
-        boolean checkForTopLevel = !Collections.disjoint(types, GlobalObjects.Type.TOP_LEVEL_TYPES);
-        boolean isTopLevel = false;
-
-        try (XMLReader reader = XMLReaderFactory.newInstance(context.getXMLObjects()).createReader(file)) {
-            XMLStreamReader streamReader = reader.getStreamReader();
-            while (streamReader.hasNext()) {
-                int eventType = streamReader.next();
-                if (eventType == XMLStreamConstants.START_ELEMENT) {
-                    QName name = streamReader.getName();
-                    if (checkForTopLevel
-                            && !isTopLevel
-                            && chunkOptions.containsProperty(name)) {
-                        isTopLevel = true;
-                    } else if (isTopLevel) {
-                        if (types.contains(GlobalObjects.Type.APPEARANCE)
-                                && "Appearance".equals(name.getLocalPart())
-                                && CityGMLModules.isCityGMLNamespace(name.getNamespaceURI())) {
-                            globalObjects.add(reader.getObject(Appearance.class), name);
-                        } else if (types.contains(GlobalObjects.Type.CITY_OBJECT_GROUP)
-                                && "CityObjectGroup".equals(name.getLocalPart())
-                                && CityGMLModules.isCityGMLNamespace(name.getNamespaceURI())) {
-                            CityGMLVersion version = CityGMLModules.getCityGMLVersion(name.getNamespaceURI());
-                            if (version == CityGMLVersion.v3_0) {
-                                globalObjects.add(reader.getObject(CityObjectGroup.class), name);
-                            } else {
-                                groupProcessors.push(new GroupProcessor());
+        try {
+            GlobalObjects globalObjects = new GlobalObjects();
+            try (CityGMLReader reader = createReader(file, context)) {
+                while (reader.hasNext()) {
+                    AbstractFeature feature = reader.next();
+                    if (feature instanceof Appearance) {
+                        if (types.contains(GlobalObjects.Type.APPEARANCE)) {
+                            globalObjects.add((Appearance) feature, reader.getName());
+                        }
+                    } else if (feature instanceof CityObjectGroup) {
+                        if (types.contains(GlobalObjects.Type.CITY_OBJECT_GROUP)) {
+                            globalObjects.add((CityObjectGroup) feature, reader.getName());
+                        }
+                    } else if (types.contains(GlobalObjects.Type.IMPLICIT_GEOMETRY)) {
+                        feature.accept(new ObjectWalker() {
+                            @Override
+                            public void visit(ImplicitGeometry implicitGeometry) {
+                                if (implicitGeometry.getRelativeGeometry() != null
+                                        && implicitGeometry.getRelativeGeometry().isSetInlineObject()
+                                        && implicitGeometry.getRelativeGeometry().getObject().getId() != null) {
+                                    String namespaceURI = CoreModule.of(getVersion(reader)).getNamespaceURI();
+                                    globalObjects.add(implicitGeometry, new QName(namespaceURI, "ImplicitGeometry"));
+                                }
                             }
-                        }
-                        isTopLevel = false;
-                    } else if (types.contains(GlobalObjects.Type.IMPLICIT_GEOMETRY)
-                            && "ImplicitGeometry".equals(name.getLocalPart())
-                            && CityGMLModules.isCityGMLNamespace(name.getNamespaceURI())) {
-                        ImplicitGeometry implicitGeometry = reader.getObject(ImplicitGeometry.class);
-                        if (implicitGeometry.getRelativeGeometry() != null
-                                && implicitGeometry.getRelativeGeometry().isSetInlineObject()
-                                && implicitGeometry.getRelativeGeometry().getObject().getId() != null) {
-                            globalObjects.add(implicitGeometry, name);
-                        }
-                        continue;
-                    }
-                }
-
-                if (!groupProcessors.isEmpty()) {
-                    GroupProcessor groupProcessor = groupProcessors.peek();
-                    groupProcessor.process(streamReader);
-                    if (eventType == XMLStreamConstants.END_ELEMENT && groupProcessor.isComplete()) {
-                        groupProcessor.build(context, globalObjects);
-                        groupProcessors.pop();
+                        });
                     }
                 }
             }
 
             return globalObjects;
-        } catch (Exception e) {
+        } catch (CityGMLReadException e) {
             throw new ExecutionException("Failed to read global objects.", e);
         }
     }
 
-    private static final class GroupProcessor {
-        private final StAXStream2SAX bridge = new StAXStream2SAX(new SAXBuffer());
-        private final ChunkOptions groupProperties = ChunkOptions.empty().addGroupMemberProperties();
+    private CityGMLReader createReader(Path file, CityGMLContext context) throws ExecutionException {
+        try {
+            CityGMLInputFactory in = context.createCityGMLInputFactory()
+                    .withChunking(ChunkOptions.defaults())
+                    .withIdCreator(new IdCreator());
 
-        private int depth = 0;
-        private int skipFrom = Integer.MAX_VALUE;
-        private boolean processEvent = true;
+            CityGMLReader reader = in.createCityGMLReader(file);
+            if (!types.contains(GlobalObjects.Type.IMPLICIT_GEOMETRY)) {
+                Set<String> localNames = new HashSet<>();
+                if (types.contains(GlobalObjects.Type.APPEARANCE)) {
+                    localNames.add("Appearance");
+                } else if (types.contains(GlobalObjects.Type.CITY_OBJECT_GROUP)) {
+                    localNames.add("CityObjectGroup");
+                }
 
-        void process(XMLStreamReader reader) throws SAXException {
-            int eventType = reader.getEventType();
-            if (eventType == XMLStreamConstants.START_ELEMENT) {
-                depth++;
-                if (groupProperties.containsProperty(reader.getName())) {
-                    skipFrom = depth + 1;
-                } else if (processEvent && depth > skipFrom) {
-                    processEvent = false;
-                }
-            } else if (eventType == XMLStreamConstants.END_ELEMENT) {
-                if (!processEvent && depth == skipFrom) {
-                    processEvent = true;
-                }
-                depth--;
+                return in.createFilteredCityGMLReader(reader, name -> localNames.contains(name.getLocalPart())
+                        && CityGMLModules.isCityGMLNamespace(name.getNamespaceURI()));
             }
 
-            if (processEvent) {
-                bridge.bridgeEvent(reader);
-            }
+            return reader;
+        } catch (CityGMLReadException e) {
+            throw new ExecutionException("Failed to read global objects.", e);
         }
+    }
 
-        boolean isComplete() {
-            return depth == 0;
-        }
-
-        void build(CityGMLContext context, GlobalObjects globalObjects) throws CityGMLReadException {
-            CityGMLInputFactory in = context.createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
-            try (CityGMLReader reader = in.createCityGMLReader(
-                    ((SAXBuffer) bridge.getContentHandler()).toXMLStreamReader(true))) {
-                while (reader.hasNext()) {
-                    CityGMLChunk chunk = reader.nextChunk();
-                    QName element = chunk.getFirstElement();
-                    if ("CityObjectGroup".equals(element.getLocalPart())
-                            && CityGMLModules.isCityGMLNamespace(element.getNamespaceURI())) {
-                        globalObjects.add((CityObjectGroup) chunk.build(), element);
-                    }
-                }
-            }
-        }
+    private CityGMLVersion getVersion(CityGMLReader reader) {
+        CityGMLVersion version = CityGMLModules.getCityGMLVersion(reader.getName().getNamespaceURI());
+        return version != null ? version : CityGMLVersion.v3_0;
     }
 }
