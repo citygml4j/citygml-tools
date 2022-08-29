@@ -117,7 +117,9 @@ public class GlobalObjectsReader {
                 Set<String> localNames = new HashSet<>();
                 if (types.contains(GlobalObjects.Type.APPEARANCE)) {
                     localNames.add("Appearance");
-                } else if (types.contains(GlobalObjects.Type.CITY_OBJECT_GROUP)) {
+                }
+
+                if (types.contains(GlobalObjects.Type.CITY_OBJECT_GROUP)) {
                     localNames.add("CityObjectGroup");
                 }
 
