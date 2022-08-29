@@ -92,7 +92,7 @@ public class DeprecatedPropertiesProcessor {
     public static DeprecatedPropertiesProcessor newInstance() {
         return new DeprecatedPropertiesProcessor(LodFilter.newInstance()
                 .withMode(LodFilter.Mode.REMOVE)
-                .keepEmptyObjects(false)
+                .keepEmptyObjects(true)
                 .collectRemovedFeatureIds(false));
     }
 

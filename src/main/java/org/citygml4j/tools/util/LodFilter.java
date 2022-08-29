@@ -180,7 +180,7 @@ public class LodFilter {
                     removedFeatureIds.add(feature.getId());
                 }
 
-                return true;
+                return !keepEmptyObjects;
             }
         }
 
