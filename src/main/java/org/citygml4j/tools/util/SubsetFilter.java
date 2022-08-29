@@ -35,10 +35,7 @@ import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.GeometryProperty;
 
 import javax.xml.namespace.QName;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class SubsetFilter {
     private final SkippedFeatureProcessor skippedFeatureProcessor = new SkippedFeatureProcessor();
@@ -47,7 +44,6 @@ public class SubsetFilter {
     private final Map<String, Integer> counter = new TreeMap<>();
     private final String TEMPLATE_ASSIGNED = "templateAssigned";
 
-    private GlobalObjects globalObjects = new GlobalObjects();
     private AppearanceRemover appearanceRemover;
     private CityObjectGroupRemover groupRemover;
     private Set<QName> typeNames;
@@ -69,10 +65,9 @@ public class SubsetFilter {
 
     public SubsetFilter withGlobalObjects(GlobalObjects globalObjects) {
         if (globalObjects != null) {
-            this.globalObjects = globalObjects;
             appearanceRemover = AppearanceRemover.of(globalObjects.getAppearances());
             groupRemover = CityObjectGroupRemover.of(globalObjects.getCityObjectGroups());
-            preprocessImplicitGeometries();
+            preprocessImplicitGeometries(globalObjects.getTemplateGeometries());
         }
 
         return this;
@@ -117,46 +112,46 @@ public class SubsetFilter {
     }
 
     public boolean filter(AbstractFeature feature, QName name, String prefix) {
-        boolean satisfiesFilter = true;
+        boolean keep = true;
         if (typeNames != null) {
-            satisfiesFilter = typeNames.contains(name);
+            keep = typeNames.contains(name);
         }
 
-        if (satisfiesFilter && ids != null) {
-            satisfiesFilter = feature.getId() != null && ids.contains(feature.getId());
+        if (keep && ids != null) {
+            keep = feature.getId() != null && ids.contains(feature.getId());
         }
 
-        if (satisfiesFilter && boundingBoxFilter != null) {
-            if (!globalObjects.getImplicitGeometries().isEmpty()) {
+        if (keep && boundingBoxFilter != null) {
+            if (!templates.isEmpty()) {
                 templatesProcessor.preprocess(feature);
             }
 
-            satisfiesFilter = boundingBoxFilter.filter(feature);
+            keep = boundingBoxFilter.filter(feature);
         }
 
         if (invert) {
-            satisfiesFilter = !satisfiesFilter;
+            keep = !keep;
         }
 
-        if (satisfiesFilter && counterOption != null) {
+        if (keep && counterOption != null) {
             if (index < counterOption.getStartIndex()) {
                 index++;
-                satisfiesFilter = false;
+                keep = false;
             } else {
                 count++;
             }
 
-            satisfiesFilter = satisfiesFilter && count <= counterOption.getCount();
+            keep = keep && count <= counterOption.getCount();
         }
 
-        if (satisfiesFilter) {
+        if (keep) {
             templatesProcessor.postprocess(feature);
             counter.merge(prefix + ":" + name.getLocalPart(), 1, Integer::sum);
         } else {
             feature.accept(skippedFeatureProcessor);
         }
 
-        return satisfiesFilter;
+        return keep;
     }
 
     public void postprocess() {
@@ -196,10 +191,10 @@ public class SubsetFilter {
         }
     }
 
-    private void preprocessImplicitGeometries() {
-        for (AbstractGeometry template : globalObjects.getTemplateGeometries()) {
+    private void preprocessImplicitGeometries(List<AbstractGeometry> templates) {
+        for (AbstractGeometry template : templates) {
             if (template.getId() != null) {
-                templates.put(template.getId(), template);
+                this.templates.put(template.getId(), template);
             }
         }
     }
