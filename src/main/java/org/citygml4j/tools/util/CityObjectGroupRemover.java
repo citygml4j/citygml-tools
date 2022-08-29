@@ -80,7 +80,7 @@ public class CityObjectGroupRemover {
         }
     }
 
-    public void removeMember(AbstractFeature feature) {
+    public void removeMembers(AbstractFeature feature) {
         if (!groups.isEmpty()) {
             feature.accept(memberProcessor);
         }

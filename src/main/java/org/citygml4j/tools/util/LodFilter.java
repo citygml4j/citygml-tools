@@ -180,7 +180,7 @@ public class LodFilter {
                 }
 
                 if (groupRemover != null) {
-                    groupRemover.removeMember(feature);
+                    groupRemover.removeMembers(feature);
                 }
 
                 if (feature.getId() != null) {

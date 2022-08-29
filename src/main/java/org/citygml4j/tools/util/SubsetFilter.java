@@ -212,7 +212,7 @@ public class SubsetFilter {
         @Override
         public void visit(AbstractFeature feature) {
             if (removeGroupMembers && groupRemover != null) {
-                groupRemover.removeMember(feature);
+                groupRemover.removeMembers(feature);
             }
         }
 
