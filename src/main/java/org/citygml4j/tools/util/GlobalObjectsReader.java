@@ -123,6 +123,9 @@ public class GlobalObjectsReader {
 
                 return in.createFilteredCityGMLReader(reader, name -> localNames.contains(name.getLocalPart())
                         && CityGMLModules.isCityGMLNamespace(name.getNamespaceURI()));
+            } else if (types.size() == 1 && types.contains(GlobalObjects.Type.IMPLICIT_GEOMETRY)) {
+                return in.createFilteredCityGMLReader(reader, name -> !"Appearance".equals(name.getLocalPart())
+                        || !CityGMLModules.isCityGMLNamespace(name.getNamespaceURI()));
             }
 
             return reader;

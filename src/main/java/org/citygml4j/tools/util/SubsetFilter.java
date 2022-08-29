@@ -22,8 +22,6 @@
 package org.citygml4j.tools.util;
 
 import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
-import org.citygml4j.core.model.cityobjectgroup.RoleProperty;
-import org.citygml4j.core.model.core.AbstractCityObjectReference;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.citygml4j.core.visitor.ObjectWalker;
@@ -37,19 +35,21 @@ import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.GeometryProperty;
 
 import javax.xml.namespace.QName;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 public class SubsetFilter {
     private final SkippedFeatureProcessor skippedFeatureProcessor = new SkippedFeatureProcessor();
     private final TemplatesProcessor templatesProcessor = new TemplatesProcessor();
-    private final Map<String, List<AbstractCityObjectReference>> groupParents = new HashMap<>();
-    private final Map<String, List<RoleProperty>> groupMembers = new HashMap<>();
     private final Map<String, AbstractGeometry> templates = new HashMap<>();
     private final Map<String, Integer> counter = new TreeMap<>();
     private final String TEMPLATE_ASSIGNED = "templateAssigned";
 
     private GlobalObjects globalObjects = new GlobalObjects();
     private AppearanceRemover appearanceRemover;
+    private CityObjectGroupRemover groupRemover;
     private Set<QName> typeNames;
     private Set<String> ids;
     private BoundingBoxFilter boundingBoxFilter;
@@ -71,7 +71,7 @@ public class SubsetFilter {
         if (globalObjects != null) {
             this.globalObjects = globalObjects;
             appearanceRemover = AppearanceRemover.of(globalObjects.getAppearances());
-            preprocessGroups();
+            groupRemover = CityObjectGroupRemover.of(globalObjects.getCityObjectGroups());
             preprocessImplicitGeometries();
         }
 
@@ -167,30 +167,8 @@ public class SubsetFilter {
         }
     }
 
-    private void preprocessGroups() {
-        int capacity = Math.min(10, globalObjects.getCityObjectGroups().size());
-
-        for (CityObjectGroup group : globalObjects.getCityObjectGroups()) {
-            if (group.getGroupParent() != null && group.getGroupParent().getHref() != null) {
-                String id = CityObjects.getIdFromReference(group.getGroupParent().getHref());
-                groupParents.computeIfAbsent(id, v -> new ArrayList<>(capacity)).add(group.getGroupParent());
-            }
-
-            if (group.isSetGroupMembers()) {
-                for (RoleProperty property : group.getGroupMembers()) {
-                    if (property.getObject() != null
-                            && property.getObject().getGroupMember() != null
-                            && property.getObject().getGroupMember().getHref() != null) {
-                        String id = CityObjects.getIdFromReference(property.getObject().getGroupMember().getHref());
-                        groupMembers.computeIfAbsent(id, v -> new ArrayList<>(capacity)).add(property);
-                    }
-                }
-            }
-        }
-    }
-
     private void postprocessGroups() {
-        if (!globalObjects.getCityObjectGroups().isEmpty()) {
+        if (groupRemover != null && groupRemover.hasCityObjectGroups()) {
             QName name = null;
             if (typeNames != null) {
                 for (QName typeName : typeNames) {
@@ -206,7 +184,7 @@ public class SubsetFilter {
                 name = new QName(CityObjectGroupModule.v3_0.getNamespaceURI(), "CityObjectGroup");
             }
 
-            for (CityObjectGroup group : globalObjects.getCityObjectGroups()) {
+            for (CityObjectGroup group : groupRemover.getCityObjectGroups()) {
                 if (group.isSetGroupMembers()) {
                     if (!filter(group, name, "grp")) {
                         group.setGroupMembers(null);
@@ -214,7 +192,7 @@ public class SubsetFilter {
                 }
             }
 
-            globalObjects.getCityObjectGroups().removeIf(group -> !group.isSetGroupMembers());
+            groupRemover.postprocess();
         }
     }
 
@@ -238,22 +216,8 @@ public class SubsetFilter {
 
         @Override
         public void visit(AbstractFeature feature) {
-            if (removeGroupMembers && feature.getId() != null) {
-                List<AbstractCityObjectReference> references = groupParents.remove(feature.getId());
-                if (references != null) {
-                    references.forEach(reference -> reference.getParent(CityObjectGroup.class).setGroupParent(null));
-                }
-
-                List<RoleProperty> properties = groupMembers.remove(feature.getId());
-                if (properties != null) {
-                    for (RoleProperty property : properties) {
-                        CityObjectGroup group = property.getParent(CityObjectGroup.class);
-                        group.getGroupMembers().remove(property);
-                        if (!group.isSetGroupMembers()) {
-                            visit((AbstractFeature) group);
-                        }
-                    }
-                }
+            if (removeGroupMembers && groupRemover != null) {
+                groupRemover.removeMember(feature);
             }
         }
 
