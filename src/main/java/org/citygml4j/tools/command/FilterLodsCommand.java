@@ -29,7 +29,7 @@ import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOption;
-import org.citygml4j.tools.util.CityObjects;
+import org.citygml4j.tools.util.GlobalObjects;
 import org.citygml4j.tools.util.GlobalObjectsReader;
 import org.citygml4j.tools.util.InputFiles;
 import org.citygml4j.tools.util.LodFilter;
@@ -43,11 +43,7 @@ import org.citygml4j.xml.writer.CityGMLWriteException;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @CommandLine.Command(name = "filter-lods",
         description = "Filters LoD representations of city objects.")
@@ -102,18 +98,19 @@ public class FilterLodsCommand extends CityGMLTool {
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            log.debug("Reading global appearances from input file.");
-            List<CityObjectGroup> groups = new ArrayList<>();
-            List<Appearance> appearances = GlobalObjectsReader.onlyAppearances()
-                    .read(inputFile, getCityGMLContext())
-                    .getAppearances();
+            log.debug("Reading global appearances and groups from input file.");
+            GlobalObjects globalObjects = GlobalObjectsReader.of(GlobalObjects.Type.APPEARANCE,
+                            GlobalObjects.Type.CITY_OBJECT_GROUP)
+                    .read(inputFile, getCityGMLContext());
 
             LodFilter lodFilter = LodFilter.of(lods)
                     .withMode(mode)
-                    .withGlobalAppearances(appearances)
+                    .withGlobalAppearances(globalObjects.getAppearances())
+                    .withCityObjectGroups(globalObjects.getCityObjectGroups())
                     .keepEmptyObjects(keepEmptyObjects);
 
-            try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions, "Appearance")) {
+            try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions,
+                    "CityObjectGroup", "Appearance")) {
                 if (!version.isSetVersion()) {
                     setCityGMLVersion(reader, out);
                 }
@@ -129,25 +126,18 @@ public class FilterLodsCommand extends CityGMLTool {
                     log.debug("Reading city objects and filtering LoD representations.");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
-                        boolean keep = lodFilter.filter(feature);
-
-                        if (feature instanceof CityObjectGroup) {
-                            groups.add((CityObjectGroup) feature);
-                        } else if (keep) {
+                        if (lodFilter.filter(feature)) {
                             writer.writeMember(feature);
                         }
                     }
 
                     lodFilter.postprocess();
 
-                    if (!groups.isEmpty()) {
-                        postprocess(groups, lodFilter.getRemovedFeatureIds());
-                        for (CityObjectGroup group : groups) {
-                            writer.writeMember(group);
-                        }
+                    for (CityObjectGroup group : globalObjects.getCityObjectGroups()) {
+                        writer.writeMember(group);
                     }
 
-                    for (Appearance appearance : appearances) {
+                    for (Appearance appearance : globalObjects.getAppearances()) {
                         writer.writeMember(appearance);
                     }
                 }
@@ -164,41 +154,6 @@ public class FilterLodsCommand extends CityGMLTool {
         }
 
         return CommandLine.ExitCode.OK;
-    }
-
-    private void postprocess(List<CityObjectGroup> groups, Set<String> removedFeatureIds) {
-        if (!removedFeatureIds.isEmpty()) {
-            for (CityObjectGroup group : groups) {
-                if (group.isSetGroupMembers()) {
-                    group.getGroupMembers().removeIf(property -> property.getObject() != null
-                            && property.getObject().getGroupMember() != null
-                            && property.getObject().getGroupMember().getHref() != null
-                            && removedFeatureIds.contains(CityObjects.getIdFromReference(
-                                    property.getObject().getGroupMember().getHref())));
-                }
-
-                if (group.getGroupParent() != null
-                        && group.getGroupParent().getHref() != null
-                        && removedFeatureIds.contains(CityObjects.getIdFromReference(
-                                group.getGroupParent().getHref()))) {
-                    group.setGroupParent(null);
-                }
-            }
-
-            List<CityObjectGroup> emptyGroups = groups.stream()
-                    .filter(group -> !group.isSetGroupMembers())
-                    .collect(Collectors.toList());
-
-            if (!emptyGroups.isEmpty()) {
-                groups.removeAll(emptyGroups);
-                if (!groups.isEmpty()) {
-                    postprocess(groups, emptyGroups.stream()
-                            .map(CityObjectGroup::getId)
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toSet()));
-                }
-            }
-        }
     }
 
     @Override

@@ -92,8 +92,7 @@ public class DeprecatedPropertiesProcessor {
     public static DeprecatedPropertiesProcessor newInstance() {
         return new DeprecatedPropertiesProcessor(LodFilter.newInstance()
                 .withMode(LodFilter.Mode.REMOVE)
-                .keepEmptyObjects(true)
-                .collectRemovedFeatureIds(false));
+                .keepEmptyObjects(true));
     }
 
     public boolean isUseLod4AsLod3() {

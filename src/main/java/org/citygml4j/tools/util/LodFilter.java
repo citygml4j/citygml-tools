@@ -22,6 +22,7 @@
 package org.citygml4j.tools.util;
 
 import org.citygml4j.core.model.appearance.Appearance;
+import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.common.GeometryInfo;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.visitor.ObjectWalker;
@@ -34,12 +35,11 @@ import java.util.*;
 
 public class LodFilter {
     private final boolean[] lods = {false, false, false, false, false};
-    private final Set<String> removedFeatureIds = new HashSet<>();
 
     private Mode mode = Mode.KEEP;
     private AppearanceRemover globalAppearanceRemover;
+    private CityObjectGroupRemover groupRemover;
     private boolean keepEmptyObjects;
-    private boolean collectRemovedFeatureIds = true;
 
     public enum Mode {
         KEEP,
@@ -66,10 +66,6 @@ public class LodFilter {
 
     public static LodFilter of(int... lods) {
         return new LodFilter(lods);
-    }
-
-    public Set<String> getRemovedFeatureIds() {
-        return removedFeatureIds;
     }
 
     public LodFilter withLods(int... lods) {
@@ -99,17 +95,27 @@ public class LodFilter {
         return this;
     }
 
+    public List<CityObjectGroup> getCityObjectGroups() {
+        return groupRemover != null ?
+                groupRemover.getCityObjectGroups() :
+                Collections.emptyList();
+    }
+
+    public LodFilter withCityObjectGroups(List<CityObjectGroup> groups) {
+        groupRemover = CityObjectGroupRemover.of(groups);
+        return this;
+    }
+
     public LodFilter keepEmptyObjects(boolean keepEmptyObjects) {
         this.keepEmptyObjects = keepEmptyObjects;
         return this;
     }
 
-    public LodFilter collectRemovedFeatureIds(boolean collectRemovedFeatureIds) {
-        this.collectRemovedFeatureIds = collectRemovedFeatureIds;
-        return this;
+    public boolean filter(AbstractFeature feature) {
+        return filter(feature, keepEmptyObjects);
     }
 
-    public boolean filter(AbstractFeature feature) {
+    private boolean filter(AbstractFeature feature, boolean keepEmptyObjects) {
         GeometryInfo geometryInfo = feature.getGeometryInfo(true);
         boolean[] filter = createLodFilter(geometryInfo);
 
@@ -126,26 +132,23 @@ public class LodFilter {
             FeatureInfo featureInfo = new FeatureInfo();
             Set<String> removedFeatureIds = new HashSet<>();
 
-            removeGeometries(geometries, featureInfo);
-            remove = removeEmptyFeatures(feature, featureInfo, removedFeatureIds);
+            removeGeometries(geometries, featureInfo, keepEmptyObjects);
+            remove = removeEmptyFeatures(feature, featureInfo, keepEmptyObjects, removedFeatureIds);
             removeAppearances(geometries, remove, feature);
             removeFeatureProperties(removedFeatureIds, remove, feature);
-
-            if (collectRemovedFeatureIds) {
-                this.removedFeatureIds.addAll(removedFeatureIds);
-            }
         }
 
         return !remove;
     }
 
     public void postprocess() {
+        postprocessGroups();
         if (globalAppearanceRemover != null) {
             globalAppearanceRemover.postprocess();
         }
     }
 
-    private void removeGeometries(List<AbstractProperty<?>> geometries, FeatureInfo featureInfo) {
+    private void removeGeometries(List<AbstractProperty<?>> geometries, FeatureInfo featureInfo, boolean keepEmptyObjects) {
         for (AbstractProperty<?> geometry : geometries) {
             Child child = geometry.getParent();
             if (child instanceof GMLObject) {
@@ -160,15 +163,15 @@ public class LodFilter {
         }
     }
 
-    private boolean removeEmptyFeatures(AbstractFeature feature, FeatureInfo featureInfo, Set<String> removedFeatureIds) {
+    private boolean removeEmptyFeatures(AbstractFeature feature, FeatureInfo featureInfo, boolean keepEmptyObjects, Set<String> removedFeatureIds) {
         boolean empty = true;
         for (AbstractFeature child : featureInfo.getChildren(feature)) {
-            if (!removeEmptyFeatures(child, featureInfo, removedFeatureIds)) {
+            if (!removeEmptyFeatures(child, featureInfo, keepEmptyObjects, removedFeatureIds)) {
                 empty = false;
             }
         }
 
-        if (empty) {
+        if (empty && !keepEmptyObjects) {
             GeometryInfo geometryInfo = feature.getGeometryInfo(true);
             if (!geometryInfo.hasLodGeometries() && !geometryInfo.hasLodImplicitGeometries()) {
                 if (feature.getParent() != null && feature.getParent().getParent() instanceof GMLObject) {
@@ -176,11 +179,15 @@ public class LodFilter {
                     parent.unsetProperty(feature.getParent(), true);
                 }
 
+                if (groupRemover != null) {
+                    groupRemover.removeMember(feature);
+                }
+
                 if (feature.getId() != null) {
                     removedFeatureIds.add(feature.getId());
                 }
 
-                return !keepEmptyObjects;
+                return true;
             }
         }
 
@@ -240,6 +247,18 @@ public class LodFilter {
             }
 
             return lods;
+        }
+    }
+
+    private void postprocessGroups() {
+        if (groupRemover != null && groupRemover.hasCityObjectGroups()) {
+            for (CityObjectGroup group : groupRemover.getCityObjectGroups()) {
+                if (!filter(group, true)) {
+                    group.setGroupMembers(null);
+                }
+            }
+
+            groupRemover.postprocess();
         }
     }
 
