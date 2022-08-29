@@ -111,6 +111,7 @@ public class GlobalObjectsReader {
                                 && implicitGeometry.getRelativeGeometry().getObject().getId() != null) {
                             globalObjects.add(implicitGeometry, name);
                         }
+                        continue;
                     }
                 }
 
