@@ -116,7 +116,10 @@ public class UpgradeProcessor {
     }
 
     private CityGMLReader createCityGMLReader(Path file, CityGMLContext context, boolean skipAppearance) throws CityGMLReadException {
-        CityGMLInputFactory in = context.createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
+        CityGMLInputFactory in = context.createCityGMLInputFactory()
+                .withChunking(ChunkOptions.defaults())
+                .withIdCreator(new IdCreator());
+
         CityGMLReader reader = in.createCityGMLReader(file);
         if (skipAppearance) {
             return in.createFilteredCityGMLReader(reader, name -> !"Appearance".equals(name.getLocalPart())

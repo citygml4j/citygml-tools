@@ -25,20 +25,27 @@ import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.common.GeometryInfo;
 import org.citygml4j.core.model.core.AbstractFeature;
+import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.citygml4j.core.visitor.ObjectWalker;
 import org.xmlobjects.gml.model.GMLObject;
 import org.xmlobjects.gml.model.base.AbstractProperty;
 import org.xmlobjects.gml.model.feature.FeatureProperty;
+import org.xmlobjects.gml.model.geometry.AbstractGeometry;
+import org.xmlobjects.gml.model.geometry.Envelope;
+import org.xmlobjects.gml.model.geometry.GeometryProperty;
 import org.xmlobjects.model.Child;
 
 import java.util.*;
 
 public class LodFilter {
     private final boolean[] lods = {false, false, false, false, false};
+    private final ExtentUpdater extentUpdater = new ExtentUpdater();
 
     private Mode mode = Mode.KEEP;
+    private boolean updateExtents;
     private AppearanceRemover globalAppearanceRemover;
     private CityObjectGroupRemover groupRemover;
+    private Map<String, AbstractGeometry> templates;
     private boolean keepEmptyObjects;
 
     public enum Mode {
@@ -84,6 +91,11 @@ public class LodFilter {
         return this;
     }
 
+    public LodFilter updateExtents(boolean updateExtents) {
+        this.updateExtents = updateExtents;
+        return this;
+    }
+
     public List<Appearance> getGlobalAppearances() {
         return globalAppearanceRemover != null ?
                 globalAppearanceRemover.getAppearances() :
@@ -103,6 +115,11 @@ public class LodFilter {
 
     public LodFilter withCityObjectGroups(List<CityObjectGroup> groups) {
         groupRemover = CityObjectGroupRemover.of(groups);
+        return this;
+    }
+
+    public LodFilter withTemplateGeometries(Map<String, AbstractGeometry> templates) {
+        this.templates = templates;
         return this;
     }
 
@@ -136,6 +153,10 @@ public class LodFilter {
             remove = removeEmptyFeatures(feature, featureInfo, keepEmptyObjects, removedFeatureIds);
             removeAppearances(geometries, remove, feature);
             removeFeatureProperties(removedFeatureIds, remove, feature);
+
+            if (!remove && updateExtents) {
+                extentUpdater.updateExtent(feature);
+            }
         }
 
         return !remove;
@@ -259,6 +280,48 @@ public class LodFilter {
             }
 
             groupRemover.postprocess();
+        }
+    }
+
+    private class ExtentUpdater extends ObjectWalker {
+        private boolean preprocess;
+
+        public void updateExtent(AbstractFeature feature) {
+            if (templates != null && !templates.isEmpty()) {
+                preprocess = true;
+                feature.accept(this);
+            }
+
+            preprocess = false;
+            feature.accept(this);
+        }
+
+        @Override
+        public void visit(AbstractFeature feature) {
+            if (!preprocess) {
+                if (feature.getBoundedBy() != null && feature.getBoundedBy().isSetEnvelope()) {
+                    Envelope envelope = feature.computeEnvelope();
+                    if (!envelope.isEmpty()) {
+                        feature.getBoundedBy().getEnvelope().setLowerCorner(envelope.getLowerCorner());
+                        feature.getBoundedBy().getEnvelope().setUpperCorner(envelope.getUpperCorner());
+                    } else {
+                        feature.setBoundedBy(null);
+                    }
+                }
+            }
+
+            super.visit(feature);
+        }
+
+        @Override
+        public void visit(ImplicitGeometry implicitGeometry) {
+            if (preprocess) {
+                GeometryProperty<?> property = implicitGeometry.getRelativeGeometry();
+                if (property.getObject() == null && property.getHref() != null) {
+                    property.setReferencedObjectIfValid(templates.get(
+                            CityObjects.getIdFromReference(property.getHref())));
+                }
+            }
         }
     }
 

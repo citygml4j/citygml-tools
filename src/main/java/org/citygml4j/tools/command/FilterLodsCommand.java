@@ -58,8 +58,13 @@ public class FilterLodsCommand extends CityGMLTool {
     private LodFilter.Mode mode;
 
     @CommandLine.Option(names = {"-k", "--keep-empty-objects"},
-            description = "Keep city objects even if all their LoD representations have been filtered.")
+            description = "Keep city objects even if all their LoD representations have been removed.")
     private boolean keepEmptyObjects;
+
+    @CommandLine.Option(names = {"-u", "--update-extents"},
+            description = "Update the extents of city objects for which LoD representations have been removed. " +
+                    "No coordinate transformation is applied in the calculation.")
+    private boolean updateExtents;
 
     @CommandLine.Mixin
     private CityGMLOutputVersion version;
@@ -98,15 +103,16 @@ public class FilterLodsCommand extends CityGMLTool {
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            log.debug("Reading global appearances and groups from input file.");
-            GlobalObjects globalObjects = GlobalObjectsReader.of(GlobalObjects.Type.APPEARANCE,
-                            GlobalObjects.Type.CITY_OBJECT_GROUP)
+            log.debug("Reading global appearances, groups and implicit geometries from input file.");
+            GlobalObjects globalObjects = GlobalObjectsReader.defaults()
                     .read(inputFile, getCityGMLContext());
 
             LodFilter lodFilter = LodFilter.of(lods)
                     .withMode(mode)
                     .withGlobalAppearances(globalObjects.getAppearances())
                     .withCityObjectGroups(globalObjects.getCityObjectGroups())
+                    .withTemplateGeometries(globalObjects.getTemplateGeometries())
+                    .updateExtents(updateExtents)
                     .keepEmptyObjects(keepEmptyObjects);
 
             try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions,
