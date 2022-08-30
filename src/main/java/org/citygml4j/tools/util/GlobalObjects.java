@@ -29,7 +29,6 @@ import org.xmlobjects.gml.model.geometry.GeometryProperty;
 
 import javax.xml.namespace.QName;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -41,8 +40,6 @@ public class GlobalObjects {
         APPEARANCE,
         CITY_OBJECT_GROUP,
         IMPLICIT_GEOMETRY;
-
-        static final EnumSet<Type> TOP_LEVEL_TYPES = EnumSet.of(APPEARANCE, CITY_OBJECT_GROUP);
     }
 
     private final List<Appearance> appearances = new ArrayList<>();
