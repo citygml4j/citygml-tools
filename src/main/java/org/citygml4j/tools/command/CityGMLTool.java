@@ -52,7 +52,11 @@ import javax.xml.XMLConstants;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 public abstract class CityGMLTool implements Command {
     final Logger log = Logger.getInstance();
@@ -218,16 +222,23 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    Path getOutputFile(Path file, String suffix, boolean overwrite) {
-        return file.resolveSibling(overwrite ?
-                ".tmp_" + UUID.randomUUID() :
-                appendFileNameSuffix(file, suffix));
+    Path getOutputFile(Path file, String suffix, boolean overwrite) throws ExecutionException {
+        return overwrite ?
+                createTempFile() :
+                file.resolveSibling(appendFileNameSuffix(file, suffix));
     }
 
-    void replaceInputFile(Path inputFile, Path tempFile) throws ExecutionException {
+    Path createTempFile() throws ExecutionException {
         try {
-            Files.delete(inputFile);
-            Files.move(tempFile, tempFile.resolveSibling(inputFile.getFileName()));
+            return Files.createTempFile("citygml-tools-", "");
+        } catch (IOException e) {
+            throw new ExecutionException("Failed to create temp file.", e);
+        }
+    }
+
+    void replaceInputFile(Path targetFile, Path sourceFile) throws ExecutionException {
+        try {
+            Files.move(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new ExecutionException("Failed to replace input file.", e);
         }
