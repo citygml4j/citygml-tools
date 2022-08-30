@@ -61,9 +61,9 @@ public class FilterLodsCommand extends CityGMLTool {
             description = "Keep city objects even if all their LoD representations have been removed.")
     private boolean keepEmptyObjects;
 
-    @CommandLine.Option(names = {"-u", "--update-extents"},
+    @CommandLine.Option(names = "--no-update-extents", negatable = true, defaultValue = "true",
             description = "Update the extents of city objects for which LoD representations have been removed. " +
-                    "No coordinate transformation is applied in the calculation.")
+                    "No coordinate transformation is applied in the calculation (default: ${DEFAULT-VALUE}).")
     private boolean updateExtents;
 
     @CommandLine.Mixin
