@@ -32,7 +32,6 @@ import org.xmlobjects.gml.model.common.CoordinateListProvider;
 import org.xmlobjects.gml.model.geometry.*;
 import org.xmlobjects.gml.model.geometry.primitives.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,8 +39,8 @@ public class HeightChanger {
     private final double offset;
     private final HeightProcessor heightProcessor = new HeightProcessor();
     private final ImplicitGeometryResolver resolver = new ImplicitGeometryResolver();
-    private final Map<String, AbstractGeometry> templates = new HashMap<>();
 
+    private Map<String, AbstractGeometry> templates;
     private Mode mode = Mode.RELATIVE;
     private double correction;
 
@@ -63,16 +62,8 @@ public class HeightChanger {
         return new HeightChanger(offset);
     }
 
-    public HeightChanger withImplicitGeometries(List<ImplicitGeometry> implicitGeometries) {
-        for (ImplicitGeometry implicitGeometry : implicitGeometries) {
-            if (implicitGeometry.getRelativeGeometry() != null
-                    && implicitGeometry.getRelativeGeometry().getObject() != null
-                    && implicitGeometry.getRelativeGeometry().getObject().getId() != null) {
-                AbstractGeometry template = implicitGeometry.getRelativeGeometry().getObject();
-                templates.put(template.getId(), template);
-            }
-        }
-
+    public HeightChanger withTemplateGeometries(Map<String, AbstractGeometry> templates) {
+        this.templates = templates;
         return this;
     }
 
@@ -83,7 +74,7 @@ public class HeightChanger {
 
     public void changeHeight(AbstractFeature feature) {
         if (offset != 0 || mode != Mode.RELATIVE) {
-            if (!templates.isEmpty()) {
+            if (templates != null && !templates.isEmpty()) {
                 feature.accept(resolver);
             }
 

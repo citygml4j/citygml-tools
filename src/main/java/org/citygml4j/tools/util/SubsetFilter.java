@@ -35,17 +35,19 @@ import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.GeometryProperty;
 
 import javax.xml.namespace.QName;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 public class SubsetFilter {
     private final SkippedFeatureProcessor skippedFeatureProcessor = new SkippedFeatureProcessor();
     private final TemplatesProcessor templatesProcessor = new TemplatesProcessor();
-    private final Map<String, AbstractGeometry> templates = new HashMap<>();
     private final Map<String, Integer> counter = new TreeMap<>();
     private final String TEMPLATE_ASSIGNED = "templateAssigned";
 
     private AppearanceRemover appearanceRemover;
     private CityObjectGroupRemover groupRemover;
+    private Map<String, AbstractGeometry> templates;
     private Set<QName> typeNames;
     private Set<String> ids;
     private BoundingBoxFilter boundingBoxFilter;
@@ -67,7 +69,7 @@ public class SubsetFilter {
         if (globalObjects != null) {
             appearanceRemover = AppearanceRemover.of(globalObjects.getAppearances());
             groupRemover = CityObjectGroupRemover.of(globalObjects.getCityObjectGroups());
-            preprocessImplicitGeometries(globalObjects.getTemplateGeometries());
+            templates = globalObjects.getTemplateGeometries();
         }
 
         return this;
@@ -122,7 +124,7 @@ public class SubsetFilter {
         }
 
         if (keep && boundingBoxFilter != null) {
-            if (!templates.isEmpty()) {
+            if (templates != null && !templates.isEmpty()) {
                 templatesProcessor.preprocess(feature);
             }
 
@@ -191,18 +193,12 @@ public class SubsetFilter {
         }
     }
 
-    private void preprocessImplicitGeometries(List<AbstractGeometry> templates) {
-        for (AbstractGeometry template : templates) {
-            if (template.getId() != null) {
-                this.templates.put(template.getId(), template);
-            }
-        }
-    }
-
     private void postprocessImplicitGeometries() {
-        for (AbstractGeometry template : templates.values()) {
-            if (!template.getLocalProperties().contains(TEMPLATE_ASSIGNED)) {
-                template.accept(skippedFeatureProcessor);
+        if (templates != null && !templates.isEmpty()) {
+            for (AbstractGeometry template : templates.values()) {
+                if (!template.getLocalProperties().contains(TEMPLATE_ASSIGNED)) {
+                    template.accept(skippedFeatureProcessor);
+                }
             }
         }
     }

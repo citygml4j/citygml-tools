@@ -25,13 +25,12 @@ import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
-import org.xmlobjects.gml.model.geometry.GeometryProperty;
 
 import javax.xml.namespace.QName;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 public class GlobalObjects {
     public static final String NAME = "name";
@@ -44,7 +43,7 @@ public class GlobalObjects {
 
     private final List<Appearance> appearances = new ArrayList<>();
     private final List<CityObjectGroup> cityObjectGroups = new ArrayList<>();
-    private final List<ImplicitGeometry> implicitGeometries = new ArrayList<>();
+    private final Map<String, AbstractGeometry> templateGeometries = new HashMap<>();
 
     GlobalObjects() {
     }
@@ -57,17 +56,8 @@ public class GlobalObjects {
         return cityObjectGroups;
     }
 
-    public List<ImplicitGeometry> getImplicitGeometries() {
-        return implicitGeometries;
-    }
-
-    public List<AbstractGeometry> getTemplateGeometries() {
-        return implicitGeometries.stream()
-                .map(ImplicitGeometry::getRelativeGeometry)
-                .filter(Objects::nonNull)
-                .map(GeometryProperty::getObject)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+    public Map<String, AbstractGeometry> getTemplateGeometries() {
+        return templateGeometries;
     }
 
     void add(Appearance appearance, QName name) {
@@ -80,8 +70,12 @@ public class GlobalObjects {
         cityObjectGroups.add(cityObjectGroup);
     }
 
-    void add(ImplicitGeometry implicitGeometry, QName name) {
-        implicitGeometry.getLocalProperties().set(NAME, name);
-        implicitGeometries.add(implicitGeometry);
+    void add(ImplicitGeometry implicitGeometry) {
+        if (implicitGeometry.getRelativeGeometry() != null
+                && implicitGeometry.getRelativeGeometry().isSetInlineObject()
+                && implicitGeometry.getRelativeGeometry().getObject().getId() != null) {
+            AbstractGeometry template = implicitGeometry.getRelativeGeometry().getObject();
+            templateGeometries.put(template.getId(), template);
+        }
     }
 }

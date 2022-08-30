@@ -141,7 +141,7 @@ public class ToCityJSONCommand extends CityGMLTool {
                     log.debug("Reading city objects and converting them into CityJSON " + outputOptions.getVersion() + ".");
                     globalObjects.getAppearances().forEach(writer::withGlobalAppearance);
                     globalObjects.getCityObjectGroups().forEach(writer::withGlobalCityObjectGroup);
-                    globalObjects.getTemplateGeometries().forEach(writer::withGlobalTemplateGeometry);
+                    globalObjects.getTemplateGeometries().values().forEach(writer::withGlobalTemplateGeometry);
 
                     while (reader.hasNext()) {
                         writer.writeCityObject(reader.next());

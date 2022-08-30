@@ -30,13 +30,11 @@ import org.citygml4j.core.visitor.ObjectWalker;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
-import org.citygml4j.xml.module.citygml.CoreModule;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
 import org.citygml4j.xml.reader.CityGMLReadException;
 import org.citygml4j.xml.reader.CityGMLReader;
 
-import javax.xml.namespace.QName;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -88,12 +86,7 @@ public class GlobalObjectsReader {
                         feature.accept(new ObjectWalker() {
                             @Override
                             public void visit(ImplicitGeometry implicitGeometry) {
-                                if (implicitGeometry.getRelativeGeometry() != null
-                                        && implicitGeometry.getRelativeGeometry().isSetInlineObject()
-                                        && implicitGeometry.getRelativeGeometry().getObject().getId() != null) {
-                                    String namespaceURI = CoreModule.of(getVersion(reader)).getNamespaceURI();
-                                    globalObjects.add(implicitGeometry, new QName(namespaceURI, "ImplicitGeometry"));
-                                }
+                                globalObjects.add(implicitGeometry);
                             }
                         });
                     }

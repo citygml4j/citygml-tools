@@ -263,19 +263,9 @@ public class StatisticsProcessor {
 
     private void lazyLoadTemplates() throws ExecutionException {
         Logger.getInstance().debug("Reading implicit geometries from input file.");
-        templates = new HashMap<>();
-        List<ImplicitGeometry> implicitGeometries = GlobalObjectsReader.onlyImplicitGeometries()
+        templates = GlobalObjectsReader.onlyImplicitGeometries()
                 .read(statistics.getFile(), context)
-                .getImplicitGeometries();
-
-        for (ImplicitGeometry implicitGeometry : implicitGeometries) {
-            if (implicitGeometry.getRelativeGeometry() != null
-                    && implicitGeometry.getRelativeGeometry().getObject() != null
-                    && implicitGeometry.getRelativeGeometry().getObject().getId() != null) {
-                AbstractGeometry template = implicitGeometry.getRelativeGeometry().getObject();
-                templates.put(template.getId(), template);
-            }
-        }
+                .getTemplateGeometries();
     }
 
     private void processGlobalAppearances(AbstractGeometry geometry) {
