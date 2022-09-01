@@ -815,35 +815,39 @@ public class DeprecatedPropertiesProcessor {
         }
 
         private MultiSurface toMultiSurface(AbstractGeometry geometry) {
-            MultiSurface multiSurface = new MultiSurface();
-            geometry.accept(new ObjectWalker() {
-                @Override
-                public void visit(AbstractSurface surface) {
-                    multiSurface.getSurfaceMember().add(new SurfaceProperty(surface));
-                    super.visit(surface);
-                }
+            if (geometry instanceof MultiSurface) {
+                return (MultiSurface) geometry;
+            } else {
+                MultiSurface multiSurface = new MultiSurface();
+                geometry.accept(new ObjectWalker() {
+                    @Override
+                    public void visit(AbstractSurface surface) {
+                        multiSurface.getSurfaceMember().add(new SurfaceProperty(surface));
+                        super.visit(surface);
+                    }
 
-                @Override
-                public void visit(Rectangle rectangle) {
-                    Polygon polygon = new Polygon(rectangle.getExterior());
-                    visit((AbstractSurface) polygon);
-                }
+                    @Override
+                    public void visit(Rectangle rectangle) {
+                        Polygon polygon = new Polygon(rectangle.getExterior());
+                        visit((AbstractSurface) polygon);
+                    }
 
-                @Override
-                public void visit(PolygonPatch polygonPatch) {
-                    Polygon polygon = new Polygon(polygonPatch.getExterior());
-                    polygon.setInterior(polygon.getInterior());
-                    visit((AbstractSurface) polygon);
-                }
+                    @Override
+                    public void visit(PolygonPatch polygonPatch) {
+                        Polygon polygon = new Polygon(polygonPatch.getExterior());
+                        polygon.setInterior(polygon.getInterior());
+                        visit((AbstractSurface) polygon);
+                    }
 
-                @Override
-                public void visit(Triangle triangle) {
-                    Polygon polygon = new Polygon(triangle.getExterior());
-                    visit((AbstractSurface) polygon);
-                }
-            });
+                    @Override
+                    public void visit(Triangle triangle) {
+                        Polygon polygon = new Polygon(triangle.getExterior());
+                        visit((AbstractSurface) polygon);
+                    }
+                });
 
-            return multiSurface.isSetSurfaceMember() ? multiSurface : null;
+                return multiSurface.isSetSurfaceMember() ? multiSurface : null;
+            }
         }
 
         public <S extends T, D extends T, T> D copy(S src, D dest, Class<T> template) {
