@@ -31,7 +31,6 @@ import org.citygml4j.core.visitor.ObjectWalker;
 import org.xmlobjects.gml.model.base.AbstractGML;
 import org.xmlobjects.gml.model.base.AbstractInlineOrByReferenceProperty;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
-import org.xmlobjects.gml.util.id.DefaultIdCreator;
 import org.xmlobjects.gml.util.reference.ReferenceResolver;
 import org.xmlobjects.model.Child;
 import org.xmlobjects.util.copy.CopyBuilder;
@@ -266,7 +265,7 @@ public class GlobalAppearanceConverter {
             }
 
             Appearance appearance = copyBuilder.shallowCopy(globalAppearance);
-            appearance.setId(DefaultIdCreator.getInstance().createId());
+            appearance.setId(null);
             appearance.setSurfaceData(null);
             appearance.getLocalProperties().set(ID, globalAppearance.getLocalProperties().get(ID));
             appearances.add(new AbstractAppearanceProperty(appearance));
@@ -290,7 +289,7 @@ public class GlobalAppearanceConverter {
             }
 
             AbstractSurfaceData surfaceData = copyBuilder.shallowCopy(globalSurfaceData);
-            surfaceData.setId(DefaultIdCreator.getInstance().createId());
+            surfaceData.setId(null);
             surfaceData.getLocalProperties().set(ID, globalSurfaceData.getLocalProperties().get(ID));
             appearance.getSurfaceData().add(new AbstractSurfaceDataProperty(surfaceData));
 
