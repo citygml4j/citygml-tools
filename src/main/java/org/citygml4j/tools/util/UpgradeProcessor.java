@@ -105,10 +105,11 @@ public class UpgradeProcessor {
     }
 
     public void upgrade(AbstractFeature feature, int featureId) {
-        propertiesProcessor.process(feature);
         if (resolveGeometryReferences && referenceResolver.hasReferences()) {
             referenceResolver.resolveGeometryReferences(feature, featureId);
         }
+
+        propertiesProcessor.process(feature);
     }
 
     public void postprocess() {
