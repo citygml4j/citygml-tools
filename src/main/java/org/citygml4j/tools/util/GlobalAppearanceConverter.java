@@ -99,10 +99,11 @@ public class GlobalAppearanceConverter {
     private void preprocess(List<Appearance> appearances) {
         ObjectWalker preprocessor = new ObjectWalker() {
             private final ReferenceResolver resolver = DefaultReferenceResolver.newInstance();
+            private int id;
 
             @Override
             public void visit(AbstractFeature feature) {
-                feature.getLocalProperties().set(ID, DefaultIdCreator.getInstance().createId());
+                feature.getLocalProperties().set(ID, id++);
             }
 
             @Override
@@ -258,7 +259,7 @@ public class GlobalAppearanceConverter {
             for (AbstractAppearanceProperty property : appearances) {
                 if (property.getObject() instanceof Appearance) {
                     Appearance appearance = (Appearance) property.getObject();
-                    if (globalAppearance.getLocalProperties().get(ID) == appearance.getLocalProperties().get(ID)) {
+                    if (globalAppearance.getLocalProperties().getAndCompare(ID, appearance.getLocalProperties().get(ID))) {
                         return appearance;
                     }
                 }
@@ -282,7 +283,7 @@ public class GlobalAppearanceConverter {
             for (AbstractSurfaceDataProperty property : appearance.getSurfaceData()) {
                 if (property.getObject() != null) {
                     AbstractSurfaceData surfaceData = property.getObject();
-                    if (globalSurfaceData.getLocalProperties().get(ID) == surfaceData.getLocalProperties().get(ID)) {
+                    if (globalSurfaceData.getLocalProperties().getAndCompare(ID, surfaceData.getLocalProperties().get(ID))) {
                         return surfaceData;
                     }
                 }
