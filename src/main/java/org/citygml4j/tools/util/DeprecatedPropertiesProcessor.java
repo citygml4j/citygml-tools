@@ -125,6 +125,14 @@ public class DeprecatedPropertiesProcessor {
         return this;
     }
 
+    public DeprecatedPropertiesProcessor withGlobalAppearanceHelper(AppearanceHelper globalAppearanceHelper) {
+        if (globalAppearanceHelper.hasAppearances()) {
+            lodFilter.withGlobalAppearanceHelper(globalAppearanceHelper);
+        }
+
+        return this;
+    }
+
     public void process(AbstractFeature feature) {
         if (useLod4AsLod3) {
             GeometryInfo geometryInfo = feature.getGeometryInfo(true);

@@ -30,76 +30,57 @@ import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.aggregates.MultiSurface;
 import org.xmlobjects.gml.model.geometry.primitives.AbstractSurface;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 public class AppearanceRemover {
-    private final List<Appearance> appearances;
-    private final Map<String, List<TextureAssociationProperty>> parameterizedTextures = new HashMap<>();
-    private final Map<String, List<GeometryReference>> georeferencedTextures = new HashMap<>();
-    private final Map<String, List<GeometryReference>> materials = new HashMap<>();
+    private final AppearanceHelper helper;
     private final TargetProcessor targetProcessor = new TargetProcessor();
     private final Set<String> surfaceDataIds = new HashSet<>();
 
-    private AppearanceRemover(List<Appearance> appearances) {
-        this.appearances = appearances;
+    private AppearanceRemover(AppearanceHelper helper) {
+        this.helper = helper;
+    }
+
+    public static AppearanceRemover of(AppearanceHelper appearanceHelper) {
+        return new AppearanceRemover(appearanceHelper);
     }
 
     public static AppearanceRemover of(List<Appearance> appearances) {
-        AppearanceRemover remover = new AppearanceRemover(appearances);
-        remover.preprocess();
-        return remover;
+        return of(AppearanceHelper.of(appearances));
     }
 
     public static AppearanceRemover of(AbstractFeature feature) {
-        List<Appearance> appearances = new ArrayList<>();
-        feature.accept(new ObjectWalker() {
-            @Override
-            public void visit(Appearance appearance) {
-                appearances.add(appearance);
-            }
-        });
-
-        return of(appearances);
+        return of(AppearanceHelper.of(feature));
     }
 
     public List<Appearance> getAppearances() {
-        return appearances;
+        return helper.getAppearances();
     }
 
     public boolean hasAppearances() {
-        return !appearances.isEmpty();
-    }
-
-    private void preprocess() {
-        if (!appearances.isEmpty()) {
-            TargetCollector targetCollector = new TargetCollector();
-            targetCollector.setCapacity((int) Math.min(10, appearances.stream()
-                    .map(Appearance::getTheme)
-                    .distinct().count()));
-
-            appearances.forEach(appearance -> appearance.accept(targetCollector));
-        }
+        return helper.hasAppearances();
     }
 
     public void removeTarget(AbstractGeometry geometry) {
-        if (!appearances.isEmpty()) {
+        if (helper.hasAppearances()) {
             geometry.accept(targetProcessor);
         }
     }
 
     public void removeTarget(AbstractInlineOrByReferenceProperty<?> property) {
-        if (!appearances.isEmpty()) {
+        if (helper.hasAppearances()) {
             targetProcessor.visit(property);
         }
     }
 
     public void postprocess() {
-        parameterizedTextures.clear();
-        georeferencedTextures.clear();
-        materials.clear();
+        helper.clear();
 
         if (!surfaceDataIds.isEmpty()) {
-            for (Appearance appearance : appearances) {
+            for (Appearance appearance : helper.getAppearances()) {
                 appearance.getSurfaceData().removeIf(property -> property.getHref() != null
                         && surfaceDataIds.contains(
                         CityObjects.getIdFromReference(property.getHref())));
@@ -108,7 +89,7 @@ public class AppearanceRemover {
             surfaceDataIds.clear();
         }
 
-        Iterator<Appearance> iterator = appearances.iterator();
+        Iterator<Appearance> iterator = helper.getAppearances().iterator();
         while (iterator.hasNext()) {
             Appearance appearance = iterator.next();
             if (!appearance.isSetSurfaceData()) {
@@ -136,7 +117,7 @@ public class AppearanceRemover {
 
         private void process(AbstractGeometry geometry) {
             if (geometry.getId() != null) {
-                List<TextureAssociationProperty> properties = parameterizedTextures.remove(geometry.getId());
+                List<TextureAssociationProperty> properties = helper.getAndRemoveParameterizedTextures(geometry.getId());
                 if (properties != null) {
                     for (TextureAssociationProperty property : properties) {
                         ParameterizedTexture texture = property.getParent(ParameterizedTexture.class);
@@ -147,7 +128,7 @@ public class AppearanceRemover {
                     }
                 }
 
-                List<GeometryReference> references = georeferencedTextures.remove(geometry.getId());
+                List<GeometryReference> references = helper.getAndRemoveGeoreferencedTextures(geometry.getId());
                 if (references != null) {
                     for (GeometryReference reference : references) {
                         GeoreferencedTexture texture = reference.getParent(GeoreferencedTexture.class);
@@ -158,7 +139,7 @@ public class AppearanceRemover {
                     }
                 }
 
-                references = materials.remove(geometry.getId());
+                references = helper.getAndRemoveMaterials(geometry.getId());
                 if (references != null) {
                     for (GeometryReference reference : references) {
                         X3DMaterial material = reference.getParent(X3DMaterial.class);
@@ -176,51 +157,6 @@ public class AppearanceRemover {
             if (appearance.getSurfaceData().remove(surfaceData.getParent(AbstractSurfaceDataProperty.class))
                     && surfaceData.getId() != null) {
                 surfaceDataIds.add(surfaceData.getId());
-            }
-        }
-    }
-
-    private class TargetCollector extends ObjectWalker {
-        private int capacity;
-
-        void setCapacity(int capacity) {
-            this.capacity = capacity;
-        }
-
-        @Override
-        public void visit(ParameterizedTexture texture) {
-            if (texture.isSetTextureParameterizations()) {
-                for (TextureAssociationProperty property : texture.getTextureParameterizations()) {
-                    if (property.getObject() != null
-                            && property.getObject().getTarget() != null
-                            && property.getObject().getTarget().getHref() != null) {
-                        String id = CityObjects.getIdFromReference(property.getObject().getTarget().getHref());
-                        parameterizedTextures.computeIfAbsent(id, v -> new ArrayList<>(capacity)).add(property);
-                    }
-                }
-            }
-        }
-
-        @Override
-        public void visit(GeoreferencedTexture texture) {
-            if (texture.isSetTargets()) {
-                process(texture.getTargets(), georeferencedTextures);
-            }
-        }
-
-        @Override
-        public void visit(X3DMaterial material) {
-            if (material.isSetTargets()) {
-                process(material.getTargets(), materials);
-            }
-        }
-
-        private void process(List<GeometryReference> references, Map<String, List<GeometryReference>> dest) {
-            for (GeometryReference reference : references) {
-                if (reference.getHref() != null) {
-                    String id = CityObjects.getIdFromReference(reference.getHref());
-                    dest.computeIfAbsent(id, v -> new ArrayList<>(capacity)).add(reference);
-                }
             }
         }
     }

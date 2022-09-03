@@ -107,6 +107,11 @@ public class LodFilter {
         return this;
     }
 
+    public LodFilter withGlobalAppearanceHelper(AppearanceHelper globalAppearanceHelper) {
+        globalAppearanceRemover = AppearanceRemover.of(globalAppearanceHelper);
+        return this;
+    }
+
     public List<CityObjectGroup> getCityObjectGroups() {
         return groupRemover != null ?
                 groupRemover.getCityObjectGroups() :

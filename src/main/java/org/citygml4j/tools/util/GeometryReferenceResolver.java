@@ -22,27 +22,25 @@
 package org.citygml4j.tools.util;
 
 import org.citygml4j.core.model.core.*;
-import org.citygml4j.core.util.reference.DefaultReferenceResolver;
 import org.citygml4j.core.visitor.ObjectWalker;
-import org.xmlobjects.gml.model.base.AbstractGML;
 import org.xmlobjects.gml.model.basictypes.Code;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.GeometryProperty;
 import org.xmlobjects.gml.util.id.DefaultIdCreator;
 import org.xmlobjects.gml.util.reference.ReferenceResolver;
-import org.xmlobjects.util.copy.CopyBuilder;
 
 import java.util.*;
 
 public class GeometryReferenceResolver {
+    private final GeometryCopyBuilder copyBuilder = GeometryCopyBuilder.newInstance();
     private final Map<String, GeometryReference> references = new HashMap<>();
     private final ResolverProcessor resolverProcessor = new ResolverProcessor();
     private final GeometryPropertyProcessor geometryPropertyProcessor = new GeometryPropertyProcessor();
     private final GeometryProcessor geometryProcessor = new GeometryProcessor();
 
-    private final ReferenceResolver referenceResolver = DefaultReferenceResolver.newInstance();
-    private final CopyBuilder copyBuilder = new CopyBuilder().failOnError(true);
     private boolean createCityObjectRelations;
+    private int resolvedReferencesCounter;
+    private int cityObjectRelationsCounter;
 
     private GeometryReferenceResolver() {
     }
@@ -60,6 +58,11 @@ public class GeometryReferenceResolver {
         return this;
     }
 
+    public void processGeometryReferences(AbstractFeature feature, int featureId, ReferenceResolver referenceResolver) {
+        referenceResolver.resolveReferences(feature);
+        processGeometryReferences(feature, featureId);
+    }
+
     public void processGeometryReferences(AbstractFeature feature, int featureId) {
         geometryPropertyProcessor.process(feature, featureId);
     }
@@ -68,8 +71,21 @@ public class GeometryReferenceResolver {
         feature.accept(geometryProcessor);
     }
 
+    public int getResolvedReferencesCounter() {
+        return resolvedReferencesCounter;
+    }
+
+    public int getCityObjectRelationsCounter() {
+        return cityObjectRelationsCounter;
+    }
+
     public boolean hasReferences() {
         return !references.isEmpty();
+    }
+
+    public void resolveGeometryReferences(AbstractFeature feature, int featureId, ReferenceResolver referenceResolver) {
+        referenceResolver.resolveReferences(feature);
+        resolveGeometryReferences(feature, featureId);
     }
 
     public void resolveGeometryReferences(AbstractFeature feature, int featureId) {
@@ -84,7 +100,6 @@ public class GeometryReferenceResolver {
 
         void resolve(AbstractFeature feature, int featureId) {
             this.featureId = featureId;
-            referenceResolver.resolveReferences(feature);
             feature.accept(this);
         }
 
@@ -97,6 +112,7 @@ public class GeometryReferenceResolver {
                     if (cityObject != null) {
                         cityObject.setId(reference.getOwner());
                         for (String relatedTo : reference.getRelatedTos()) {
+                            cityObjectRelationsCounter++;
                             CityObjectRelation relation = new CityObjectRelation("#" + relatedTo);
                             relation.setRelationType(new Code("shared"));
                             cityObject.getRelatedTo().add(new CityObjectRelationProperty(relation));
@@ -114,6 +130,7 @@ public class GeometryReferenceResolver {
                 propertyId++;
                 GeometryReference reference = references.get(CityObjects.getIdFromReference(property.getHref()));
                 if (reference != null) {
+                    resolvedReferencesCounter++;
                     if (reference.getTarget(featureId) == propertyId) {
                         AbstractGeometry geometry = reference.createGeometryFor(featureId);
                         property.setInlineObjectIfValid(geometry);
@@ -127,6 +144,7 @@ public class GeometryReferenceResolver {
                         if (relatedTo != null) {
                             AbstractCityObject cityObject = property.getParent(AbstractCityObject.class);
                             if (cityObject != null) {
+                                cityObjectRelationsCounter++;
                                 cityObject.setId(relatedTo);
                                 CityObjectRelation relation = new CityObjectRelation("#" + reference.getOwner());
                                 relation.setRelationType(new Code("shared"));
@@ -147,7 +165,6 @@ public class GeometryReferenceResolver {
         private int propertyId;
 
         void process(AbstractFeature feature, int featureId) {
-            referenceResolver.resolveReferences(feature);
             feature.accept(this);
 
             for (Map.Entry<String, Deque<AbstractCityObject>> entry : referees.entrySet()) {
@@ -208,14 +225,7 @@ public class GeometryReferenceResolver {
         private final Map<Integer, Integer> targets = new HashMap<>();
 
         AbstractGeometry createGeometryFor(int featureId) {
-            AbstractGeometry copy = copyBuilder.deepCopy(geometry);
-            copy.accept(new ObjectWalker() {
-                @Override
-                public void visit(AbstractGML object) {
-                    object.setId(DefaultIdCreator.getInstance().createId());
-                }
-            });
-
+            AbstractGeometry copy = copyBuilder.copy(geometry);
             copy.setId(getOrCreateGeometryId(featureId));
             return copy;
         }

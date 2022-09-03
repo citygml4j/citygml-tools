@@ -54,13 +54,17 @@ public class UpgradeCommand extends CityGMLTool {
             description = "Map the LoD1 multi-surface representation of city objects onto generic thematic surfaces.")
     private boolean mapLod1MultiSurfaces;
 
-    @CommandLine.Option(names = {"-r", "--resolve-geometry-references"},
+    @CommandLine.Option(names = {"-x", "--resolve-cross-lod-references"},
+            description = "Resolve geometry references between different LoDs of the same top-level city object.")
+    private boolean resolveCrossLodReferences;
+
+    @CommandLine.Option(names = {"-g", "--resolve-geometry-references"},
             description = "Resolve geometry references between top-level city objects.")
     private boolean resolveGeometryReferences;
 
     @CommandLine.Option(names = {"-l", "--add-object-links"},
             description = "Add CityObjectRelation links between top-level city objects sharing a common geometry. " +
-                    "Use only when resolving of geometry references is enabled.")
+                    "Use only when resolving of geometry between top-level city objects references is enabled.")
     private boolean createCityObjectRelations;
 
     @CommandLine.Mixin
@@ -109,6 +113,7 @@ public class UpgradeCommand extends CityGMLTool {
                 UpgradeProcessor processor = UpgradeProcessor.newInstance()
                         .useLod4AsLod3(useLod4AsLod3)
                         .mapLod1MultiSurfaces(mapLod1MultiSurfaces)
+                        .resolveCrossLodReferences(resolveCrossLodReferences)
                         .resolveGeometryReferences(resolveGeometryReferences)
                         .createCityObjectRelations(createCityObjectRelations);
 
@@ -138,6 +143,8 @@ public class UpgradeCommand extends CityGMLTool {
                         writer.writeMember(appearance);
                     }
                 }
+
+                printResultStatistics(processor.getResultStatistics());
             } catch (CityGMLReadException e) {
                 throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
             } catch (CityGMLWriteException e) {
@@ -151,6 +158,31 @@ public class UpgradeCommand extends CityGMLTool {
         }
 
         return CommandLine.ExitCode.OK;
+    }
+
+    private void printResultStatistics(UpgradeProcessor.ResultStatistics resultStatistics) {
+        if (resolveGeometryReferences) {
+            if (resultStatistics.getResolvedCrossTopLevelReferences() > 0) {
+                log.debug("Resolved geometry references between top-level city objects: "
+                        + resultStatistics.getResolvedCrossTopLevelReferences());
+
+                if (createCityObjectRelations) {
+                    log.debug("Created city object relations: " + resultStatistics.getCreatedCityObjectRelations());
+                }
+            } else {
+                log.debug("The input file has no geometry references between top-level city objects.");
+            }
+        }
+
+        if (resolveCrossLodReferences) {
+            if (resultStatistics.getResolvedCrossLodReferences() > 0) {
+                log.debug("Resolved cross-LoD geometry references: " + resultStatistics.getResolvedCrossLodReferences());
+            } else {
+                log.debug("The input file has no cross-level geometry references.");
+            }
+        } else if (resultStatistics.getRemovedCrossLodReferences() > 0) {
+            log.debug("Removed cross-LoD geometry references: " + resultStatistics.getRemovedCrossLodReferences());
+        }
     }
 
     @Override

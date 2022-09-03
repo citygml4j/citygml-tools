@@ -23,6 +23,7 @@ package org.citygml4j.tools.util;
 
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.core.AbstractFeature;
+import org.citygml4j.core.util.reference.DefaultReferenceResolver;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
@@ -30,16 +31,21 @@ import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
 import org.citygml4j.xml.reader.CityGMLReadException;
 import org.citygml4j.xml.reader.CityGMLReader;
+import org.xmlobjects.gml.util.reference.ReferenceResolver;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UpgradeProcessor {
+    private final ReferenceResolver referenceResolver = DefaultReferenceResolver.newInstance();
     private final DeprecatedPropertiesProcessor propertiesProcessor = DeprecatedPropertiesProcessor.newInstance();
-    private final GeometryReferenceResolver referenceResolver = GeometryReferenceResolver.newInstance();
+    private final GeometryReferenceResolver crossTopLevelResolver = GeometryReferenceResolver.newInstance();
+    private final CrossLodReferenceResolver crossLodResolver = CrossLodReferenceResolver.newInstance()
+            .withMode(CrossLodReferenceResolver.Mode.REMOVE_LOD4_REFERENCES);
 
     private boolean resolveGeometryReferences;
+    private boolean resolveCrossLodReferences;
 
     private UpgradeProcessor() {
     }
@@ -64,7 +70,15 @@ public class UpgradeProcessor {
     }
 
     public UpgradeProcessor createCityObjectRelations(boolean createCityObjectRelations) {
-        referenceResolver.createCityObjectRelations(createCityObjectRelations);
+        crossTopLevelResolver.createCityObjectRelations(createCityObjectRelations);
+        return this;
+    }
+
+    public UpgradeProcessor resolveCrossLodReferences(boolean resolveCrossLodReferences) {
+        this.resolveCrossLodReferences = resolveCrossLodReferences;
+        crossLodResolver.withMode(resolveCrossLodReferences ?
+                CrossLodReferenceResolver.Mode.RESOLVE :
+                CrossLodReferenceResolver.Mode.REMOVE_LOD4_REFERENCES);
         return this;
     }
 
@@ -83,19 +97,22 @@ public class UpgradeProcessor {
                         appearances.add((Appearance) feature);
                     } else if (resolveGeometryReferences) {
                         featureId++;
-                        referenceResolver.processGeometryReferences(feature, featureId);
+                        referenceResolver.resolveReferences(feature);
+                        crossTopLevelResolver.processGeometryReferences(feature, featureId);
                     }
                 }
 
                 if (!appearances.isEmpty()) {
-                    propertiesProcessor.withGlobalAppearances(appearances);
+                    AppearanceHelper appearanceHelper = AppearanceHelper.of(appearances);
+                    propertiesProcessor.withGlobalAppearanceHelper(appearanceHelper);
+                    crossLodResolver.withGlobalAppearanceHelper(appearanceHelper);
                 }
             }
 
-            if (resolveGeometryReferences && referenceResolver.hasReferences()) {
+            if (resolveGeometryReferences && crossTopLevelResolver.hasReferences()) {
                 try (CityGMLReader reader = createCityGMLReader(file, context, true)) {
                     while (reader.hasNext()) {
-                        referenceResolver.processReferencedGeometries(reader.next());
+                        crossTopLevelResolver.processReferencedGeometries(reader.next());
                     }
                 }
             }
@@ -105,8 +122,14 @@ public class UpgradeProcessor {
     }
 
     public void upgrade(AbstractFeature feature, int featureId) {
-        if (resolveGeometryReferences && referenceResolver.hasReferences()) {
-            referenceResolver.resolveGeometryReferences(feature, featureId);
+        referenceResolver.resolveReferences(feature);
+
+        if (resolveGeometryReferences && crossTopLevelResolver.hasReferences()) {
+            crossTopLevelResolver.resolveGeometryReferences(feature, featureId);
+        }
+
+        if (resolveCrossLodReferences || !propertiesProcessor.isUseLod4AsLod3()) {
+            crossLodResolver.resolveCrossLodReferences(feature);
         }
 
         propertiesProcessor.process(feature);
@@ -114,6 +137,10 @@ public class UpgradeProcessor {
 
     public void postprocess() {
         propertiesProcessor.postprocess();
+    }
+
+    public ResultStatistics getResultStatistics() {
+        return new ResultStatistics();
     }
 
     private CityGMLReader createCityGMLReader(Path file, CityGMLContext context, boolean skipAppearance) throws CityGMLReadException {
@@ -127,6 +154,25 @@ public class UpgradeProcessor {
                     || !CityGMLModules.isCityGMLNamespace(name.getNamespaceURI()));
         } else {
             return reader;
+        }
+    }
+
+    public class ResultStatistics {
+
+        public int getResolvedCrossTopLevelReferences() {
+            return crossTopLevelResolver.getResolvedReferencesCounter();
+        }
+
+        public int getCreatedCityObjectRelations() {
+            return crossTopLevelResolver.getCityObjectRelationsCounter();
+        }
+
+        public int getResolvedCrossLodReferences() {
+            return crossLodResolver.getCounter().getOrDefault(CrossLodReferenceResolver.Mode.RESOLVE, 0);
+        }
+
+        public int getRemovedCrossLodReferences() {
+            return crossLodResolver.getCounter().getOrDefault(CrossLodReferenceResolver.Mode.REMOVE_LOD4_REFERENCES, 0);
         }
     }
 }
