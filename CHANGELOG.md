@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fixed
+- Fixed loading of ADE extensions using the `--extensions` option.
 
 ## [2.0.0] - 2022-09-09
 ### Added

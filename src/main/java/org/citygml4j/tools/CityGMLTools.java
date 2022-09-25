@@ -248,7 +248,8 @@ public class CityGMLTools implements Command, CommandLine.IVersionProvider {
                 APP_HOME.resolve(EXTENSIONS_DIR);
 
         if (Files.exists(extensionsDir) && Files.isDirectory(extensionsDir)) {
-            try (URLClassLoader classLoader = new URLClassLoader(Thread.currentThread().getContextClassLoader())) {
+            URLClassLoader classLoader = new URLClassLoader(Thread.currentThread().getContextClassLoader());
+            try {
                 try (Stream<Path> stream = Files.walk(extensionsDir)
                         .filter(path -> path.getFileName().toString().toLowerCase().endsWith(".jar"))) {
                     stream.forEach(classLoader::addPath);
