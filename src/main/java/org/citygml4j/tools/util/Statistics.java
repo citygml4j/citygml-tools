@@ -51,6 +51,7 @@ public class Statistics {
     private final Set<CityGMLVersion> versions = new TreeSet<>();
     private final Set<String> referenceSystems = new LinkedHashSet<>();
     private final Map<String, Envelope> extents = new LinkedHashMap<>();
+    private final Set<String> missingSchemas = new HashSet<>();
     private final Set<Integer> lods = new TreeSet<>();
     private final Set<String> themes = new TreeSet<>();
     private boolean hasImplicitGeometries;
@@ -101,6 +102,14 @@ public class Statistics {
 
     public boolean hasValidExtent() {
         return extents.values().stream().anyMatch(Envelope::isValid);
+    }
+
+    public void addMissingSchema(String namespaceURI) {
+        missingSchemas.add(namespaceURI);
+    }
+
+    public boolean hasMissingSchemas() {
+        return !missingSchemas.isEmpty();
     }
 
     public void addLod(int lod) {
@@ -192,6 +201,7 @@ public class Statistics {
         cityObjectIds.addAll(other.cityObjectIds);
         versions.addAll(other.versions);
         referenceSystems.addAll(other.referenceSystems);
+        missingSchemas.addAll(other.missingSchemas);
         lods.addAll(other.lods);
         themes.addAll(other.themes);
         hasImplicitGeometries = other.hasImplicitGeometries || hasImplicitGeometries;
@@ -262,6 +272,11 @@ public class Statistics {
             for (Map.Entry<String, Envelope> entry : this.extents.entrySet()) {
                 toJson(entry.getValue(), entry.getKey(), extents);
             }
+        }
+
+        if (hasMissingSchemas()) {
+            ArrayNode missingSchemas = statistics.putArray("missingSchemas");
+            this.missingSchemas.forEach(missingSchemas::add);
         }
 
         if (hasObjects(ObjectType.GEOMETRY)) {
@@ -378,6 +393,10 @@ public class Statistics {
             ObjectNode extents = (ObjectNode) statistics.get("extents");
             extents.fields().forEachRemaining(field -> printer.accept("Extent (\"" + field.getKey() + "\"): " +
                     field.getValue()));
+        }
+
+        if (statistics.path("missingSchemas").isArray()) {
+            printer.accept("Missing schemas: " + statistics.get("missingSchemas"));
         }
 
         if (statistics.path("geometry").isObject()) {

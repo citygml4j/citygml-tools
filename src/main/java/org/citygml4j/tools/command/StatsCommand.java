@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.core.AbstractGenericAttribute;
 import org.citygml4j.core.model.core.ImplicitGeometry;
+import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.log.LogLevel;
 import org.citygml4j.tools.option.IdOption;
@@ -49,10 +50,7 @@ import picocli.CommandLine;
 
 import javax.xml.namespace.QName;
 import java.nio.file.Path;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @CommandLine.Command(name = "stats",
         description = "Generates statistics about the content of CityGML files.")
@@ -79,10 +77,19 @@ public class StatsCommand extends CityGMLTool {
                     "(default: ${DEFAULT-VALUE}).")
     private boolean jsonReport;
 
-    @CommandLine.Option(names = {"-s", "--summary-report"}, paramLabel = "<file>",
+    @CommandLine.Option(names = {"-r", "--summary-report"}, paramLabel = "<file>",
             description = "Write the overall statistics over all input file(s) as JSON report to the " +
                     "specified output file.")
     private Path summaryFile;
+
+    @CommandLine.Option(names = {"-f", "--fail-on-missing-schema"},
+            description = "Fail if elements in the input file(s) are not associated with an XML schema.")
+    private boolean failOnMissingSchema;
+
+    @CommandLine.Option(names = {"-s", "--schema"}, split = ",", paramLabel = "<URI>",
+            description = "One or more files or URLs of additional XML schemas to use for generating the statistics. " +
+                    "Note that the official CityGML schemas cannot be replaced.")
+    private Set<String> schemas;
 
     @CommandLine.Mixin
     private InputOptions inputOptions;
@@ -105,15 +112,28 @@ public class StatsCommand extends CityGMLTool {
 
         SchemaHandler schemaHandler;
         try {
-             schemaHandler = CityGMLSchemaHandler.newInstance();
+            schemaHandler = CityGMLSchemaHandler.newInstance();
         } catch (Exception e) {
             throw new ExecutionException("Failed to create schema handler.", e);
         }
 
+        if (schemas != null) {
+            for (String schema : schemas) {
+                try {
+                    Path schemaFile = CityGMLTools.WORKING_DIR.resolve(schema).toAbsolutePath();
+                    log.debug("Reading additional XML schema from " + schemaFile + ".");
+                    schemaHandler.parseSchema(schema);
+                } catch (Exception e) {
+                    throw new ExecutionException("Failed to read XML schema from " + schema + ".", e);
+                }
+            }
+        }
+
+        Statistics summary = null;
         ObjectMapper objectMapper = new ObjectMapper();
         ChunkOptions chunkOptions = ChunkOptions.defaults();
-        SchemaHelper schemaHelper = SchemaHelper.of(schemaHandler);
-        Statistics summary = null;
+        SchemaHelper schemaHelper = SchemaHelper.of(schemaHandler)
+                .failOnMissingSchema(failOnMissingSchema);
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
@@ -196,6 +216,10 @@ public class StatsCommand extends CityGMLTool {
                 throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
             }
 
+            if (schemaHelper.hasMissingSchemas()) {
+                schemaHelper.getAndResetMissingSchemas().forEach(statistics::addMissingSchema);
+            }
+
             if (jsonReport) {
                 Path outputFile = inputFile.resolveSibling(appendFileNameSuffix(inputFile.resolveSibling(
                         replaceFileExtension(inputFile, "json")), suffix));
@@ -211,16 +235,22 @@ public class StatsCommand extends CityGMLTool {
             }
         }
 
+        int exitCode = CommandLine.ExitCode.OK;
         if (summary != null) {
             if (summaryFile != null) {
                 log.info("Writing overall statistics over all input file(s) as JSON report to file " + summaryFile + ".");
                 writeStatistics(summaryFile, summary, objectMapper);
             }
 
+            if (summary.hasMissingSchemas()) {
+                log.warn("The statistics might be incomplete due to missing XML schemas in the input file(s).");
+                exitCode = 3;
+            }
+
             summary.print(objectMapper, (msg) -> log.print(LogLevel.INFO, msg));
         }
 
-        return CommandLine.ExitCode.OK;
+        return exitCode;
     }
 
     private boolean hasMatchingIdentifier(XMLReader reader) {

@@ -25,6 +25,7 @@ import com.sun.xml.xsom.XSElementDecl;
 import com.sun.xml.xsom.XSSchemaSet;
 import com.sun.xml.xsom.XSType;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.log.Logger;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.xmlobjects.gml.util.GMLConstants;
 import org.xmlobjects.schema.SchemaHandler;
@@ -33,11 +34,15 @@ import javax.xml.namespace.QName;
 import java.util.*;
 
 public class SchemaHelper {
+    private final Logger log = Logger.getInstance();
     private final SchemaHandler schemaHandler;
     private final Map<String, Set<String>> features = new HashMap<>();
     private final Map<String, Set<String>> geometries = new HashMap<>();
     private final List<QName> featureTypes = new ArrayList<>();
     private final List<QName> geometryTypes = new ArrayList<>();
+    private final Set<String> missingSchemas = new HashSet<>();
+
+    private boolean failOnMissingSchema;
 
     private SchemaHelper(SchemaHandler schemaHandler) {
         this.schemaHandler = schemaHandler;
@@ -49,6 +54,25 @@ public class SchemaHelper {
 
     public static SchemaHelper of(SchemaHandler schemaHandler) {
         return new SchemaHelper(schemaHandler);
+    }
+
+    public SchemaHelper failOnMissingSchema(boolean failOnMissingSchema) {
+        this.failOnMissingSchema = failOnMissingSchema;
+        return this;
+    }
+
+    public Set<String> getMissingSchemas() {
+        return missingSchemas;
+    }
+
+    public Set<String> getAndResetMissingSchemas() {
+        Set<String> missingSchemas = new HashSet<>(this.missingSchemas);
+        this.missingSchemas.clear();
+        return missingSchemas;
+    }
+
+    public boolean hasMissingSchemas() {
+        return !missingSchemas.isEmpty();
     }
 
     public boolean isCityModel(QName element) {
@@ -101,11 +125,13 @@ public class SchemaHelper {
         }
 
         XSSchemaSet schemas = getSchemas(element.getNamespaceURI());
-        XSType type = getType(element, schemas);
-        if (type != null) {
-            if (types.stream().anyMatch(name -> isDerivedFrom(type, name, schemas))) {
-                visited.computeIfAbsent(element.getNamespaceURI(), v -> new HashSet<>()).add(element.getLocalPart());
-                return true;
+        if (schemas != null) {
+            XSType type = getType(element, schemas);
+            if (type != null) {
+                if (types.stream().anyMatch(name -> isDerivedFrom(type, name, schemas))) {
+                    visited.computeIfAbsent(element.getNamespaceURI(), v -> new HashSet<>()).add(element.getLocalPart());
+                    return true;
+                }
             }
         }
 
@@ -129,7 +155,16 @@ public class SchemaHelper {
     private XSSchemaSet getSchemas(String namespaceURI) throws ExecutionException {
         XSSchemaSet schemas = schemaHandler.getSchemaSet(namespaceURI);
         if (schemas == null) {
-            throw new ExecutionException("Missing XML schema for target namespace " + namespaceURI + ".");
+            if (missingSchemas.add(namespaceURI)) {
+                String message = "Missing XML schema for target namespace " + namespaceURI + ".";
+                if (failOnMissingSchema) {
+                    throw new ExecutionException(message);
+                } else {
+                    log.warn(message);
+                }
+            }
+
+            return null;
         } else {
             return schemas;
         }

@@ -1,6 +1,20 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- Added a `--schema` parameter to the `stats` command to load external XML schema files that are not referenced by
+  the input files themselves.
+- Added a `--fail-on-missing-schema` parameter to the `stats` command to let the operation fail in case elements of
+  the input files are associated with a namespace for which no XML schema has been loaded.
+
+### Changed
+- **Breaking:** The short option `-s` of the `stats` command for generating an overall statistics over all input files
+  has been renamed to `-r`. The option `-s` is now used as shortcut for the newly introduced `--schema` parameter.
+  This is also more consistent with other commands.
+- The `stats` command does not fail by default anymore in case elements of the input files are associated with a
+  namespace for which no XML schema has been loaded. A warning is logged instead and the command returns with `3` as
+  exit code.
+
 ### Fixed
 - Fixed loading of ADE extensions using the `--extensions` option.
 
