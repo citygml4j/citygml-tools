@@ -16,6 +16,8 @@
   exit code.
 
 ### Fixed
+- Fixed `to-cityjson` command to write correct coordinate values when transforming coordinates to integers.
+  ([#31](https://github.com/citygml4j/citygml-tools/issues/31))
 - Fixed loading of ADE extensions using the `--extensions` option.
 
 ## [2.0.0] - 2022-09-09
