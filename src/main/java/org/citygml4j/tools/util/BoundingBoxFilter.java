@@ -30,6 +30,7 @@ import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.Envelope;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 public class BoundingBoxFilter {
@@ -45,7 +46,7 @@ public class BoundingBoxFilter {
 
         @Override
         public String toString() {
-            return name().toLowerCase();
+            return name().toLowerCase(Locale.ROOT);
         }
     }
 

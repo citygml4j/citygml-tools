@@ -25,6 +25,8 @@ import org.citygml4j.cityjson.model.CityJSONVersion;
 import org.citygml4j.cityjson.writer.OutputEncoding;
 import picocli.CommandLine;
 
+import java.util.Locale;
+
 public class CityJSONOutputOptions implements Option {
     @CommandLine.Option(names = {"-v", "--cityjson-version"}, defaultValue = "1.1",
             description = "CityJSON version to use for output file(s): 1.1, 1.0 (default: ${DEFAULT-VALUE}).")
@@ -95,7 +97,7 @@ public class CityJSONOutputOptions implements Option {
             }
         }
 
-        switch (encoding.toUpperCase()) {
+        switch (encoding.toUpperCase(Locale.ROOT)) {
             case "UTF-8":
                 encodingOption = OutputEncoding.UTF8;
                 break;

@@ -33,6 +33,7 @@ import org.xmlobjects.gml.model.geometry.*;
 import org.xmlobjects.gml.model.geometry.primitives.*;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class HeightChanger {
@@ -50,7 +51,7 @@ public class HeightChanger {
 
         @Override
         public String toString() {
-            return name().toLowerCase();
+            return name().toLowerCase(Locale.ROOT);
         }
     }
 

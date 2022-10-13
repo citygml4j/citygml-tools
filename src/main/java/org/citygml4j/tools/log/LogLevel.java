@@ -21,6 +21,8 @@
 
 package org.citygml4j.tools.log;
 
+import java.util.Locale;
+
 public enum LogLevel {
     ERROR,
     WARN,
@@ -29,6 +31,6 @@ public enum LogLevel {
 
     @Override
     public String toString() {
-        return name().toLowerCase();
+        return name().toLowerCase(Locale.ROOT);
     }
 }

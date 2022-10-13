@@ -43,6 +43,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.stream.Stream;
 
@@ -251,7 +252,7 @@ public class CityGMLTools implements Command, CommandLine.IVersionProvider {
             URLClassLoader classLoader = new URLClassLoader(Thread.currentThread().getContextClassLoader());
             try {
                 try (Stream<Path> stream = Files.walk(extensionsDir)
-                        .filter(path -> path.getFileName().toString().toLowerCase().endsWith(".jar"))) {
+                        .filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".jar"))) {
                     stream.forEach(classLoader::addPath);
                 }
 

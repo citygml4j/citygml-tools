@@ -23,6 +23,7 @@ package org.citygml4j.tools.util;
 
 import org.citygml4j.cityjson.util.lod.DefaultLodMapper;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,7 +38,7 @@ public class LodMapper implements org.citygml4j.cityjson.util.lod.LodMapper {
 
         @Override
         public String toString() {
-            return name().toLowerCase();
+            return name().toLowerCase(Locale.ROOT);
         }
     }
 

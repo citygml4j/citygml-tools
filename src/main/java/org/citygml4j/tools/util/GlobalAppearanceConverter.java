@@ -55,7 +55,7 @@ public class GlobalAppearanceConverter {
 
         @Override
         public String toString() {
-            return name().toLowerCase();
+            return name().toLowerCase(Locale.ROOT);
         }
     }
 
