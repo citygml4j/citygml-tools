@@ -111,6 +111,7 @@ public class CityGMLTools implements Command, CommandLine.IVersionProvider {
 
         APP_HOME = Paths.get(appHomeEnv).normalize().toAbsolutePath();
         WORKING_DIR = Paths.get(workingDirEnv).normalize().toAbsolutePath();
+        System.setProperty("picocli.disable.closures", "true");
     }
 
     public static void main(String[] args) {
