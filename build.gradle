@@ -37,7 +37,7 @@ dependencies {
     implementation 'org.geotools:gt-epsg-hsql:27.2'
     implementation 'org.geotools:gt-referencing:27.2'
     implementation 'org.apache.commons:commons-imaging:1.0-alpha3'
-    runtimeOnly 'com.fasterxml.woodstox:woodstox-core:6.3.1'
+    runtimeOnly 'com.fasterxml.woodstox:woodstox-core:6.4.0'
 }
 
 jar {
