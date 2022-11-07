@@ -111,6 +111,10 @@ public class InputFiles {
         LinkedList<String> elements = new LinkedList<>();
         Path path = null;
 
+        if (file.startsWith("~" + File.separator)) {
+            file = System.getProperty("user.home") + file.substring(1);
+        }
+
         do {
             if (matcher.reset(file).matches()) {
                 try {
