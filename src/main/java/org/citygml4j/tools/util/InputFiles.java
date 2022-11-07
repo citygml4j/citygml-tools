@@ -84,7 +84,7 @@ public class InputFiles {
 
                     // find files matching the glob pattern
                     PathMatcher matcher = FileSystems.getDefault().getPathMatcher(glob.replace("\\", "\\\\"));
-                    try (Stream<Path> stream = Files.walk(path)) {
+                    try (Stream<Path> stream = Files.walk(path, FileVisitOption.FOLLOW_LINKS)) {
                         stream.filter(Files::isRegularFile).forEach(p -> {
                             if (matcher.matches(p.toAbsolutePath().normalize())) {
                                 if (filter != null && !filter.test(p)) {
