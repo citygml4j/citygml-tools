@@ -16,7 +16,6 @@
 - The `stats` command does not fail by default anymore in case elements of the input files are associated with a
   namespace for which no XML schema has been loaded. A warning is logged instead and the command returns with `3` as
   exit code.
-- Support symbolic links in paths to input files and automatically expand `~` to the user home directory.
 
 ### Fixed
 - Fixed `to-cityjson` command to write correct coordinate values when transforming coordinates to integers.
@@ -24,6 +23,7 @@
 - The namespaces of the CityGML 2.0/1.0 base profiles were reported to be unsupported.
 - Fixed loading of ADE extensions using the `--extensions` option.
 - Avoid localization issues when internally converting strings to lower or upper case.
+- Symbolic links in paths to input files are followed and `~` is automatically expanded to the user home directory.
 
 ## [2.0.0] - 2022-09-09
 ### Added
