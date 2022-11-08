@@ -199,7 +199,9 @@ public abstract class CityGMLTool implements Command {
         Set<String> namespaces = CityGMLModules.of(CityGMLVersion.v3_0).getNamespaces();
         namespaces.addAll(CityGMLModules.of(CityGMLVersion.v2_0).getNamespaces());
         namespaces.addAll(CityGMLModules.of(CityGMLVersion.v1_0).getNamespaces());
+        namespaces.add("http://www.opengis.net/citygml/profiles/base/2.0");
         namespaces.add("http://www.opengis.net/citygml/texturedsurface/2.0");
+        namespaces.add("http://www.opengis.net/citygml/profiles/base/1.0");
         namespaces.add("http://www.opengis.net/citygml/texturedsurface/1.0");
 
         CityGMLADELoader loader = ADERegistry.getInstance().getADELoader(CityGMLADELoader.class);
