@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.1.0]
 ### Added
 - Added a `--schema` parameter to the `stats` command to load external XML schema files that are not referenced by
   the input files themselves.
@@ -14,6 +16,7 @@
 - The `stats` command does not fail by default anymore in case elements of the input files are associated with a
   namespace for which no XML schema has been loaded. A warning is logged instead and the command returns with `3` as
   exit code.
+- Support symbolic links in paths to input files and automatically expand `~` to the user home directory.
 
 ### Fixed
 - Fixed `to-cityjson` command to write correct coordinate values when transforming coordinates to integers.
@@ -51,6 +54,7 @@
 The changelog of previous citygml-tools releases before version 2.0 is available
 [here](https://github.com/citygml4j/citygml-tools/blob/citygml-tools-v1/CHANGES.md).
 
-[Unreleased]: https://github.com/citygml4j/citygml-tools/compare/v2.0.0..HEAD
+[Unreleased]: https://github.com/citygml4j/citygml-tools/compare/v2.1.0..HEAD
+[2.1.0]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.1.0
 [2.0.0]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.0.0
 [Before 2.0.0]: https://github.com/citygml4j/citygml-tools/blob/citygml-tools-v1/CHANGES.md
