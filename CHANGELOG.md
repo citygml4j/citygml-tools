@@ -18,6 +18,7 @@
 ### Fixed
 - Fixed `to-cityjson` command to write correct coordinate values when transforming coordinates to integers.
   ([#31](https://github.com/citygml4j/citygml-tools/issues/31))
+- The namespaces of the CityGML 2.0/1.0 base profiles were reported to be unsupported.
 - Fixed loading of ADE extensions using the `--extensions` option.
 - Avoid localization issues when internally converting strings to lower or upper case.
 
