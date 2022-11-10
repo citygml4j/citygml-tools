@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'org.citygml4j.tools'
-version '2.1.0'
+version '2.1.0-SNAPSHOT'
 description 'Collection of tools for processing CityGML files'
 
 ext {
