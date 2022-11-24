@@ -27,6 +27,7 @@ import org.citygml4j.core.model.core.AbstractSpaceBoundary;
 import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.citygml4j.core.model.relief.AbstractReliefComponent;
 import org.citygml4j.core.visitor.ObjectWalker;
+import org.citygml4j.tools.log.Logger;
 import org.xmlobjects.gml.model.base.AbstractInlineOrByReferenceProperty;
 import org.xmlobjects.gml.model.common.CoordinateListProvider;
 import org.xmlobjects.gml.model.geometry.*;
@@ -37,6 +38,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class HeightChanger {
+    private final Logger log = Logger.getInstance();
     private final double offset;
     private final HeightProcessor heightProcessor = new HeightProcessor();
     private final ImplicitGeometryResolver resolver = new ImplicitGeometryResolver();
@@ -86,6 +88,9 @@ public class HeightChanger {
             correction = offset - minimumHeight;
             if (correction != 0) {
                 feature.accept(heightProcessor);
+            } else {
+                log.debug("Skipping " + CityObjects.getObjectSignature(feature) + " because the height does not " +
+                        "change for the given offset.");
             }
         }
     }

@@ -70,6 +70,12 @@ public class ChangeHeightCommand extends CityGMLTool {
 
     @Override
     public Integer call() throws ExecutionException {
+        if (offset == 0 && mode == HeightChanger.Mode.RELATIVE) {
+            log.warn("Height values do not change for offset = " + offset + " and mode = " + mode + ".");
+            log.info("Cancelling the operation.");
+            return CommandLine.ExitCode.OK;
+        }
+
         log.debug("Searching for CityGML input files.");
         List<Path> inputFiles = InputFiles.of(inputOptions.getFiles())
                 .withFilter(path -> !stripFileExtension(path).endsWith(suffix))
