@@ -31,7 +31,6 @@ import org.citygml4j.core.visitor.ObjectWalker;
 import org.xmlobjects.gml.model.base.AbstractGML;
 import org.xmlobjects.gml.model.base.AbstractInlineOrByReferenceProperty;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
-import org.xmlobjects.gml.util.reference.ReferenceResolver;
 import org.xmlobjects.model.Child;
 import org.xmlobjects.util.copy.CopyBuilder;
 
@@ -97,7 +96,6 @@ public class GlobalAppearanceConverter {
 
     private void preprocess(List<Appearance> appearances) {
         ObjectWalker preprocessor = new ObjectWalker() {
-            private final ReferenceResolver resolver = DefaultReferenceResolver.newInstance();
             private int id;
 
             @Override
@@ -107,8 +105,8 @@ public class GlobalAppearanceConverter {
 
             @Override
             public void visit(AbstractInlineOrByReferenceProperty<?> property) {
-                if (property.getObject() == null && property.getHref() != null) {
-                    Child child = resolver.resolveReference(property.getHref(), appearances);
+                if (property.isSetReferencedObject()) {
+                    Child child = property.getObject();
                     property.setInlineObjectIfValid(copyBuilder.shallowCopy(child));
                     property.setHref(null);
                 }
@@ -123,10 +121,8 @@ public class GlobalAppearanceConverter {
                     Iterator<TextureAssociationReference> iterator = properties.getTargets().iterator();
                     while (iterator.hasNext()) {
                         TextureAssociationReference reference = iterator.next();
-                        TextureAssociation association = resolver.resolveReference(
-                                reference.getHref(), TextureAssociation.class, appearances);
-                        if (association != null) {
-                            TextureAssociation copy = copyBuilder.shallowCopy(association);
+                        if (reference.isSetReferencedObject()) {
+                            TextureAssociation copy = copyBuilder.shallowCopy(reference.getReferencedObject());
                             texture.getTextureParameterizations().add(new TextureAssociationProperty(copy));
                             iterator.remove();
                         } else if (version != CityGMLVersion.v3_0 && reference.getURI() != null) {
@@ -176,6 +172,7 @@ public class GlobalAppearanceConverter {
             }
         };
 
+        DefaultReferenceResolver.newInstance().resolveReferences(appearances);
         appearances.forEach(preprocessor::visit);
     }
 
