@@ -33,11 +33,11 @@ dependencies {
     implementation 'org.citygml4j:citygml4j-xml:3.0.0-SNAPSHOT'
     implementation 'org.citygml4j:citygml4j-cityjson:3.0.0-SNAPSHOT'
     implementation 'info.picocli:picocli:4.7.1'
-    implementation 'org.geotools:gt-epsg-extension:28.2'
-    implementation 'org.geotools:gt-epsg-hsql:28.2'
-    implementation 'org.geotools:gt-referencing:28.2'
+    implementation 'org.geotools:gt-epsg-extension:29.0'
+    implementation 'org.geotools:gt-epsg-hsql:29.0'
+    implementation 'org.geotools:gt-referencing:29.0'
     implementation 'org.apache.commons:commons-imaging:1.0-alpha3'
-    runtimeOnly 'com.fasterxml.woodstox:woodstox-core:6.4.0'
+    runtimeOnly 'com.fasterxml.woodstox:woodstox-core:6.5.0'
 }
 
 jar {
