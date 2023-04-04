@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.1.0] - 2023-04-04
 ### Added
 - Added a `--schema` parameter to the `stats` command to load external XML schema files that are not referenced by
   the input files themselves.
@@ -52,6 +54,7 @@
 The changelog of previous citygml-tools releases before version 2.0 is available
 [here](https://github.com/citygml4j/citygml-tools/blob/citygml-tools-v1/CHANGES.md).
 
-[Unreleased]: https://github.com/citygml4j/citygml-tools/compare/v2.0.0..HEAD
+[Unreleased]: https://github.com/citygml4j/citygml-tools/compare/v2.1.0..HEAD
+[2.1.0]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.1.0
 [2.0.0]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.0.0
 [Before 2.0.0]: https://github.com/citygml4j/citygml-tools/blob/citygml-tools-v1/CHANGES.md

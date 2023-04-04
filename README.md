@@ -11,7 +11,7 @@ citygml-tools is licensed under the [Apache License, Version 2.0](http://www.apa
 See the `LICENSE` file for more details.
 
 ## Latest release
-The latest stable release of citygml-tools is 2.0.0.
+The latest stable release of citygml-tools is 2.1.0.
 
 Download the latest citygml-tools release as ZIP package
 [here](https://github.com/citygml4j/citygml-tools/releases/latest). Previous releases are available from the
