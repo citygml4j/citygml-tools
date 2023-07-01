@@ -95,12 +95,21 @@ public class GeometryReferenceResolver {
     }
 
     private class ResolverProcessor extends ObjectWalker {
+        private final Map<AbstractCityObject, Integer> childIds = new IdentityHashMap<>();
+        private final Map<AbstractCityObject, Set<String>> relatedTos = new IdentityHashMap<>();
         private int featureId;
-        private int propertyId;
 
         void resolve(AbstractFeature feature, int featureId) {
             this.featureId = featureId;
             feature.accept(this);
+            childIds.clear();
+            relatedTos.clear();
+        }
+
+        @Override
+        public void visit(AbstractCityObject cityObject) {
+            childIds.put(cityObject, childIds.size());
+            super.visit(cityObject);
         }
 
         @Override
@@ -112,10 +121,12 @@ public class GeometryReferenceResolver {
                     if (cityObject != null) {
                         cityObject.setId(reference.getOwner());
                         for (String relatedTo : reference.getRelatedTos()) {
-                            cityObjectRelationsCounter++;
-                            CityObjectRelation relation = new CityObjectRelation("#" + relatedTo);
-                            relation.setRelationType(new Code("shared"));
-                            cityObject.getRelatedTo().add(new CityObjectRelationProperty(relation));
+                            if (relatedTos.computeIfAbsent(cityObject, v -> new HashSet<>()).add(relatedTo)) {
+                                cityObjectRelationsCounter++;
+                                CityObjectRelation relation = new CityObjectRelation("#" + relatedTo);
+                                relation.setRelationType(new Code("shared"));
+                                cityObject.getRelatedTo().add(new CityObjectRelationProperty(relation));
+                            }
                         }
                     }
                 }
@@ -127,29 +138,28 @@ public class GeometryReferenceResolver {
             if (property.getObject() == null
                     && property.getHref() != null
                     && property.getParent(ImplicitGeometry.class) == null) {
-                propertyId++;
                 GeometryReference reference = references.get(CityObjects.getIdFromReference(property.getHref()));
                 if (reference != null) {
                     resolvedReferencesCounter++;
-                    if (reference.getTarget(featureId) == propertyId) {
-                        AbstractGeometry geometry = reference.createGeometryFor(featureId);
-                        property.setInlineObjectIfValid(geometry);
-                        property.setHref(null);
-                    } else {
-                        property.setHref("#" + reference.getOrCreateGeometryId(featureId));
-                    }
+                    AbstractCityObject cityObject = property.getParent(AbstractCityObject.class);
+                    if (cityObject != null) {
+                        String target = reference.getTarget(featureId, childIds.get(cityObject));
+                        if (target != null) {
+                            AbstractGeometry geometry = reference.createGeometryFor(featureId);
+                            property.setInlineObjectIfValid(geometry);
+                            property.setHref(null);
 
-                    if (createCityObjectRelations) {
-                        String relatedTo = reference.getRelatedTo(featureId, propertyId);
-                        if (relatedTo != null) {
-                            AbstractCityObject cityObject = property.getParent(AbstractCityObject.class);
-                            if (cityObject != null) {
+                            if (createCityObjectRelations
+                                    && relatedTos.computeIfAbsent(cityObject, v -> new HashSet<>())
+                                    .add(reference.getOwner())) {
                                 cityObjectRelationsCounter++;
-                                cityObject.setId(relatedTo);
+                                cityObject.setId(target);
                                 CityObjectRelation relation = new CityObjectRelation("#" + reference.getOwner());
                                 relation.setRelationType(new Code("shared"));
                                 cityObject.getRelatedTo().add(new CityObjectRelationProperty(relation));
                             }
+                        } else {
+                            property.setHref("#" + reference.getOrCreateGeometryId(featureId));
                         }
                     }
                 }
@@ -161,8 +171,7 @@ public class GeometryReferenceResolver {
 
     private class GeometryPropertyProcessor extends ObjectWalker {
         private final Map<String, Deque<AbstractCityObject>> referees = new HashMap<>();
-        private final String ID = "id";
-        private int propertyId;
+        private final Map<AbstractCityObject, Integer> childIds = new IdentityHashMap<>();
 
         void process(AbstractFeature feature, int featureId) {
             feature.accept(this);
@@ -175,14 +184,17 @@ public class GeometryReferenceResolver {
                         .forEach(space -> candidates.removeIf(space::equals));
 
                 GeometryReference reference = references.computeIfAbsent(entry.getKey(), v -> new GeometryReference());
-                reference.addTarget(featureId, candidates.getFirst().getLocalProperties().get(ID, Integer.class));
-                if (createCityObjectRelations) {
-                    candidates.forEach(candidate -> reference.addRelatedTo(
-                            candidate, featureId, candidate.getLocalProperties().get(ID, Integer.class)));
-                }
+                reference.addTarget(candidates.getFirst(), featureId, childIds.get(candidates.getFirst()));
             }
 
             referees.clear();
+            childIds.clear();
+        }
+
+        @Override
+        public void visit(AbstractCityObject cityObject) {
+            childIds.put(cityObject, childIds.size());
+            super.visit(cityObject);
         }
 
         @Override
@@ -190,12 +202,10 @@ public class GeometryReferenceResolver {
             if (property.getObject() == null
                     && property.getHref() != null
                     && property.getParent(ImplicitGeometry.class) == null) {
-                propertyId++;
                 AbstractCityObject cityObject = property.getParent(AbstractCityObject.class);
                 if (cityObject != null) {
                     String reference = CityObjects.getIdFromReference(property.getHref());
                     referees.computeIfAbsent(reference, v -> new ArrayDeque<>()).add(cityObject);
-                    cityObject.getLocalProperties().set(ID, propertyId);
                 }
             } else {
                 super.visit(property);
@@ -221,8 +231,7 @@ public class GeometryReferenceResolver {
         private AbstractGeometry geometry;
         private String owner;
         private final Map<Integer, String> geometryIds = new HashMap<>();
-        private final Map<String, String> relatedTos = new HashMap<>();
-        private final Map<Integer, Integer> targets = new HashMap<>();
+        private final Map<String, String> targets = new HashMap<>();
 
         AbstractGeometry createGeometryFor(int featureId) {
             AbstractGeometry copy = copyBuilder.copy(geometry);
@@ -247,23 +256,15 @@ public class GeometryReferenceResolver {
         }
 
         Collection<String> getRelatedTos() {
-            return relatedTos.values();
+            return targets.values();
         }
 
-        String getRelatedTo(int featureId, int propertyId) {
-            return relatedTos.get(featureId + "_" + propertyId);
+        String getTarget(int featureId, int childId) {
+            return targets.get(featureId + "_" + childId);
         }
 
-        void addRelatedTo(AbstractCityObject cityObject, int featureId, int propertyId) {
-            relatedTos.put(featureId + "_" + propertyId, CityObjects.getOrCreateId(cityObject));
-        }
-
-        int getTarget(int featureId) {
-            return targets.getOrDefault(featureId, -1);
-        }
-
-        void addTarget(int featureId, int propertyId) {
-            targets.put(featureId, propertyId);
+        void addTarget(AbstractCityObject cityObject, int featureId, int childId) {
+            targets.put(featureId + "_" + childId, CityObjects.getOrCreateId(cityObject));
         }
     }
 }
