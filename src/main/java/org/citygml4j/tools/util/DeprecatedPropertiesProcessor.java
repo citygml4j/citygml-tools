@@ -69,9 +69,8 @@ import org.citygml4j.core.visitor.ObjectWalker;
 import org.citygml4j.tools.log.Logger;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.GeometryProperty;
-import org.xmlobjects.gml.model.geometry.aggregates.MultiSolidProperty;
-import org.xmlobjects.gml.model.geometry.aggregates.MultiSurface;
-import org.xmlobjects.gml.model.geometry.aggregates.MultiSurfaceProperty;
+import org.xmlobjects.gml.model.geometry.aggregates.*;
+import org.xmlobjects.gml.model.geometry.complexes.CompositeSurface;
 import org.xmlobjects.gml.model.geometry.primitives.*;
 import org.xmlobjects.util.copy.CopyBuilder;
 
@@ -761,37 +760,18 @@ public class DeprecatedPropertiesProcessor {
         }
 
         private void processLod1MultiSurface(MultiSurfaceProperty property, AbstractSpace object) {
-            if (property.getObject() != null) {
-                processLod1MultiSurface(property.getObject(), object);
-            }
-        }
-
-        private void processLod1MultiSurface(MultiSurface multiSurface, AbstractSpace object) {
-            if (multiSurface.isSetSurfaceMember()) {
-                for (SurfaceProperty member : multiSurface.getSurfaceMember()) {
-                    if (member.isSetInlineObject()) {
-                        GenericThematicSurface thematicSurface = createGenericThematicSurface(member.getObject());
-                        object.addBoundary(new AbstractSpaceBoundaryProperty(thematicSurface));
-                    }
-                }
-            }
-
-            if (multiSurface.getSurfaceMembers() != null && multiSurface.getSurfaceMembers().isSetObjects()) {
-                for (AbstractSurface surface : multiSurface.getSurfaceMembers().getObjects()) {
-                    GenericThematicSurface thematicSurface = createGenericThematicSurface(surface);
-                    object.addBoundary(new AbstractSpaceBoundaryProperty(thematicSurface));
-                }
-            }
+            GenericThematicSurface thematicSurface = new GenericThematicSurface();
+            thematicSurface.setLod1MultiSurface(property);
+            object.addBoundary(new AbstractSpaceBoundaryProperty(thematicSurface));
         }
 
         private void processLod1Geometry(GeometryProperty<?> property, AbstractSpace object) {
             if (property.getObject() instanceof MultiSurface) {
-                processLod1MultiSurface((MultiSurface) property.getObject(), object);
-            } else if (property.getObject() != null) {
-                MultiSurface multiSurface = toMultiSurface(property.getObject());
-                if (multiSurface != null) {
-                    processLod1MultiSurface(multiSurface, object);
-                }
+                processLod1MultiSurface(new MultiSurfaceProperty((MultiSurface) property.getObject()), object);
+            } else if (property.getObject() instanceof AbstractSurface) {
+                MultiSurface multiSurface = new MultiSurface();
+                multiSurface.getSurfaceMember().add(new SurfaceProperty((AbstractSurface) property.getObject()));
+                processLod1MultiSurface(new MultiSurfaceProperty(multiSurface), object);
             }
         }
 
@@ -800,6 +780,8 @@ public class DeprecatedPropertiesProcessor {
                 object.setLod3Solid(copy(property, new SolidProperty(), GeometryProperty.class));
             } else if (property.getObject() instanceof MultiSurface) {
                 object.setLod3MultiSurface(copy(property, new MultiSurfaceProperty(), GeometryProperty.class));
+            } else if (property.getObject() instanceof MultiCurve) {
+                object.setLod3MultiCurve(copy(property, new MultiCurveProperty(), GeometryProperty.class));
             } else {
                 processGeometry(property, object, 3, true);
             }
@@ -825,32 +807,36 @@ public class DeprecatedPropertiesProcessor {
         private MultiSurface toMultiSurface(AbstractGeometry geometry) {
             if (geometry instanceof MultiSurface) {
                 return (MultiSurface) geometry;
+            } else if (geometry instanceof AbstractSurface) {
+                MultiSurface multiSurface = new MultiSurface();
+                multiSurface.getSurfaceMember().add(new SurfaceProperty((AbstractSurface) geometry));
+                return multiSurface;
             } else {
                 MultiSurface multiSurface = new MultiSurface();
                 geometry.accept(new ObjectWalker() {
                     @Override
                     public void visit(AbstractSurface surface) {
                         multiSurface.getSurfaceMember().add(new SurfaceProperty(surface));
-                        super.visit(surface);
                     }
 
                     @Override
-                    public void visit(Rectangle rectangle) {
-                        Polygon polygon = new Polygon(rectangle.getExterior());
-                        visit((AbstractSurface) polygon);
+                    public void visit(OrientableSurface orientableSurface) {
+                        visit((AbstractSurface) orientableSurface);
                     }
 
                     @Override
-                    public void visit(PolygonPatch polygonPatch) {
-                        Polygon polygon = new Polygon(polygonPatch.getExterior());
-                        polygon.setInterior(polygon.getInterior());
-                        visit((AbstractSurface) polygon);
+                    public void visit(CompositeSurface compositeSurface) {
+                        visit((AbstractSurface) compositeSurface);
                     }
 
                     @Override
-                    public void visit(Triangle triangle) {
-                        Polygon polygon = new Polygon(triangle.getExterior());
-                        visit((AbstractSurface) polygon);
+                    public void visit(Shell shell) {
+                        visit((AbstractSurface) shell);
+                    }
+
+                    @Override
+                    public void visit(Surface surface) {
+                        visit((AbstractSurface) surface);
                     }
                 });
 
