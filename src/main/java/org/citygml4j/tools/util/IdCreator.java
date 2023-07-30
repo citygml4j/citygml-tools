@@ -38,7 +38,7 @@ public class IdCreator implements org.xmlobjects.gml.util.id.IdCreator {
 
     @Override
     public String createId() {
-        String id = "citygml-tools-" + seed + index++;
+        String id = seed + index++;
         return prefix + UUID.nameUUIDFromBytes(id.getBytes());
     }
 }

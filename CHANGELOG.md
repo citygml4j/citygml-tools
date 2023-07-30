@@ -1,6 +1,16 @@
 # Changelog
 
 ## [Unreleased]
+### Fixed
+- In a few scenarios, non-random identifiers were created for city objects that had no identifier in the input file.
+  This has been fixed for all commands so that automatically generated identifiers are now random UUIDs.
+  ([#47](https://github.com/citygml4j/citygml-tools/issues/47))
+- Fixed `upgrade` command to correctly create `CityObjectRelation` links between top-level city objects sharing a
+  common geometry.
+
+### Changed
+- The `--map-lod1-multi-surfaces` option of the `upgrade` command now creates a `GenericThematicSurface` object
+  for an entire LoD1 multi-surface, but not for each surface member anymore.
 
 ## [2.1.0] - 2023-04-04
 ### Added
