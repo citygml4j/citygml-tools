@@ -73,7 +73,7 @@ public class FilterLodsCommand extends CityGMLTool {
     private CityGMLOutputOptions outputOptions;
 
     @CommandLine.Mixin
-    OverwriteInputOption overwriteOption;
+    private OverwriteInputOption overwriteOption;
 
     @CommandLine.Mixin
     private InputOptions inputOptions;
