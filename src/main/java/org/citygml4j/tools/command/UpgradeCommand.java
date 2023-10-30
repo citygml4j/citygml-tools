@@ -23,6 +23,7 @@ package org.citygml4j.tools.command;
 
 import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.core.model.appearance.Appearance;
+import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
@@ -49,6 +50,10 @@ public class UpgradeCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-u", "--use-lod4-as-lod3"},
             description = "Use the LoD4 representation of city objects as LoD3, replacing an existing LoD3.")
     private boolean useLod4AsLod3;
+
+    @CommandLine.Option(names = {"-r", "--map-lod0-roof-edge"},
+            description = "Map the LoD0 roof edge representation of buildings onto a roof surface.")
+    private boolean mapLod0RoofEdge;
 
     @CommandLine.Option(names = {"-m", "--map-lod1-multi-surfaces"},
             description = "Map the LoD1 multi-surface representation of city objects onto generic thematic surfaces.")
@@ -101,7 +106,7 @@ public class UpgradeCommand extends CityGMLTool {
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions, "Appearance")) {
+            try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions)) {
                 if (reader.hasNext()) {
                     CityGMLVersion version = CityGMLModules.getCityGMLVersion(reader.getName().getNamespaceURI());
                     if (version == CityGMLVersion.v3_0) {
@@ -112,6 +117,7 @@ public class UpgradeCommand extends CityGMLTool {
 
                 UpgradeProcessor processor = UpgradeProcessor.newInstance()
                         .useLod4AsLod3(useLod4AsLod3)
+                        .mapLod0RoofEdge(mapLod0RoofEdge)
                         .mapLod1MultiSurfaces(mapLod1MultiSurfaces)
                         .resolveCrossLodReferences(resolveCrossLodReferences)
                         .resolveGeometryReferences(resolveGeometryReferences)
@@ -133,11 +139,16 @@ public class UpgradeCommand extends CityGMLTool {
                     while (reader.hasNext()) {
                         featureId++;
                         AbstractFeature feature = reader.next();
-                        processor.upgrade(feature, featureId);
-                        writer.writeMember(feature);
+                        if (processor.upgrade(feature, featureId)) {
+                            writer.writeMember(feature);
+                        }
                     }
 
                     processor.postprocess();
+
+                    for (CityObjectGroup cityObjectGroup : processor.getCityObjectGroups()) {
+                        writer.writeMember(cityObjectGroup);
+                    }
 
                     for (Appearance appearance : processor.getGlobalAppearances()) {
                         writer.writeMember(appearance);

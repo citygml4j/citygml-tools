@@ -42,11 +42,11 @@ public class LodFilter {
     private final ExtentUpdater extentUpdater = new ExtentUpdater();
 
     private Mode mode = Mode.KEEP;
+    private FeatureMode featureMode = FeatureMode.DELETE_EMPTY_FEATURES;
     private boolean updateExtents;
     private AppearanceRemover globalAppearanceRemover;
     private CityObjectGroupRemover groupRemover;
     private Map<String, AbstractGeometry> templates;
-    private boolean keepEmptyObjects;
 
     public enum Mode {
         KEEP,
@@ -58,6 +58,12 @@ public class LodFilter {
         public String toString() {
             return name().toLowerCase(Locale.ROOT);
         }
+    }
+
+    public enum FeatureMode {
+        DELETE_EMPTY_FEATURES,
+        KEEP_EMPTY_FEATURES,
+        KEEP_TOP_LEVEL_FEATURE
     }
 
     private LodFilter() {
@@ -88,6 +94,11 @@ public class LodFilter {
 
     public LodFilter withMode(Mode mode) {
         this.mode = mode != null ? mode : Mode.KEEP;
+        return this;
+    }
+
+    public LodFilter withFeatureMode(FeatureMode featureMode) {
+        this.featureMode = featureMode;
         return this;
     }
 
@@ -128,16 +139,11 @@ public class LodFilter {
         return this;
     }
 
-    public LodFilter keepEmptyObjects(boolean keepEmptyObjects) {
-        this.keepEmptyObjects = keepEmptyObjects;
-        return this;
-    }
-
     public boolean filter(AbstractFeature feature) {
-        return filter(feature, keepEmptyObjects);
+        return filter(feature, featureMode);
     }
 
-    private boolean filter(AbstractFeature feature, boolean keepEmptyObjects) {
+    private boolean filter(AbstractFeature feature, FeatureMode featureMode) {
         GeometryInfo geometryInfo = feature.getGeometryInfo(true);
         boolean[] filter = createLodFilter(geometryInfo);
 
@@ -154,8 +160,8 @@ public class LodFilter {
             FeatureInfo featureInfo = new FeatureInfo();
             Set<String> removedFeatureIds = new HashSet<>();
 
-            removeGeometries(geometries, featureInfo, keepEmptyObjects);
-            remove = removeEmptyFeatures(feature, featureInfo, keepEmptyObjects, removedFeatureIds);
+            removeGeometries(geometries, featureInfo, featureMode);
+            remove = removeEmptyFeatures(feature, featureInfo, removedFeatureIds, featureMode);
             removeAppearances(geometries, remove, feature);
             removeFeatureProperties(removedFeatureIds, remove, feature);
 
@@ -174,14 +180,14 @@ public class LodFilter {
         }
     }
 
-    private void removeGeometries(List<AbstractProperty<?>> geometries, FeatureInfo featureInfo, boolean keepEmptyObjects) {
+    private void removeGeometries(List<AbstractProperty<?>> geometries, FeatureInfo featureInfo, FeatureMode featureMode) {
         for (AbstractProperty<?> geometry : geometries) {
             Child child = geometry.getParent();
             if (child instanceof GMLObject) {
                 ((GMLObject) child).unsetProperty(geometry, true);
             }
 
-            if (!keepEmptyObjects) {
+            if (featureMode != FeatureMode.KEEP_EMPTY_FEATURES) {
                 featureInfo.add(child instanceof AbstractFeature ?
                         (AbstractFeature) child :
                         geometry.getParent(AbstractFeature.class));
@@ -189,15 +195,18 @@ public class LodFilter {
         }
     }
 
-    private boolean removeEmptyFeatures(AbstractFeature feature, FeatureInfo featureInfo, boolean keepEmptyObjects, Set<String> removedFeatureIds) {
+    private boolean removeEmptyFeatures(AbstractFeature feature, FeatureInfo featureInfo, Set<String> removedFeatureIds, FeatureMode featureMode) {
         boolean empty = true;
         for (AbstractFeature child : featureInfo.getChildren(feature)) {
-            if (!removeEmptyFeatures(child, featureInfo, keepEmptyObjects, removedFeatureIds)) {
+            if (!removeEmptyFeatures(child, featureInfo, removedFeatureIds,
+                    featureMode == FeatureMode.KEEP_TOP_LEVEL_FEATURE ?
+                            FeatureMode.DELETE_EMPTY_FEATURES :
+                            featureMode)) {
                 empty = false;
             }
         }
 
-        if (empty && !keepEmptyObjects) {
+        if (empty && featureMode == FeatureMode.DELETE_EMPTY_FEATURES) {
             GeometryInfo geometryInfo = feature.getGeometryInfo(true);
             if (!geometryInfo.hasLodGeometries() && !geometryInfo.hasLodImplicitGeometries()) {
                 if (feature.getParent() != null && feature.getParent().getParent() instanceof GMLObject) {
@@ -279,9 +288,7 @@ public class LodFilter {
     private void postprocessGroups() {
         if (groupRemover != null && groupRemover.hasCityObjectGroups()) {
             for (CityObjectGroup group : groupRemover.getCityObjectGroups()) {
-                if (!filter(group, true)) {
-                    group.setGroupMembers(null);
-                }
+                filter(group, FeatureMode.KEEP_TOP_LEVEL_FEATURE);
             }
 
             groupRemover.postprocess();

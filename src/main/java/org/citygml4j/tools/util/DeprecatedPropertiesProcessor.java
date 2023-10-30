@@ -28,6 +28,7 @@ import org.citygml4j.core.model.building.BuildingFurniture;
 import org.citygml4j.core.model.building.BuildingInstallation;
 import org.citygml4j.core.model.building.BuildingRoom;
 import org.citygml4j.core.model.cityfurniture.CityFurniture;
+import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.common.GeometryInfo;
 import org.citygml4j.core.model.construction.AbstractFillingSurface;
 import org.citygml4j.core.model.construction.RoofSurface;
@@ -78,20 +79,21 @@ import java.util.List;
 
 public class DeprecatedPropertiesProcessor {
     private final LodFilter lodFilter;
-    private final DeprecatedPropertiesWalker deprecatedPropertiesWalker;
+    private final DeprecatedPropertiesWalker deprecatedPropertiesWalker = new DeprecatedPropertiesWalker();
 
     private boolean useLod4AsLod3;
+    private boolean mapLod0RoofEdge;
     private boolean mapLod1MultiSurfaces;
 
     private DeprecatedPropertiesProcessor(LodFilter lodFilter) {
         this.lodFilter = lodFilter;
-        deprecatedPropertiesWalker = new DeprecatedPropertiesWalker();
     }
 
     public static DeprecatedPropertiesProcessor newInstance() {
         return new DeprecatedPropertiesProcessor(LodFilter.newInstance()
                 .withMode(LodFilter.Mode.REMOVE)
-                .keepEmptyObjects(true));
+                .withFeatureMode(LodFilter.FeatureMode.KEEP_TOP_LEVEL_FEATURE)
+                .updateExtents(false));
     }
 
     public boolean isUseLod4AsLod3() {
@@ -100,6 +102,15 @@ public class DeprecatedPropertiesProcessor {
 
     public DeprecatedPropertiesProcessor useLod4AsLod3(boolean useLod4AsLod3) {
         this.useLod4AsLod3 = useLod4AsLod3;
+        return this;
+    }
+
+    public boolean isMapLod0RoofEdge() {
+        return mapLod0RoofEdge;
+    }
+
+    public DeprecatedPropertiesProcessor mapLod0RoofEdge(boolean mapLod0RoofEdge) {
+        this.mapLod0RoofEdge = mapLod0RoofEdge;
         return this;
     }
 
@@ -132,7 +143,16 @@ public class DeprecatedPropertiesProcessor {
         return this;
     }
 
-    public void process(AbstractFeature feature) {
+    public List<CityObjectGroup> getCityObjectGroups() {
+        return lodFilter.getCityObjectGroups();
+    }
+
+    DeprecatedPropertiesProcessor withCityObjectGroups(List<CityObjectGroup> cityObjectGroups) {
+        lodFilter.withCityObjectGroups(cityObjectGroups);
+        return this;
+    }
+
+    public boolean process(AbstractFeature feature) {
         if (useLod4AsLod3) {
             GeometryInfo geometryInfo = feature.getGeometryInfo(true);
             if (geometryInfo.hasGeometries(4) || geometryInfo.hasImplicitGeometries(4)) {
@@ -143,7 +163,7 @@ public class DeprecatedPropertiesProcessor {
         }
 
         feature.accept(deprecatedPropertiesWalker);
-        lodFilter.withLods(4).filter(feature);
+        return lodFilter.withLods(4).filter(feature);
     }
 
     public void postprocess() {
@@ -194,7 +214,7 @@ public class DeprecatedPropertiesProcessor {
             if (building.hasDeprecatedProperties()) {
                 DeprecatedPropertiesOfAbstractBuilding properties = building.getDeprecatedProperties();
 
-                if (properties.getLod0RoofEdge() != null) {
+                if (mapLod0RoofEdge && properties.getLod0RoofEdge() != null) {
                     RoofSurface roofSurface = new RoofSurface();
                     roofSurface.setLod0MultiSurface(properties.getLod0RoofEdge());
                     building.addBoundary(new AbstractSpaceBoundaryProperty(roofSurface));
@@ -794,14 +814,6 @@ public class DeprecatedPropertiesProcessor {
                     object.setMultiSurface(lod, new MultiSurfaceProperty(multiSurface));
                 }
             }
-        }
-
-        private GenericThematicSurface createGenericThematicSurface(AbstractSurface surface) {
-            GenericThematicSurface thematicSurface = new GenericThematicSurface();
-            MultiSurface multiSurface = new MultiSurface();
-            multiSurface.getSurfaceMember().add(new SurfaceProperty(surface));
-            thematicSurface.setLod1MultiSurface(new MultiSurfaceProperty(multiSurface));
-            return thematicSurface;
         }
 
         private MultiSurface toMultiSurface(AbstractGeometry geometry) {

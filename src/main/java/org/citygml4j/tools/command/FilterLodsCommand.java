@@ -113,7 +113,9 @@ public class FilterLodsCommand extends CityGMLTool {
                     .withCityObjectGroups(globalObjects.getCityObjectGroups())
                     .withTemplateGeometries(globalObjects.getTemplateGeometries())
                     .updateExtents(updateExtents)
-                    .keepEmptyObjects(keepEmptyObjects);
+                    .withFeatureMode(keepEmptyObjects ?
+                            LodFilter.FeatureMode.KEEP_EMPTY_FEATURES :
+                            LodFilter.FeatureMode.DELETE_EMPTY_FEATURES);
 
             try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions,
                     "CityObjectGroup", "Appearance")) {

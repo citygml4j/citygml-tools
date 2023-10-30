@@ -22,6 +22,7 @@
 package org.citygml4j.tools.util;
 
 import org.citygml4j.core.model.appearance.Appearance;
+import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.util.reference.DefaultReferenceResolver;
 import org.citygml4j.tools.ExecutionException;
@@ -59,6 +60,11 @@ public class UpgradeProcessor {
         return this;
     }
 
+    public UpgradeProcessor mapLod0RoofEdge(boolean mapLod0RoofEdge) {
+        propertiesProcessor.mapLod0RoofEdge(mapLod0RoofEdge);
+        return this;
+    }
+
     public UpgradeProcessor mapLod1MultiSurfaces(boolean mapLod1MultiSurfaces) {
         propertiesProcessor.mapLod1MultiSurfaces(mapLod1MultiSurfaces);
         return this;
@@ -86,17 +92,26 @@ public class UpgradeProcessor {
         return propertiesProcessor.getGlobalAppearances();
     }
 
+    public List<CityObjectGroup> getCityObjectGroups() {
+        return propertiesProcessor.getCityObjectGroups();
+    }
+
     public void readGlobalObjects(Path file, CityGMLContext context) throws ExecutionException {
         try {
             try (CityGMLReader reader = createCityGMLReader(file, context, false)) {
                 List<Appearance> appearances = new ArrayList<>();
+                List<CityObjectGroup> cityObjectGroups = new ArrayList<>();
                 int featureId = 0;
+
                 while (reader.hasNext()) {
                     AbstractFeature feature = reader.next();
+                    featureId++;
+
                     if (feature instanceof Appearance) {
                         appearances.add((Appearance) feature);
+                    } else if (feature instanceof CityObjectGroup) {
+                        cityObjectGroups.add((CityObjectGroup) feature);
                     } else if (resolveGeometryReferences) {
-                        featureId++;
                         referenceResolver.resolveReferences(feature);
                         crossTopLevelResolver.processGeometryReferences(feature, featureId);
                     }
@@ -106,6 +121,10 @@ public class UpgradeProcessor {
                     AppearanceHelper appearanceHelper = AppearanceHelper.of(appearances);
                     propertiesProcessor.withGlobalAppearanceHelper(appearanceHelper);
                     crossLodResolver.withGlobalAppearanceHelper(appearanceHelper);
+                }
+
+                if (!cityObjectGroups.isEmpty()) {
+                    propertiesProcessor.withCityObjectGroups(cityObjectGroups);
                 }
             }
 
@@ -121,7 +140,12 @@ public class UpgradeProcessor {
         }
     }
 
-    public void upgrade(AbstractFeature feature, int featureId) {
+    public boolean upgrade(AbstractFeature feature, int featureId) {
+        if (feature instanceof Appearance
+                || feature instanceof CityObjectGroup) {
+            return false;
+        }
+
         referenceResolver.resolveReferences(feature);
 
         if (resolveGeometryReferences && crossTopLevelResolver.hasReferences()) {
@@ -132,7 +156,7 @@ public class UpgradeProcessor {
             crossLodResolver.resolveCrossLodReferences(feature);
         }
 
-        propertiesProcessor.process(feature);
+        return propertiesProcessor.process(feature);
     }
 
     public void postprocess() {
