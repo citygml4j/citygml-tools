@@ -27,15 +27,12 @@ import org.xmlobjects.gml.model.basictypes.Code;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.GeometryProperty;
 import org.xmlobjects.gml.util.id.DefaultIdCreator;
-import org.xmlobjects.gml.util.reference.ReferenceResolver;
 
 import java.util.*;
 
 public class GeometryReferenceResolver {
     private final GeometryCopyBuilder copyBuilder = GeometryCopyBuilder.newInstance();
     private final Map<String, GeometryReference> references = new HashMap<>();
-    private final ResolverProcessor resolverProcessor = new ResolverProcessor();
-    private final GeometryPropertyProcessor geometryPropertyProcessor = new GeometryPropertyProcessor();
     private final GeometryProcessor geometryProcessor = new GeometryProcessor();
 
     private boolean createCityObjectRelations;
@@ -58,13 +55,9 @@ public class GeometryReferenceResolver {
         return this;
     }
 
-    public void processGeometryReferences(AbstractFeature feature, int featureId, ReferenceResolver referenceResolver) {
-        referenceResolver.resolveReferences(feature);
-        processGeometryReferences(feature, featureId);
-    }
-
     public void processGeometryReferences(AbstractFeature feature, int featureId) {
-        geometryPropertyProcessor.process(feature, featureId);
+        GeometryPropertyProcessor processor = new GeometryPropertyProcessor();
+        processor.process(feature, featureId);
     }
 
     public void processReferencedGeometries(AbstractFeature feature) {
@@ -83,14 +76,10 @@ public class GeometryReferenceResolver {
         return !references.isEmpty();
     }
 
-    public void resolveGeometryReferences(AbstractFeature feature, int featureId, ReferenceResolver referenceResolver) {
-        referenceResolver.resolveReferences(feature);
-        resolveGeometryReferences(feature, featureId);
-    }
-
     public void resolveGeometryReferences(AbstractFeature feature, int featureId) {
         if (!references.isEmpty()) {
-            resolverProcessor.resolve(feature, featureId);
+            ResolverProcessor processor = new ResolverProcessor();
+            processor.resolve(feature, featureId);
         }
     }
 
@@ -139,7 +128,7 @@ public class GeometryReferenceResolver {
                     && property.getHref() != null
                     && property.getParent(ImplicitGeometry.class) == null) {
                 GeometryReference reference = references.get(CityObjects.getIdFromReference(property.getHref()));
-                if (reference != null) {
+                if (reference != null && reference.geometry != null) {
                     resolvedReferencesCounter++;
                     AbstractCityObject cityObject = property.getParent(AbstractCityObject.class);
                     if (cityObject != null) {

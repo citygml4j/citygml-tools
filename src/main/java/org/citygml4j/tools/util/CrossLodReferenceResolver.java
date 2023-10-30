@@ -34,10 +34,8 @@ import org.xmlobjects.model.Child;
 import java.util.*;
 
 public class CrossLodReferenceResolver {
-    private final CrossLodReferenceCollector lodReferenceCollector = new CrossLodReferenceCollector();
     private final GeometryCopyBuilder copyBuilder = GeometryCopyBuilder.newInstance().copyAppearance(true);
     private final Map<Mode, Integer> counter = new HashMap<>();
-
     private Mode mode = Mode.RESOLVE;
 
     public enum Mode {
@@ -77,6 +75,7 @@ public class CrossLodReferenceResolver {
     }
 
     public void resolveCrossLodReferences(AbstractFeature feature) {
+        CrossLodReferenceCollector lodReferenceCollector = new CrossLodReferenceCollector();
         Map<AbstractGeometry, List<GeometryProperty<?>>> references = lodReferenceCollector.process(feature);
         if (!references.isEmpty()) {
             if (mode == Mode.RESOLVE) {
@@ -110,8 +109,6 @@ public class CrossLodReferenceResolver {
                         });
             }
         }
-
-        lodReferenceCollector.clear();
     }
 
     private GeometryProperty<?> getTargetProperty(List<GeometryProperty<?>> properties) {
@@ -138,11 +135,6 @@ public class CrossLodReferenceResolver {
 
             propertiesByLod.keySet().forEach(this::visit);
             return references;
-        }
-
-        public void clear() {
-            references.clear();
-            propertiesByLod.clear();
         }
 
         @Override
