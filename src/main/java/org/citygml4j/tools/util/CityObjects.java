@@ -40,9 +40,13 @@ public class CityObjects {
         return index != -1 ? reference.substring(index + 1) : reference;
     }
 
+    public static String createId() {
+        return DefaultIdCreator.getInstance().createId();
+    }
+
     public static String getOrCreateId(AbstractFeature feature) {
         if (feature.getId() == null) {
-            feature.setId(DefaultIdCreator.getInstance().createId());
+            feature.setId(createId());
         }
 
         return feature.getId();
