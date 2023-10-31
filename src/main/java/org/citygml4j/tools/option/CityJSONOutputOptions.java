@@ -32,10 +32,10 @@ public class CityJSONOutputOptions implements Option {
             description = "CityJSON version to use for output file(s): 2.0, 1.1, 1.0 (default: ${DEFAULT-VALUE}).")
     private String version;
 
-    @CommandLine.Option(names = {"-f", "--write-cityjson-features"},
-            description = "Create CityJSONFeature objects and write them as JSON lines to enable streaming. " +
+    @CommandLine.Option(names = {"-l", "--json-lines"},
+            description = "Write CityJSONFeature objects in JSON Lines format. " +
                     "This option requires CityJSON 1.1 or later.")
-    private boolean writeCityJSONFeatures;
+    private boolean jsonLines;
 
     @CommandLine.Option(names = "--output-encoding", defaultValue = "UTF-8",
             description = "Encoding to use for output file(s): UTF-8, UTF-16, UTF-32 (default: ${DEFAULT-VALUE}).")
@@ -56,8 +56,8 @@ public class CityJSONOutputOptions implements Option {
         return versionOption;
     }
 
-    public boolean isWriteCityJSONFeatures() {
-        return writeCityJSONFeatures;
+    public boolean isJsonLines() {
+        return jsonLines;
     }
 
     public OutputEncoding getEncoding() {
@@ -81,7 +81,7 @@ public class CityJSONOutputOptions implements Option {
                             "but was '" + version + "'");
         }
 
-        if (writeCityJSONFeatures) {
+        if (jsonLines) {
             if (!versionOption.isGreaterThanOrEqual(CityJSONVersion.v1_1)) {
                 throw new CommandLine.ParameterException(commandLine,
                         "Error: --write-cityjson-features can only be used with CityJSON > 1.0");

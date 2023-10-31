@@ -119,7 +119,8 @@ public class ToCityJSONCommand extends CityGMLTool {
 
         for (int i = 0; i < inputFiles.size(); i++) {
             Path inputFile = inputFiles.get(i);
-            Path outputFile = inputFile.resolveSibling(replaceFileExtension(inputFile, "json"));
+            Path outputFile = inputFile.resolveSibling(replaceFileExtension(inputFile,
+                    outputOptions.isJsonLines() ? "jsonl" : "json"));
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
