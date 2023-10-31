@@ -66,7 +66,7 @@ public class ToCityJSONCommand extends CityGMLTool {
 
     @CommandLine.Option(names = {"-t", "--transform-coordinates"},
             description = "Transform the coordinates of vertices to integers to reduce the file size. The " +
-                    "transformation is always applied for CityJSON 1.1.")
+                    "transformation is always applied for CityJSON 1.1 and later.")
     private boolean transformCoordinates;
 
     @CommandLine.Option(names = {"-r", "--replace-implicit-geometries"},
@@ -141,7 +141,9 @@ public class ToCityJSONCommand extends CityGMLTool {
                     log.debug("Reading city objects and converting them into CityJSON " + outputOptions.getVersion() + ".");
                     globalObjects.getAppearances().forEach(writer::withGlobalAppearance);
                     globalObjects.getCityObjectGroups().forEach(writer::withGlobalCityObjectGroup);
-                    globalObjects.getTemplateGeometries().values().forEach(writer::withGlobalTemplateGeometry);
+                    globalObjects.getTemplateGeometries().values().forEach(geometry ->
+                            writer.withGlobalTemplateGeometry(geometry, geometry.getLocalProperties()
+                                    .getOrDefault(GlobalObjects.LOD, Integer.class, () -> 0)));
 
                     while (reader.hasNext()) {
                         writer.writeCityObject(reader.next());

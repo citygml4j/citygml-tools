@@ -28,13 +28,13 @@ import picocli.CommandLine;
 import java.util.Locale;
 
 public class CityJSONOutputOptions implements Option {
-    @CommandLine.Option(names = {"-v", "--cityjson-version"}, defaultValue = "1.1",
-            description = "CityJSON version to use for output file(s): 1.1, 1.0 (default: ${DEFAULT-VALUE}).")
+    @CommandLine.Option(names = {"-v", "--cityjson-version"}, defaultValue = "2.0",
+            description = "CityJSON version to use for output file(s): 2.0, 1.1, 1.0 (default: ${DEFAULT-VALUE}).")
     private String version;
 
-    @CommandLine.Option(names = "--write-cityjson-features",
-            description = "Create CityJSONFeature objects and write them as JSON Lines to enable streaming. " +
-                    "This option can only be used with CityJSON 1.1.")
+    @CommandLine.Option(names = {"-f", "--write-cityjson-features"},
+            description = "Create CityJSONFeature objects and write them as JSON lines to enable streaming. " +
+                    "This option requires CityJSON 1.1 or later.")
     private boolean writeCityJSONFeatures;
 
     @CommandLine.Option(names = "--output-encoding", defaultValue = "UTF-8",
@@ -74,23 +74,17 @@ public class CityJSONOutputOptions implements Option {
 
     @Override
     public void preprocess(CommandLine commandLine) {
-        switch (version) {
-            case "1.0":
-                versionOption = CityJSONVersion.v1_0;
-                break;
-            case "1.1":
-                versionOption = CityJSONVersion.v1_1;
-                break;
-            default:
-                throw new CommandLine.ParameterException(commandLine,
-                        "Invalid value for option '--cityjson-version': expected one of [1.1, 1.0] " +
-                                "but was '" + version + "'");
+        versionOption = CityJSONVersion.fromValue(version);
+        if (versionOption == null) {
+            throw new CommandLine.ParameterException(commandLine,
+                    "Invalid value for option '--cityjson-version': expected one of [2.0, 1.1, 1.0] " +
+                            "but was '" + version + "'");
         }
 
         if (writeCityJSONFeatures) {
-            if (getVersion() != CityJSONVersion.v1_1) {
+            if (!versionOption.isGreaterThanOrEqual(CityJSONVersion.v1_1)) {
                 throw new CommandLine.ParameterException(commandLine,
-                        "Error: --write-cityjson-features can only be used with CityJSON version 1.1");
+                        "Error: --write-cityjson-features can only be used with CityJSON > 1.0");
             } else if (prettyPrint) {
                 throw new CommandLine.ParameterException(commandLine,
                         "Error: --write-cityjson-features and --pretty-print are mutually exclusive (specify only one)");

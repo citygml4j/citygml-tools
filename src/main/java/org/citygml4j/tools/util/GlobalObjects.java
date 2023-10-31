@@ -34,6 +34,7 @@ import java.util.Map;
 
 public class GlobalObjects {
     public static final String NAME = "name";
+    public static final String LOD = "lod";
 
     public enum Type {
         APPEARANCE,
@@ -71,10 +72,15 @@ public class GlobalObjects {
     }
 
     void add(ImplicitGeometry implicitGeometry) {
+        add(implicitGeometry, 0);
+    }
+
+    void add(ImplicitGeometry implicitGeometry, int lod) {
         if (implicitGeometry.getRelativeGeometry() != null
                 && implicitGeometry.getRelativeGeometry().isSetInlineObject()
                 && implicitGeometry.getRelativeGeometry().getObject().getId() != null) {
             AbstractGeometry template = implicitGeometry.getRelativeGeometry().getObject();
+            template.getLocalProperties().set(LOD, lod);
             templateGeometries.put(template.getId(), template);
         }
     }

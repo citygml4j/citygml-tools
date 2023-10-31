@@ -21,12 +21,11 @@
 
 package org.citygml4j.tools.util;
 
-import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
+import org.citygml4j.core.model.common.GeometryInfo;
 import org.citygml4j.core.model.core.AbstractFeature;
-import org.citygml4j.core.model.core.ImplicitGeometry;
-import org.citygml4j.core.visitor.ObjectWalker;
+import org.citygml4j.core.model.core.ImplicitGeometryProperty;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
@@ -83,12 +82,18 @@ public class GlobalObjectsReader {
                             globalObjects.add((CityObjectGroup) feature, reader.getName());
                         }
                     } else if (types.contains(GlobalObjects.Type.IMPLICIT_GEOMETRY)) {
-                        feature.accept(new ObjectWalker() {
-                            @Override
-                            public void visit(ImplicitGeometry implicitGeometry) {
-                                globalObjects.add(implicitGeometry);
-                            }
-                        });
+                        GeometryInfo geometryInfo = feature.getGeometryInfo();
+                        for (int lod : geometryInfo.getLods()) {
+                            geometryInfo.getImplicitGeometries(lod).stream()
+                                    .filter(ImplicitGeometryProperty::isSetInlineObject)
+                                    .map(ImplicitGeometryProperty::getObject)
+                                    .forEach(implicitGeometry -> globalObjects.add(implicitGeometry, lod));
+                        }
+
+                        geometryInfo.getNonLodImplicitGeometries().stream()
+                                .filter(ImplicitGeometryProperty::isSetInlineObject)
+                                .map(ImplicitGeometryProperty::getObject)
+                                .forEach(globalObjects::add);
                     }
                 }
             }
@@ -127,10 +132,5 @@ public class GlobalObjectsReader {
         } catch (CityGMLReadException e) {
             throw new ExecutionException("Failed to read global objects.", e);
         }
-    }
-
-    private CityGMLVersion getVersion(CityGMLReader reader) {
-        CityGMLVersion version = CityGMLModules.getCityGMLVersion(reader.getName().getNamespaceURI());
-        return version != null ? version : CityGMLVersion.v3_0;
     }
 }
