@@ -54,7 +54,7 @@ public class FromCityJSONCommand extends CityGMLTool {
     private boolean mapUnknownTypes;
 
     @CommandLine.Option(names = {"-r", "--replace-templates"},
-            description = "Replace templates with their absolute coordinates.")
+            description = "Replace geometry templates with real coordinates.")
     private boolean replaceTemplates;
 
     @CommandLine.Option(names = {"-a", "--assign-appearances-to-implicit-geometries"},
@@ -198,6 +198,12 @@ public class FromCityJSONCommand extends CityGMLTool {
         if (assignAppearancesToImplicitGeometries && versionOption != CityGMLVersion.v3_0) {
             throw new CommandLine.ParameterException(commandLine,
                     "Error: --assign-appearances-to-implicit-geometries can only be used with CityGML version 3.0");
+        }
+
+        if (assignAppearancesToImplicitGeometries && replaceTemplates) {
+            throw new CommandLine.ParameterException(commandLine,
+                    "Error: --assign-appearances-to-implicit-geometries and --replace-templates are mutually " +
+                            "exclusive (specify only one)");
         }
 
         if (lodMappings != null) {
