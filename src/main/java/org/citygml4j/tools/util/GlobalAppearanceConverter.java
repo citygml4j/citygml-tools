@@ -41,12 +41,14 @@ import java.util.stream.Collectors;
 public class GlobalAppearanceConverter {
     private final CityGMLVersion version;
     private final Map<String, List<AbstractSurfaceData>> targets = new HashMap<>();
+    private final Set<String> processedTemplates = new HashSet<>();
     private final CopyBuilder copyBuilder = new CopyBuilder().failOnError(true);
     private final CityModel cityModel = new CityModel();
     private final Map<String, Integer> counter = new TreeMap<>();
     private final String ID = "id";
 
     private Mode mode = Mode.TOPLEVEL;
+    private Map<String, AbstractGeometry> templates;
 
     public enum Mode {
         TOPLEVEL,
@@ -70,6 +72,11 @@ public class GlobalAppearanceConverter {
 
     public GlobalAppearanceConverter withMode(Mode mode) {
         this.mode = mode;
+        return this;
+    }
+
+    public GlobalAppearanceConverter withTemplateGeometries(Map<String, AbstractGeometry> templates) {
+        this.templates = templates;
         return this;
     }
 
@@ -196,6 +203,39 @@ public class GlobalAppearanceConverter {
             topLevelFeature = feature instanceof AbstractCityObject ?
                     (AbstractCityObject) feature :
                     feature.getParent(AbstractCityObject.class);
+        }
+
+        @Override
+        public void visit(ImplicitGeometry implicitGeometry) {
+            if (templates != null && implicitGeometry.getRelativeGeometry() != null) {
+                AbstractGeometry template = templates.get(implicitGeometry.getRelativeGeometry().isSetInlineObject() ?
+                        implicitGeometry.getRelativeGeometry().getObject().getId() :
+                        CityObjects.getIdFromReference(implicitGeometry.getRelativeGeometry().getHref()));
+
+                if (template != null) {
+                    if (processedTemplates.add(template.getId())) {
+                        template.accept(this);
+                    }
+
+                    if (version == CityGMLVersion.v3_0) {
+                        ImplicitGeometry other = template.getParent(ImplicitGeometry.class);
+                        if (other.isSetAppearances()) {
+                            boolean isInline = implicitGeometry.getRelativeGeometry().isSetInlineObject();
+                            for (AbstractAppearanceProperty property : other.getAppearances()) {
+                                if (property.isSetInlineObject()
+                                        && property.getObject().hasLocalProperties()
+                                        && property.getObject().getLocalProperties().contains(ID)) {
+                                    implicitGeometry.getAppearances().add(isInline ?
+                                            new AbstractAppearanceProperty(property.getObject()) :
+                                            new AbstractAppearanceProperty("#" + property.getObject().getId()));
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                super.visit(implicitGeometry);
+            }
         }
 
         @Override

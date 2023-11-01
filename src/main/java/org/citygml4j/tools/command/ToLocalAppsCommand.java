@@ -21,6 +21,7 @@
 
 package org.citygml4j.tools.command;
 
+import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.tools.ExecutionException;
@@ -29,6 +30,7 @@ import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOption;
 import org.citygml4j.tools.util.GlobalAppearanceConverter;
+import org.citygml4j.tools.util.GlobalObjects;
 import org.citygml4j.tools.util.GlobalObjectsReader;
 import org.citygml4j.tools.util.InputFiles;
 import org.citygml4j.xml.reader.ChunkOptions;
@@ -41,6 +43,7 @@ import org.citygml4j.xml.writer.CityGMLWriteException;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.List;
 
 @CommandLine.Command(name = "to-local-apps",
@@ -88,21 +91,23 @@ public class ToLocalAppsCommand extends CityGMLTool {
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
-            log.debug("Reading global appearances from input file.");
-            List<Appearance> appearances = GlobalObjectsReader.onlyAppearances()
-                    .read(inputFile, getCityGMLContext())
-                    .getAppearances();
-
-            if (appearances.isEmpty()) {
-                log.info("The file does not contain global appearances. No action required.");
-                continue;
-            } else {
-                log.debug("Found " + appearances.size() + " global appearance(s).");
-            }
-
             try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions, "Appearance")) {
                 if (!version.isSetVersion()) {
                     setCityGMLVersion(reader, out);
+                }
+
+                log.debug("Reading global appearances and implicit geometries from input file.");
+                EnumSet<GlobalObjects.Type> types = out.getVersion() == CityGMLVersion.v3_0 ?
+                        EnumSet.of(GlobalObjects.Type.APPEARANCE, GlobalObjects.Type.IMPLICIT_GEOMETRY) :
+                        EnumSet.of(GlobalObjects.Type.APPEARANCE);
+
+                GlobalObjects globalObjects = GlobalObjectsReader.of(types).read(inputFile, getCityGMLContext());
+                List<Appearance> appearances = globalObjects.getAppearances();
+                if (appearances.isEmpty()) {
+                    log.info("The file does not contain global appearances. No action required.");
+                    continue;
+                } else {
+                    log.debug("Found " + appearances.size() + " global appearance(s).");
                 }
 
                 if (overwriteOption.isOverwrite()) {
@@ -112,7 +117,8 @@ public class ToLocalAppsCommand extends CityGMLTool {
                 }
 
                 GlobalAppearanceConverter converter = GlobalAppearanceConverter.of(appearances, out.getVersion())
-                        .withMode(mode);
+                        .withMode(mode)
+                        .withTemplateGeometries(globalObjects.getTemplateGeometries());
 
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(getFeatureInfo(reader))) {

@@ -55,6 +55,10 @@ public class GlobalObjectsReader {
         return new GlobalObjectsReader(EnumSet.copyOf(Arrays.asList(types)));
     }
 
+    public static GlobalObjectsReader of(EnumSet<GlobalObjects.Type> types) {
+        return new GlobalObjectsReader(types);
+    }
+
     public static GlobalObjectsReader onlyAppearances() {
         return new GlobalObjectsReader(EnumSet.of(GlobalObjects.Type.APPEARANCE));
     }
