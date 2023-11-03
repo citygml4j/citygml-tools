@@ -22,9 +22,9 @@
 package org.citygml4j.tools.util;
 
 import org.citygml4j.tools.ExecutionException;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.CRS;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
