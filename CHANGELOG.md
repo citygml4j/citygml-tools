@@ -1,16 +1,38 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.2.0] - 2023-11-03
+### Added
+- Added support for [CityJSON 2.0](https://www.cityjson.org/specs/2.0.0/) to the `to-cityjson` and `from-cityjson`
+  commands. ([#50](https://github.com/citygml4j/citygml-tools/issues/50))
+- The `apply-xslt` command now supports XSLT/XPath 2.0 and 3.0.
+- Added the `--map-lod0-roof-edge` option to the `upgrade` command. Use this option to convert bldg:lod0RoofEdge
+  properties of buildings in your CityGML 2.0/1.0 input files to individual RoofSurface objects having an LoD0 surface
+  in CityGML 3.0.
+- Added support for geometry templates to the `from-cityjson` command when reading CityJSON files in JSON Lines format.
+  The "geometry-templates" property must be placed in the "CityJSON" object on the first line of the file.
+
+### Changed
+- **Breaking:** Renamed the `--write-cityjson-features` option to `--json-lines` for the `to-cityjson` command.
+- The `--map-lod1-multi-surfaces` option of the `upgrade` command now creates a `GenericThematicSurface` object
+  for the entire LoD1 multi-surface rather than each surface member.
+- Child city objects that have no geometry after an upgrade to CityGML 3.0 with the `upgrade` command are now deleted.
+  Only empty top-level city objects are kept.
+- The `to-cityjson` command now creates geometry templates for the "CityJSON" object on the first line and references
+  them from the corresponding "CityJSONFeature" objects when the output is written in JSON Lines format. Replacing
+  geometry templates with real coordinates is still supported with the `--replace-implicit-geometries` option, but is
+  no longer the default behavior.
+- The `.jsonl` file extension is used by the `to-cityjson` command when writing CityJSON files in JSON Lines format. 
+
 ### Fixed
 - In a few scenarios, non-random identifiers were created for city objects that had no identifier in the input file.
   This has been fixed for all commands so that automatically generated identifiers are now random UUIDs.
   ([#47](https://github.com/citygml4j/citygml-tools/issues/47))
 - Fixed `upgrade` command to correctly create `CityObjectRelation` links between top-level city objects sharing a
   common geometry.
-
-### Changed
-- The `--map-lod1-multi-surfaces` option of the `upgrade` command now creates a `GenericThematicSurface` object
-  for an entire LoD1 multi-surface, but not for each surface member anymore.
+- Both the `to-local-apps` and the `from-cityjson` commands now correctly set XLink references to appearances of
+  implicit geometries when writing to CityGML 3.0.
 
 ## [2.1.0] - 2023-04-04
 ### Added
