@@ -61,15 +61,14 @@ processResources {
 
 application {
     mainClass = 'org.citygml4j.tools.CityGMLTools'
-    applicationDefaultJvmArgs = ['-Xms1G']
     executableDir = ''
 
     startScripts {
         doLast {
-            def windowsScript = getWindowsScript()
-            def unixScript = getUnixScript()
-            windowsScript.text = windowsScript.text.replaceFirst('set APP_HOME=.*', '$0\r\nset WORKING_DIR=%CD%')
-            unixScript.text = unixScript.text.replaceFirst('APP_HOME=.*', '$0\nexport APP_HOME\nexport WORKING_DIR=\\$SAVED')
+            def windows = getWindowsScript()
+            def unix = getUnixScript()
+            windows.text = windows.text.replaceFirst('set APP_HOME=.*', '$0\r\nset WORKING_DIR=%CD%')
+            unix.text = unix.text.replaceFirst('\nAPP_HOME=.*', '$0\nexport APP_HOME\nexport WORKING_DIR=\\$(pwd -P)')
         }
     }
 }
@@ -90,7 +89,7 @@ distributions.main.contents {
     into('lib') {
         from('resources/logging.properties')
     }
-    from(file("$buildDir/tmp/dir")) {
-        mkdir "$buildDir/tmp/dir/extensions"
+    from(file("$projectDir/build/tmp/dir")) {
+        mkdir "$projectDir/build/tmp/dir/extensions"
     }
 }
