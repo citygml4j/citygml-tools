@@ -37,6 +37,7 @@ dependencies {
     implementation 'org.geotools:gt-epsg-hsql:30.0'
     implementation 'org.geotools:gt-referencing:30.0'
     implementation 'org.apache.commons:commons-imaging:1.0-alpha3'
+    implementation 'net.sf.saxon:Saxon-HE:12.3'
     runtimeOnly 'com.fasterxml.woodstox:woodstox-core:6.5.1'
 }
 
