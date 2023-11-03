@@ -11,7 +11,7 @@ citygml-tools is licensed under the [Apache License, Version 2.0](http://www.apa
 See the `LICENSE` file for more details.
 
 ## Latest release
-The latest stable release of citygml-tools is 2.1.0.
+The latest stable release of citygml-tools is 2.2.0.
 
 Download the latest citygml-tools release as ZIP package
 [here](https://github.com/citygml4j/citygml-tools/releases/latest). Previous releases are available from the
@@ -76,7 +76,7 @@ of the specified CityGML file:
 You can process CityGML 3.0, 2.0, and 1.0 files with citygml-tools. The `upgrade` command provides an
 easy way to convert your existing CityGML 2.0 and 1.0 datasets into the latest version 3.0 of CityGML.
 
-The `from-cityjson` and `to-cityjson` commands support [CityJSON](https://www.cityjson.org/) 1.1 and 1.0 files.
+The `from-cityjson` and `to-cityjson` commands support [CityJSON](https://www.cityjson.org/) 2.0, 1.1, and 1.0 files.
 
 ## System requirements
 * Java 11 or higher
@@ -96,7 +96,7 @@ An official image can be pulled from Docker Hub as shown below.
 
     > docker pull citygml4j/citygml-tools:TAG
 
-Replace the `TAG` label with the version of citygml-tools you want to use such as `v1.4.5`. The `latest` tag
+Replace the `TAG` label with the version of citygml-tools you want to use such as `v2.2.0`. The `latest` tag
 refers to the latest stable release and is also the _default value_ if no tag is specified. If you want to pull the
 most recent unreleased snapshot of citygml-tools, use `edge` as tag.
 
