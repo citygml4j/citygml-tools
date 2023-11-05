@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- The `apply-xslt` command now supports XSLT/XPath 2.0 and 3.0.
 
 ## [2.2.0] - 2023-11-03
 ### Added
