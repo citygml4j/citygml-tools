@@ -6,7 +6,6 @@
 ### Added
 - Added support for [CityJSON 2.0](https://www.cityjson.org/specs/2.0.0/) to the `to-cityjson` and `from-cityjson`
   commands. ([#50](https://github.com/citygml4j/citygml-tools/issues/50))
-- The `apply-xslt` command now supports XSLT/XPath 2.0 and 3.0.
 - Added the `--map-lod0-roof-edge` option to the `upgrade` command. Use this option to convert bldg:lod0RoofEdge
   properties of buildings in your CityGML 2.0/1.0 input files to individual RoofSurface objects having an LoD0 surface
   in CityGML 3.0.
