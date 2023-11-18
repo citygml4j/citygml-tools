@@ -144,7 +144,7 @@ public class ToCityJSONCommand extends CityGMLTool {
                     globalObjects.getCityObjectGroups().forEach(writer::withGlobalCityObjectGroup);
                     globalObjects.getTemplateGeometries().values().forEach(geometry ->
                             writer.withGlobalTemplateGeometry(geometry, geometry.getLocalProperties()
-                                    .getOrDefault(GlobalObjects.LOD, Integer.class, () -> 0)));
+                                    .getOrDefault(GlobalObjects.TEMPLATE_LOD, Integer.class, () -> 0)));
 
                     while (reader.hasNext()) {
                         writer.writeCityObject(reader.next());

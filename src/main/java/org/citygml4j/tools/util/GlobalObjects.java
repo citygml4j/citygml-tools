@@ -24,7 +24,9 @@ package org.citygml4j.tools.util;
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.ImplicitGeometry;
+import org.citygml4j.core.util.reference.DefaultReferenceResolver;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
+import org.xmlobjects.gml.util.reference.ReferenceResolver;
 
 import javax.xml.namespace.QName;
 import java.util.ArrayList;
@@ -34,7 +36,7 @@ import java.util.Map;
 
 public class GlobalObjects {
     public static final String NAME = "name";
-    public static final String LOD = "lod";
+    public static final String TEMPLATE_LOD = "lod";
 
     public enum Type {
         APPEARANCE,
@@ -45,6 +47,8 @@ public class GlobalObjects {
     private final List<Appearance> appearances = new ArrayList<>();
     private final List<CityObjectGroup> cityObjectGroups = new ArrayList<>();
     private final Map<String, AbstractGeometry> templateGeometries = new HashMap<>();
+    private final ReferenceResolver referenceResolver = DefaultReferenceResolver.newInstance()
+            .storeRefereesWithReferencedObject(true);
 
     GlobalObjects() {
     }
@@ -79,8 +83,9 @@ public class GlobalObjects {
         if (implicitGeometry.getRelativeGeometry() != null
                 && implicitGeometry.getRelativeGeometry().isSetInlineObject()
                 && implicitGeometry.getRelativeGeometry().getObject().getId() != null) {
+            referenceResolver.resolveReferences(implicitGeometry);
             AbstractGeometry template = implicitGeometry.getRelativeGeometry().getObject();
-            template.getLocalProperties().set(LOD, lod);
+            template.getLocalProperties().set(TEMPLATE_LOD, lod);
             templateGeometries.put(template.getId(), template);
         }
     }
