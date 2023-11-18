@@ -33,7 +33,7 @@ public class CityJSONOutputOptions implements Option {
     private String version;
 
     @CommandLine.Option(names = {"-l", "--json-lines"},
-            description = "Write CityJSONFeature objects in JSON Lines format. " +
+            description = "Write output as CityJSON Sequence in JSON Lines format. " +
                     "This option requires CityJSON 1.1 or later.")
     private boolean jsonLines;
 
