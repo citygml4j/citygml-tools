@@ -96,10 +96,10 @@ public class CityJSONOutputOptions implements Option {
                 encodingOption = OutputEncoding.UTF8;
                 break;
             case "UTF-16":
-                encodingOption = OutputEncoding.UTF16_LE;
+                encodingOption = OutputEncoding.UTF16_BE;
                 break;
             case "UTF-32":
-                encodingOption = OutputEncoding.UTF32_LE;
+                encodingOption = OutputEncoding.UTF32_BE;
                 break;
             default:
                 throw new CommandLine.ParameterException(commandLine,
