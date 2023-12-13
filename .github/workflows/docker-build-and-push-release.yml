@@ -1,33 +1,89 @@
-name: docker-build-and-push-release
+name: docker-build-push-release
 
 on:
+  workflow_dispatch:
   release:
-    types: [released, edited]
+    types: [published, edited]
+env:
+  IMAGE_NAME: citygml-tools
 
 jobs:
-  docker:
+  build-push:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
     steps:
       -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      -
-        name: Get release version
+        name: Get release version without v
         id: release_version
-        uses: battila7/get-version-action@v2.2.1
+        uses: battila7/get-version-action@v2
       -
-        name: Login to DockerHub
-        uses: docker/login-action@v1
+        name: set lower case owner name
+        run: |
+          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+        env:
+          OWNER: '${{ github.repository_owner }}'
+      -
+        name: Checkout repo
+        uses: actions/checkout@v4
+      -
+        name: Docker login Dockerhub
+        id: docker_login
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
-        name: Build and push
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: ${{ matrix.platform }}
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      -
+        name: Extract metadata (tags, labels) for docker image
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}
+            ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=${{ !github.event.release.prerelease }}
+          tags: |
+            type=semver,pattern={{version}}
+          labels: |
+            maintainer=Claus Nagel
+            maintainer.email=claus.nagel@gmail.com
+            org.opencontainers.image.authors=Claus Nagel
+            org.opencontainers.image.title=citygml-tools
+            org.opencontainers.image.description=citygml-tools is a command line utility that bundles several operations for processing CityGML files
+            org.opencontainers.image.url=https://github.com/citygml4j/citygml-tools
+            org.opencontainers.image.documentation=https://github.com/citygml4j/citygml-tools#docker
+            org.opencontainers.image.source=https://github.com/citygml4j/citygml-tools
+      -
+        name: Build and publish
+        uses: docker/build-push-action@v5
         id: docker_build
-        uses: docker/build-push-action@v2
         with:
           push: true
-          tags: citygml4j/citygml-tools:${{ steps.release_version.outputs.version }},citygml4j/citygml-tools:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: ${{ matrix.platform }}
+          build-args: |
+            CITYGML_TOOLS_VERSION=${{ steps.release_version.outputs.version }}
       -
         name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
