@@ -61,7 +61,6 @@ jobs:
         with:
           images: |
             ${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}
-            ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}
           flavor: |
             latest=false
           tags: |
@@ -85,7 +84,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ matrix.platform }}
           build-args: |
-            CITYDB_TOOL_VERSION=${{ steps.short-sha.outputs.sha }}
+            CITYGML_TOOLS_VERSION=${{ steps.short-sha.outputs.sha }}
       -
         name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
