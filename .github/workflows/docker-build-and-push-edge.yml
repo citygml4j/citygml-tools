@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - master
+      - feature-docker
 env:
   IMAGE_NAME: citygml-tools
 
