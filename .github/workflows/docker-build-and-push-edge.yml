@@ -61,10 +61,11 @@ jobs:
         with:
           images: |
             ${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}
+            ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}
           flavor: |
             latest=false
           tags: |
-            type=edge,branch=master
+            type=edge,branch=feature-docker
           labels: |
             maintainer=Claus Nagel
             maintainer.email=claus.nagel@gmail.com
