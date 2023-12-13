@@ -83,7 +83,7 @@ The `from-cityjson` and `to-cityjson` commands support [CityJSON](https://www.ci
 
 citygml-tools can be run on any platform providing appropriate Java support.
 
-## Docker image
+## Docker
 citygml-tools is also available as Docker image. You can either build the image yourself using the provided `Dockerfile`
 or use a pre-built image from Docker Hub: https://hub.docker.com/r/citygml4j/citygml-tools.
 
