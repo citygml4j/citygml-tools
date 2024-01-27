@@ -42,6 +42,7 @@ import java.util.Set;
 
 public class GlobalObjectsReader {
     private final EnumSet<GlobalObjects.Type> types;
+    private boolean withTemplateAppearances;
 
     private GlobalObjectsReader(EnumSet<GlobalObjects.Type> types) {
         this.types = types;
@@ -71,6 +72,11 @@ public class GlobalObjectsReader {
         return new GlobalObjectsReader(EnumSet.of(GlobalObjects.Type.IMPLICIT_GEOMETRY));
     }
 
+    public GlobalObjectsReader withTemplateAppearances(boolean withTemplateAppearances) {
+        this.withTemplateAppearances = withTemplateAppearances;
+        return this;
+    }
+
     public GlobalObjects read(Path file, CityGMLContext context) throws ExecutionException {
         try {
             GlobalObjects globalObjects = new GlobalObjects();
@@ -91,13 +97,15 @@ public class GlobalObjectsReader {
                             geometryInfo.getImplicitGeometries(lod).stream()
                                     .filter(ImplicitGeometryProperty::isSetInlineObject)
                                     .map(ImplicitGeometryProperty::getObject)
-                                    .forEach(implicitGeometry -> globalObjects.add(implicitGeometry, lod));
+                                    .forEach(implicitGeometry ->
+                                            globalObjects.add(implicitGeometry, lod, withTemplateAppearances));
                         }
 
                         geometryInfo.getNonLodImplicitGeometries().stream()
                                 .filter(ImplicitGeometryProperty::isSetInlineObject)
                                 .map(ImplicitGeometryProperty::getObject)
-                                .forEach(globalObjects::add);
+                                .forEach(implicitGeometry ->
+                                        globalObjects.add(implicitGeometry, withTemplateAppearances));
                     }
                 }
             }

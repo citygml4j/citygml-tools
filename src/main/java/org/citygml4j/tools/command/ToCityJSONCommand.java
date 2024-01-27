@@ -126,6 +126,7 @@ public class ToCityJSONCommand extends CityGMLTool {
 
             log.debug("Reading global appearances, groups and implicit geometries from input file.");
             GlobalObjects globalObjects = GlobalObjectsReader.defaults()
+                    .withTemplateAppearances(true)
                     .read(inputFile, getCityGMLContext());
 
             try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions,
