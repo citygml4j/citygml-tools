@@ -1,8 +1,19 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2.3.0] - 2024-01-29
 ### Added
 - The `apply-xslt` command now supports XSLT/XPath 2.0 and 3.0.
+- The citygml-tools Docker images are now available as GitHub packages in addition to Docker Hub.
+
+### Changed
+- **Breaking:** Java 17 is now the minimum required version for running citygml-tools.
+- Improved performance when resolving global references in the `to-cityjson` command.
+
+### Fixed
+- Inline appearances of implicit geometries in CityGML 3 are now correctly converted to CityJSONSeq.
+- Fixed UTF-16 and UTF-32 encoding for CityJSON.
 
 ## [2.2.0] - 2023-11-03
 ### Added

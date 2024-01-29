@@ -11,7 +11,7 @@ citygml-tools is licensed under the [Apache License, Version 2.0](http://www.apa
 See the `LICENSE` file for more details.
 
 ## Latest release
-The latest stable release of citygml-tools is 2.2.0.
+The latest stable release of citygml-tools is 2.3.0.
 
 Download the latest citygml-tools release as ZIP package
 [here](https://github.com/citygml4j/citygml-tools/releases/latest). Previous releases are available from the
@@ -79,13 +79,14 @@ easy way to convert your existing CityGML 2.0 and 1.0 datasets into the latest v
 The `from-cityjson` and `to-cityjson` commands support [CityJSON](https://www.cityjson.org/) 2.0, 1.1, and 1.0 files.
 
 ## System requirements
-* Java 11 or higher
+* Java 17 or higher
 
 citygml-tools can be run on any platform providing appropriate Java support.
 
 ## Docker
 citygml-tools is also available as Docker image. You can either build the image yourself using the provided `Dockerfile`
-or use a pre-built image from Docker Hub: https://hub.docker.com/r/citygml4j/citygml-tools.
+or use a pre-built image from [Docker Hub](https://hub.docker.com/r/citygml4j/citygml-tools) or GitHub packages.
+The pre-built images support the most common architectures `(amd64, arm64)`.
 
 To build the image, clone the repository to your local machine and run the following command from the root of the
 repository:
@@ -96,7 +97,7 @@ An official image can be pulled from Docker Hub as shown below.
 
     > docker pull citygml4j/citygml-tools:TAG
 
-Replace the `TAG` label with the version of citygml-tools you want to use such as `v2.2.0`. The `latest` tag
+Replace the `TAG` label with the version of citygml-tools you want to use such as `v2.3.0`. The `latest` tag
 refers to the latest stable release and is also the _default value_ if no tag is specified. If you want to pull the
 most recent unreleased snapshot of citygml-tools, use `edge` as tag.
 
@@ -134,7 +135,6 @@ repository to your local machine and run the following command from the root of 
     > gradlew installDist
 
 The script automatically downloads all required dependencies for building and running citygml-tools. So make sure you
-are connected to the internet. The build process runs on all major operating systems and only requires a Java 11 JDK or
-higher to run.
+are connected to the internet.
 
 If the build was successful, you will find the citygml-tools package under `citygml-tools/build/install`.
