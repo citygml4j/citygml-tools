@@ -30,8 +30,8 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.citygml4j:citygml4j-xml:3.2.0'
-    implementation 'org.citygml4j:citygml4j-cityjson:3.2.0'
+    implementation 'org.citygml4j:citygml4j-xml:3.2.1-SNAPSHOT'
+    implementation 'org.citygml4j:citygml4j-cityjson:3.2.1-SNAPSHOT'
     implementation 'info.picocli:picocli:4.7.5'
     implementation 'org.geotools:gt-epsg-extension:30.2'
     implementation 'org.geotools:gt-epsg-hsql:30.2'
