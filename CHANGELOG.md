@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [2.3.1] - 2024-07-15
+### Changed
+- CityGML `Section` and `Intersection` features are no longer considered by the `to-cityjson` command
+  due to missing support in CityJSON.
+
+### Fixed
+- `LandUse` features were not converted to CityJSON using the `to-cityjson` command.
+- Fixed mapping of closure surfaces to CityJSON. ([#54](https://github.com/citygml4j/citygml-tools/issues/54))
+- Fixed reading of CityJSON storeys and building units with the `from-cityjson` command.
+- Fixed support for the `linux/arm64` architecture in the citygml-tools Docker image.
+  ([#52](https://github.com/citygml4j/citygml-tools/issues/52))
+
 ## [2.3.0] - 2024-01-29
 ### Added
 - The `apply-xslt` command now supports XSLT/XPath 2.0 and 3.0.
@@ -98,7 +110,8 @@
 The changelog of previous citygml-tools releases before version 2.0 is available
 [here](https://github.com/citygml4j/citygml-tools/blob/citygml-tools-v1/CHANGES.md).
 
-[Unreleased]: https://github.com/citygml4j/citygml-tools/compare/v2.3.0..HEAD
+[Unreleased]: https://github.com/citygml4j/citygml-tools/compare/v2.3.1..HEAD
+[2.3.1]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.3.1
 [2.3.0]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.3.0
 [2.2.0]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.2.0
 [2.1.0]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.1.0

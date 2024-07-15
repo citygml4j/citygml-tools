@@ -11,7 +11,7 @@ citygml-tools is licensed under the [Apache License, Version 2.0](http://www.apa
 See the `LICENSE` file for more details.
 
 ## Latest release
-The latest stable release of citygml-tools is 2.3.0.
+The latest stable release of citygml-tools is 2.3.1.
 
 Download the latest citygml-tools release as ZIP package
 [here](https://github.com/citygml4j/citygml-tools/releases/latest). Previous releases are available from the
@@ -97,7 +97,7 @@ An official image can be pulled from Docker Hub as shown below.
 
     > docker pull citygml4j/citygml-tools:TAG
 
-Replace the `TAG` label with the version of citygml-tools you want to use such as `v2.3.0`. The `latest` tag
+Replace the `TAG` label with the version of citygml-tools you want to use such as `v2.3.1`. The `latest` tag
 refers to the latest stable release and is also the _default value_ if no tag is specified. If you want to pull the
 most recent unreleased snapshot of citygml-tools, use `edge` as tag.
 
