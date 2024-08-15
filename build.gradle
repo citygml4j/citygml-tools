@@ -69,7 +69,8 @@ application {
             def windows = getWindowsScript()
             def unix = getUnixScript()
             windows.text = windows.text.replaceFirst('set APP_HOME=.*', '$0\r\nset WORKING_DIR=%CD%')
-            unix.text = unix.text.replaceFirst('\nAPP_HOME=.*', '$0\nexport APP_HOME\nexport WORKING_DIR=\\$(pwd -P)')
+            unix.text = unix.text.replaceFirst('\nCLASSPATH=.*',
+                    '$0\n\nexport APP_HOME\nexport WORKING_DIR=\\$(pwd -P)')
         }
     }
 }
