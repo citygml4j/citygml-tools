@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [2.3.2] - 2024-08-15
+### Fixed
+- Fixed start script for UNIX/Linux and Docker.
+
 ## [2.3.1] - 2024-07-15
 ### Changed
 - CityGML `Section` and `Intersection` features are no longer considered by the `to-cityjson` command
@@ -110,7 +114,8 @@
 The changelog of previous citygml-tools releases before version 2.0 is available
 [here](https://github.com/citygml4j/citygml-tools/blob/citygml-tools-v1/CHANGES.md).
 
-[Unreleased]: https://github.com/citygml4j/citygml-tools/compare/v2.3.1..HEAD
+[Unreleased]: https://github.com/citygml4j/citygml-tools/compare/v2.3.2..HEAD
+[2.3.2]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.3.2
 [2.3.1]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.3.1
 [2.3.0]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.3.0
 [2.2.0]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.2.0
