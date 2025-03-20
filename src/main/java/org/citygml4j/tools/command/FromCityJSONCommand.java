@@ -26,6 +26,7 @@ import org.citygml4j.cityjson.reader.CityJSONInputFactory;
 import org.citygml4j.cityjson.reader.CityJSONReadException;
 import org.citygml4j.cityjson.reader.CityJSONReader;
 import org.citygml4j.core.model.CityGMLVersion;
+import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.model.core.CityModel;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
@@ -39,6 +40,7 @@ import org.xmlobjects.gml.model.deprecated.StringOrRef;
 import org.xmlobjects.gml.model.feature.BoundingShape;
 import org.xmlobjects.gml.model.geometry.DirectPosition;
 import org.xmlobjects.gml.model.geometry.Envelope;
+import org.xmlobjects.gml.util.EnvelopeOptions;
 import org.xmlobjects.util.xml.XMLPatterns;
 import picocli.CommandLine;
 
@@ -125,9 +127,12 @@ public class FromCityJSONCommand extends CityGMLTool {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
 
             try (CityJSONReader reader = createCityJSONReader(in, inputFile, inputOptions)) {
-                CityModel cityModel = null;
+                String srsName = null;
+                CityModel cityModel = new CityModel();
                 if (reader.hasNext()) {
-                    cityModel = createCityModel(reader.getMetadata());
+                    Metadata metadata = reader.getMetadata();
+                    srsName = getSrsName(metadata);
+                    setMetadata(cityModel, metadata, srsName);
                 }
 
                 log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
@@ -136,7 +141,12 @@ public class FromCityJSONCommand extends CityGMLTool {
                         .withCityModelInfo(cityModel)) {
                     log.debug("Reading city objects and converting them into CityGML " + versionOption + ".");
                     while (reader.hasNext()) {
-                        writer.writeMember(reader.next());
+                        AbstractFeature feature = reader.next();
+                        if (srsName != null && cityModel.getBoundedBy() == null) {
+                            setSrsName(feature, srsName);
+                        }
+
+                        writer.writeMember(feature);
                     }
                 }
             } catch (CityJSONReadException e) {
@@ -149,11 +159,8 @@ public class FromCityJSONCommand extends CityGMLTool {
         return CommandLine.ExitCode.OK;
     }
 
-    private CityModel createCityModel(Metadata metadata) {
-        CityModel cityModel = null;
+    private void setMetadata(CityModel cityModel, Metadata metadata, String srsName) {
         if (metadata != null) {
-            cityModel = new CityModel();
-
             if (metadata.getIdentifier() != null) {
                 cityModel.setId(XMLPatterns.NCNAME.matcher(metadata.getIdentifier()).matches() ?
                         metadata.getIdentifier() :
@@ -169,18 +176,34 @@ public class FromCityJSONCommand extends CityGMLTool {
                         new DirectPosition(metadata.getGeographicalExtent().subList(0, 3)),
                         new DirectPosition(metadata.getGeographicalExtent().subList(3, 6)));
                 envelope.setSrsDimension(3);
-
-                if (srsName != null) {
-                    envelope.setSrsName(srsName);
-                } else if (metadata.getReferenceSystem() != null) {
-                    envelope.setSrsName(metadata.getReferenceSystem().toURL());
-                }
-
+                envelope.setSrsName(srsName);
                 cityModel.setBoundedBy(new BoundingShape(envelope));
             }
         }
+    }
 
-        return cityModel;
+    private String getSrsName(Metadata metadata) {
+        if (srsName != null) {
+            return srsName;
+        } else if (metadata != null && metadata.getReferenceSystem() != null) {
+            return metadata.getReferenceSystem().toURL();
+        } else {
+            return null;
+        }
+    }
+
+    private void setSrsName(AbstractFeature feature, String srsName) {
+        if (feature.getBoundedBy() != null
+                && feature.getBoundedBy().isSetEnvelope()) {
+            feature.getBoundedBy().getEnvelope().setSrsName(srsName);
+        } else {
+            Envelope envelope = feature.computeEnvelope(EnvelopeOptions.defaults()
+                    .reuseExistingEnvelopes(true));
+            if (envelope.isValid()) {
+                envelope.setSrsName(srsName);
+                feature.setBoundedBy(new BoundingShape(envelope));
+            }
+        }
     }
 
     @Override
