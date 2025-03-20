@@ -5,9 +5,9 @@ plugins {
     id 'application'
 }
 
-group 'org.citygml4j.tools'
-version '2.3.2'
-description 'Collection of tools for processing CityGML files'
+group = 'org.citygml4j.tools'
+version = '2.3.2'
+description = 'Collection of tools for processing CityGML files'
 
 ext {
     date = new Date()
@@ -21,10 +21,10 @@ java {
 
 repositories {
     maven {
-        url 'https://repo.osgeo.org/repository/release'
+        url = 'https://repo.osgeo.org/repository/release'
     }
     maven {
-        url 'https://oss.sonatype.org/content/repositories/snapshots'
+        url = 'https://oss.sonatype.org/content/repositories/snapshots'
     }
     mavenCentral()
 }
@@ -52,10 +52,11 @@ jar {
 processResources {
     outputs.upToDateWhen { false }
     filteringCharset = 'ISO-8859-1'
+    def appName = project.name
     filesMatching('**/application.properties') {
         filter(ReplaceTokens, tokens: [
-                name: project.name,
-                version: project.version
+                name: appName,
+                version: version
         ])
     }
 }

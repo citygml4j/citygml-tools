@@ -329,8 +329,8 @@ public class CityGMLTools implements Command, CommandLine.IVersionProvider {
             Properties properties = new Properties();
             properties.load(stream);
             return new String[]{
-                    properties.getProperty("name") + ", version " + properties.getProperty("version"),
-                    "(C) 2018-" + LocalDate.now().getYear() + " Claus Nagel <claus.nagel@gmail.com>"
+                    properties.getProperty("name") + " version " + properties.getProperty("version"),
+                    "(C) 2018-" + LocalDate.now().getYear() + " Claus Nagel <claus.nagel@gmail.com>\n"
             };
         } catch (IOException e) {
             return new String[]{};
