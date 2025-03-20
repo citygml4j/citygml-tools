@@ -78,6 +78,10 @@ public class FromCityJSONCommand extends CityGMLTool {
             description = "CityGML version to use for output file(s): 3.0, 2.0, 1.0 (default: ${DEFAULT-VALUE}).")
     private String version;
 
+    @CommandLine.Option(names = {"--srs-name"},
+            description = "Name of the CRS to use in the output file.")
+    private String srsName;
+
     @CommandLine.Mixin
     private CityGMLOutputOptions outputOptions;
 
@@ -166,7 +170,9 @@ public class FromCityJSONCommand extends CityGMLTool {
                         new DirectPosition(metadata.getGeographicalExtent().subList(3, 6)));
                 envelope.setSrsDimension(3);
 
-                if (metadata.getReferenceSystem() != null) {
+                if (srsName != null) {
+                    envelope.setSrsName(srsName);
+                } else if (metadata.getReferenceSystem() != null) {
                     envelope.setSrsName(metadata.getReferenceSystem().toURL());
                 }
 

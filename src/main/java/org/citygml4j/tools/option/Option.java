@@ -24,5 +24,6 @@ package org.citygml4j.tools.option;
 import picocli.CommandLine;
 
 public interface Option {
-    default void preprocess(CommandLine commandLine) throws Exception {}
+    default void preprocess(CommandLine commandLine) throws Exception {
+    }
 }

@@ -474,7 +474,7 @@ public class Statistics {
         if (hierarchy.fields().hasNext()) {
             String indent = level > 0 ? "    ".repeat(level) : "";
             Map.Entry<String, JsonNode> object = hierarchy.fields().next();
-            printer.accept(indent + "|-- " + object.getKey() + " (" + object.getValue() + ")" );
+            printer.accept(indent + "|-- " + object.getKey() + " (" + object.getValue() + ")");
             hierarchy.path("children").elements().forEachRemaining(child -> printHierarchies(child, level + 1, printer));
         }
     }

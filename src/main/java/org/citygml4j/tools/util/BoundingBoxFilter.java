@@ -83,7 +83,7 @@ public class BoundingBoxFilter {
         Envelope candidate = feature.computeEnvelope();
         if (!candidate.isEmpty() && candidate.isValid()) {
             return mode == Mode.WITHIN ?
-                    boundingBox.contains(candidate):
+                    boundingBox.contains(candidate) :
                     boundingBox.intersects(candidate);
         }
 
