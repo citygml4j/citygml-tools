@@ -37,7 +37,7 @@ import org.xmlobjects.gml.model.common.CoordinateListProvider;
 import org.xmlobjects.gml.model.feature.BoundingShape;
 import org.xmlobjects.gml.model.geometry.*;
 import org.xmlobjects.gml.model.geometry.primitives.*;
-import org.xmlobjects.gml.util.jama.Matrix;
+import org.xmlobjects.gml.util.matrix.Matrix;
 
 import java.util.ArrayList;
 import java.util.HashMap;
