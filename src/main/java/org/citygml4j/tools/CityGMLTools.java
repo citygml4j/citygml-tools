@@ -128,17 +128,17 @@ public class CityGMLTools implements Command, CommandLine.IVersionProvider {
         Instant start = Instant.now();
         int exitCode = CommandLine.ExitCode.SOFTWARE;
 
-        CommandLine cmd = new CommandLine(this)
-                .setCaseInsensitiveEnumValuesAllowed(true)
-                .setAbbreviatedOptionsAllowed(true)
-                .setAbbreviatedSubcommandsAllowed(true)
-                .setExecutionStrategy(new CommandLine.RunAll());
+        System.setProperty("picocli.disable.closures", "true");
+        CommandLine cmd = new CommandLine(this);
 
         try {
-            CommandLine.ParseResult parseResult = cmd.parseArgs(args);
-            List<CommandLine> commandLines = parseResult.asCommandLineList();
+            CommandLine.ParseResult parseResult = cmd.setCaseInsensitiveEnumValuesAllowed(true)
+                    .setAbbreviatedOptionsAllowed(true)
+                    .setAbbreviatedSubcommandsAllowed(true)
+                    .setExecutionStrategy(new CommandLine.RunAll())
+                    .parseArgs(args);
 
-            // check for help options
+            List<CommandLine> commandLines = parseResult.asCommandLineList();
             for (CommandLine commandLine : commandLines) {
                 if (commandLine.isUsageHelpRequested() || commandLine.isVersionHelpRequested()) {
                     return CommandLine.executeHelpRequest(parseResult);
@@ -147,7 +147,6 @@ public class CityGMLTools implements Command, CommandLine.IVersionProvider {
                 }
             }
 
-            // check for required subcommand
             if (!parseResult.hasSubcommand()) {
                 throw new CommandLine.ParameterException(cmd, "Missing required subcommand.");
             }
@@ -155,7 +154,6 @@ public class CityGMLTools implements Command, CommandLine.IVersionProvider {
             for (CommandLine commandLine : commandLines) {
                 Object command = commandLine.getCommand();
 
-                // preprocess options
                 for (Field field : command.getClass().getDeclaredFields()) {
                     if (Option.class.isAssignableFrom(field.getType())) {
                         field.setAccessible(true);
@@ -166,13 +164,11 @@ public class CityGMLTools implements Command, CommandLine.IVersionProvider {
                     }
                 }
 
-                // preprocess commands
                 if (command instanceof Command) {
                     ((Command) command).preprocess(commandLine);
                 }
             }
 
-            // execute commands
             commandLine = APP_NAME + " " + String.join(" ", args);
             subCommandName = commandLines.get(1).getCommandName();
             exitCode = cmd.getExecutionStrategy().execute(parseResult);
