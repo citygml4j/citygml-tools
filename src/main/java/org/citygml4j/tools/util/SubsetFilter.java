@@ -25,9 +25,9 @@ import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.citygml4j.core.visitor.ObjectWalker;
-import org.citygml4j.tools.option.CounterOption;
-import org.citygml4j.tools.option.IdOption;
-import org.citygml4j.tools.option.TypeNamesOption;
+import org.citygml4j.tools.option.CounterOptions;
+import org.citygml4j.tools.option.IdOptions;
+import org.citygml4j.tools.option.TypeNameOptions;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.module.citygml.CityObjectGroupModule;
@@ -52,7 +52,7 @@ public class SubsetFilter {
     private Set<String> ids;
     private BoundingBoxFilter boundingBoxFilter;
     private boolean invert;
-    private CounterOption counterOption;
+    private CounterOptions counterOptions;
     private boolean removeGroupMembers;
 
     private long count;
@@ -75,13 +75,13 @@ public class SubsetFilter {
         return this;
     }
 
-    public SubsetFilter withTypeNamesFilter(TypeNamesOption typeNamesOption, CityGMLContext context) {
-        this.typeNames = typeNamesOption != null ? typeNamesOption.getTypeNames(context) : null;
+    public SubsetFilter withTypeNamesFilter(TypeNameOptions typeNameOptions, CityGMLContext context) {
+        this.typeNames = typeNameOptions != null ? typeNameOptions.getTypeNames(context) : null;
         return this;
     }
 
-    public SubsetFilter withIdFilter(IdOption idOption) {
-        this.ids = idOption != null ? idOption.getIds() : null;
+    public SubsetFilter withIdFilter(IdOptions idOptions) {
+        this.ids = idOptions != null ? idOptions.getIds() : null;
         return this;
     }
 
@@ -99,8 +99,8 @@ public class SubsetFilter {
         return this;
     }
 
-    public SubsetFilter withCounterOption(CounterOption counterOption) {
-        this.counterOption = counterOption;
+    public SubsetFilter withCounterOption(CounterOptions counterOptions) {
+        this.counterOptions = counterOptions;
         return this;
     }
 
@@ -135,15 +135,15 @@ public class SubsetFilter {
             keep = !keep;
         }
 
-        if (keep && counterOption != null) {
-            if (index < counterOption.getStartIndex()) {
+        if (keep && counterOptions != null) {
+            if (index < counterOptions.getStartIndex()) {
                 index++;
                 keep = false;
             } else {
                 count++;
             }
 
-            keep = keep && count <= counterOption.getCount();
+            keep = keep && count <= counterOptions.getCount();
         }
 
         if (keep) {

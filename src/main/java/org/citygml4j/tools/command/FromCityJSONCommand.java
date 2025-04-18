@@ -29,10 +29,14 @@ import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.model.core.CityModel;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.io.InputFile;
+import org.citygml4j.tools.io.InputFiles;
+import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
+import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.util.InputFiles;
 import org.citygml4j.tools.util.LodMapper;
+import org.citygml4j.tools.util.ResourceProcessor;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
@@ -44,7 +48,6 @@ import org.xmlobjects.gml.util.EnvelopeOptions;
 import org.xmlobjects.util.xml.XMLPatterns;
 import picocli.CommandLine;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -76,9 +79,8 @@ public class FromCityJSONCommand extends CityGMLTool {
                     "lacks the defined CityJSON LoD.")
     private Map<Integer, Double> lodMappings;
 
-    @CommandLine.Option(names = {"-v", "--citygml-version"}, defaultValue = "3.0",
-            description = "CityGML version to use for output file(s): 3.0, 2.0, 1.0 (default: ${DEFAULT-VALUE}).")
-    private String version;
+    @CommandLine.Mixin
+    private CityGMLOutputVersion version;
 
     @CommandLine.Option(names = {"--srs-name"},
             description = "Name of the CRS to use in the output file.")
@@ -90,22 +92,21 @@ public class FromCityJSONCommand extends CityGMLTool {
     @CommandLine.Mixin
     InputOptions inputOptions;
 
-    private CityGMLVersion versionOption;
-
     @Override
     public Integer call() throws ExecutionException {
         log.debug("Searching for CityJSON input files.");
-        List<Path> inputFiles = InputFiles.of(inputOptions.getFiles())
-                .withDefaultGlob("**.{json,cityjson}")
+        List<InputFile> inputFiles = InputFiles.of(inputOptions.getFile())
+                .withDefaultGlob("**.{json,jsonl,cityjson}")
                 .find();
 
         if (inputFiles.isEmpty()) {
-            log.warn("No files found at " + inputOptions.joinFiles() + ".");
+            log.warn("No files found at " + inputOptions.getFile() + ".");
             return CommandLine.ExitCode.OK;
+        } else if (inputFiles.size() > 1) {
+            log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.getFile() + ".");
         }
 
-        log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
-        log.debug("Using CityGML " + versionOption + " for the output file(s).");
+        log.debug("Using CityGML " + version.getVersion() + " for the output file(s).");
 
         LodMapper lodMapper = LodMapper.newInstance()
                 .withMode(mode)
@@ -117,16 +118,18 @@ public class FromCityJSONCommand extends CityGMLTool {
                 .transformTemplateGeometries(replaceTemplates)
                 .assignAppearancesToImplicitGeometries(assignAppearancesToImplicitGeometries)
                 .withLodMapper(lodMapper)
-                .withTargetCityGMLVersion(versionOption);
-        CityGMLOutputFactory out = createCityGMLOutputFactory(versionOption);
+                .withTargetCityGMLVersion(version.getVersion());
+        CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
 
         for (int i = 0; i < inputFiles.size(); i++) {
-            Path inputFile = inputFiles.get(i);
-            Path outputFile = inputFile.resolveSibling(replaceFileExtension(inputFile, "gml"));
+            InputFile inputFile = inputFiles.get(i);
+            OutputFile outputFile = OutputFile.of(getOutputDirectory(inputFile, outputOptions)
+                    .resolve(replaceFileExtension(inputFile.getFile(), "gml")));
 
-            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
+            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
-            try (CityJSONReader reader = createCityJSONReader(in, inputFile, inputOptions)) {
+            try (CityJSONReader reader = createCityJSONReader(in, inputFile, inputOptions);
+                 ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
                 String srsName = null;
                 CityModel cityModel = new CityModel();
                 if (reader.hasNext()) {
@@ -135,24 +138,25 @@ public class FromCityJSONCommand extends CityGMLTool {
                     setMetadata(cityModel, metadata, srsName);
                 }
 
-                log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
+                log.info("Writing output to file " + outputFile + ".");
 
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(cityModel)) {
-                    log.debug("Reading city objects and converting them into CityGML " + versionOption + ".");
+                    log.debug("Reading city objects and converting them into CityGML " + version.getVersion() + ".");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
                         if (srsName != null && cityModel.getBoundedBy() == null) {
                             setSrsName(feature, srsName);
                         }
 
+                        resourceProcessor.process(feature);
                         writer.writeMember(feature);
                     }
                 }
             } catch (CityJSONReadException e) {
-                throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
+                throw new ExecutionException("Failed to read file " + inputFile + ".", e);
             } catch (CityGMLWriteException e) {
-                throw new ExecutionException("Failed to write file " + outputFile.toAbsolutePath() + ".", e);
+                throw new ExecutionException("Failed to write file " + outputFile + ".", e);
             }
         }
 
@@ -208,23 +212,7 @@ public class FromCityJSONCommand extends CityGMLTool {
 
     @Override
     public void preprocess(CommandLine commandLine) {
-        switch (version) {
-            case "1.0":
-                versionOption = CityGMLVersion.v1_0;
-                break;
-            case "2.0":
-                versionOption = CityGMLVersion.v2_0;
-                break;
-            case "3.0":
-                versionOption = CityGMLVersion.v3_0;
-                break;
-            default:
-                throw new CommandLine.ParameterException(commandLine,
-                        "Invalid value for option '--citygml-version': expected one of [3.0, 2.0, 1.0] " +
-                                "but was '" + version + "'");
-        }
-
-        if (assignAppearancesToImplicitGeometries && versionOption != CityGMLVersion.v3_0) {
+        if (assignAppearancesToImplicitGeometries && version.getVersion() != CityGMLVersion.v3_0) {
             throw new CommandLine.ParameterException(commandLine,
                     "Error: --assign-appearances-to-implicit-geometries can only be used with CityGML version 3.0");
         }

@@ -4,7 +4,7 @@
  *
  * citygml-tools is part of the citygml4j project
  *
- * Copyright 2018-2024 Claus Nagel <claus.nagel@gmail.com>
+ * Copyright 2018-2025 Claus Nagel <claus.nagel@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,20 @@ package org.citygml4j.tools.option;
 
 import picocli.CommandLine;
 
-public class OverwriteInputOption implements Option {
+public class OverwriteInputOptions implements Option {
     @CommandLine.Option(names = {"-O", "--overwrite"},
             description = "Overwrite input file(s).")
     private boolean overwrite;
 
     public boolean isOverwrite() {
         return overwrite;
+    }
+
+    @Override
+    public void preprocess(CommandLine commandLine) throws Exception {
+        if (overwrite && commandLine.getParseResult().hasMatchedOption("--output")) {
+            throw new CommandLine.ParameterException(commandLine,
+                    "Error: --overwrite and --output are mutually exclusive (specify only one)");
+        }
     }
 }

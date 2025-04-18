@@ -26,10 +26,13 @@ import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.io.InputFile;
+import org.citygml4j.tools.io.InputFiles;
+import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.option.OverwriteInputOption;
-import org.citygml4j.tools.util.InputFiles;
+import org.citygml4j.tools.option.OverwriteInputOptions;
+import org.citygml4j.tools.util.ResourceProcessor;
 import org.citygml4j.tools.util.UpgradeProcessor;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.reader.ChunkOptions;
@@ -41,7 +44,6 @@ import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
 import picocli.CommandLine;
 
-import java.nio.file.Path;
 import java.util.List;
 
 @CommandLine.Command(name = "upgrade",
@@ -69,14 +71,14 @@ public class UpgradeCommand extends CityGMLTool {
 
     @CommandLine.Option(names = {"-l", "--add-object-links"},
             description = "Add CityObjectRelation links between top-level city objects sharing a common geometry. " +
-                    "Use only when resolving of geometry between top-level city objects references is enabled.")
+                    "Use only when resolving geometry references between top-level city objects references is enabled.")
     private boolean createCityObjectRelations;
 
     @CommandLine.Mixin
     private CityGMLOutputOptions outputOptions;
 
     @CommandLine.Mixin
-    private OverwriteInputOption overwriteOption;
+    private OverwriteInputOptions overwriteOptions;
 
     @CommandLine.Mixin
     private InputOptions inputOptions;
@@ -86,27 +88,28 @@ public class UpgradeCommand extends CityGMLTool {
     @Override
     public Integer call() throws ExecutionException {
         log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles = InputFiles.of(inputOptions.getFiles())
+        List<InputFile> inputFiles = InputFiles.of(inputOptions.getFile())
                 .withFilter(path -> !stripFileExtension(path).endsWith(suffix))
                 .find();
 
         if (inputFiles.isEmpty()) {
-            log.warn("No files found at " + inputOptions.joinFiles() + ".");
+            log.warn("No files found at " + inputOptions.getFile() + ".");
             return CommandLine.ExitCode.OK;
+        } else if (inputFiles.size() > 1) {
+            log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.getFile() + ".");
         }
-
-        log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
 
         CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
         CityGMLOutputFactory out = createCityGMLOutputFactory(CityGMLVersion.v3_0);
 
         for (int i = 0; i < inputFiles.size(); i++) {
-            Path inputFile = inputFiles.get(i);
-            Path outputFile = getOutputFile(inputFile, suffix, overwriteOption.isOverwrite());
+            InputFile inputFile = inputFiles.get(i);
+            OutputFile outputFile = getOutputFile(inputFile, suffix, outputOptions, overwriteOptions);
 
-            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
+            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
-            try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions)) {
+            try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions);
+                 ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
                 if (reader.hasNext()) {
                     CityGMLVersion version = CityGMLModules.getCityGMLVersion(reader.getName().getNamespaceURI());
                     if (version == CityGMLVersion.v3_0) {
@@ -126,10 +129,10 @@ public class UpgradeCommand extends CityGMLTool {
                 log.debug("Reading global objects from input file.");
                 processor.readGlobalObjects(inputFile, getCityGMLContext());
 
-                if (overwriteOption.isOverwrite()) {
-                    log.debug("Writing temporary output file " + outputFile.toAbsolutePath() + ".");
+                if (outputFile.isTemporary()) {
+                    log.debug("Writing temporary output file " + outputFile + ".");
                 } else {
-                    log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
+                    log.info("Writing output to file " + outputFile + ".");
                 }
 
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
@@ -140,6 +143,7 @@ public class UpgradeCommand extends CityGMLTool {
                         featureId++;
                         AbstractFeature feature = reader.next();
                         if (processor.upgrade(feature, featureId)) {
+                            resourceProcessor.process(feature);
                             writer.writeMember(feature);
                         }
                     }
@@ -147,22 +151,24 @@ public class UpgradeCommand extends CityGMLTool {
                     processor.postprocess();
 
                     for (CityObjectGroup cityObjectGroup : processor.getCityObjectGroups()) {
+                        resourceProcessor.process(cityObjectGroup);
                         writer.writeMember(cityObjectGroup);
                     }
 
                     for (Appearance appearance : processor.getGlobalAppearances()) {
+                        resourceProcessor.process(appearance);
                         writer.writeMember(appearance);
                     }
                 }
 
                 printResultStatistics(processor.getResultStatistics());
             } catch (CityGMLReadException e) {
-                throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
+                throw new ExecutionException("Failed to read file " + inputFile + ".", e);
             } catch (CityGMLWriteException e) {
-                throw new ExecutionException("Failed to write file " + outputFile.toAbsolutePath() + ".", e);
+                throw new ExecutionException("Failed to write file " + outputFile + ".", e);
             }
 
-            if (overwriteOption.isOverwrite()) {
+            if (outputFile.isTemporary()) {
                 log.debug("Replacing input file with temporary output file.");
                 replaceInputFile(inputFile, outputFile);
             }

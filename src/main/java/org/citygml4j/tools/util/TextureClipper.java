@@ -32,6 +32,8 @@ import org.citygml4j.core.model.appearance.*;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.visitor.ObjectWalker;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.io.InputFile;
+import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.log.Logger;
 import org.xmlobjects.gml.model.geometry.DirectPosition;
 import org.xmlobjects.gml.model.geometry.Envelope;
@@ -57,7 +59,8 @@ import java.util.*;
 
 public class TextureClipper {
     private final Logger log = Logger.getInstance();
-    private final Path basePath;
+    private final Path inputDir;
+    private final Path outputDir;
     private final CityGMLVersion version;
     private final ClippingProcessor clippingProcessor = new ClippingProcessor();
 
@@ -71,13 +74,14 @@ public class TextureClipper {
 
     private Path targetFolder;
 
-    private TextureClipper(Path basePath, CityGMLVersion version) {
-        this.basePath = basePath;
+    private TextureClipper(Path inputDir, Path outputDir, CityGMLVersion version) {
+        this.inputDir = inputDir;
+        this.outputDir = outputDir;
         this.version = version;
     }
 
-    public static TextureClipper of(Path basePath, CityGMLVersion version) {
-        return new TextureClipper(basePath, version);
+    public static TextureClipper of(InputFile inputFile, OutputFile outputFile, CityGMLVersion version) {
+        return new TextureClipper(inputFile.getFile().getParent(), outputFile.getFile().getParent(), version);
     }
 
     public TextureClipper forceJpeg(boolean forceJpeg) {
@@ -117,10 +121,10 @@ public class TextureClipper {
 
     public void clipTextures(AbstractFeature feature) throws ExecutionException {
         try {
-            targetFolder = basePath.resolve(textureFolder);
+            targetFolder = outputDir.resolve(textureFolder);
         } catch (InvalidPathException e) {
             throw new ExecutionException("Failed to create target texture folder " +
-                    basePath + File.separator + textureFolder + ".", e);
+                    outputDir + File.separator + textureFolder + ".", e);
         }
 
         feature.accept(clippingProcessor);
@@ -167,8 +171,7 @@ public class TextureClipper {
                             property.getObject().getTextureParameterization().getObject() :
                             null;
 
-                    if (parameterization instanceof TexCoordList) {
-                        TexCoordList texCoordList = (TexCoordList) parameterization;
+                    if (parameterization instanceof TexCoordList texCoordList) {
                         GeometryReference target = property.getObject().getTarget();
 
                         Envelope textureSpace = getTextureSpace(texCoordList, target, texture);
@@ -218,12 +221,12 @@ public class TextureClipper {
 
             String targetURI = copyImage(imageURI);
             texture.setImageURI(targetURI);
-            copyWorldFile(imageURI, basePath.resolve(targetURI));
+            copyWorldFile(imageURI, inputDir.resolve(targetURI));
         }
 
         private Path getImageURI(AbstractTexture texture) {
             try {
-                return basePath.resolve(texture.getImageURI().replaceAll("\\\\", "/"));
+                return inputDir.resolve(texture.getImageURI().replaceAll("\\\\", "/"));
             } catch (Exception e) {
                 log.warn("Skipping " + CityObjects.getObjectSignature(texture) + " due to an invalid " +
                         "image URI " + texture.getImageURI() + ".");
@@ -332,8 +335,7 @@ public class TextureClipper {
                         && property.getObject().getTextureParameterization() != null ?
                         property.getObject().getTextureParameterization().getObject() :
                         null;
-                if (parameterization instanceof TexCoordList) {
-                    TexCoordList texCoordList = (TexCoordList) parameterization;
+                if (parameterization instanceof TexCoordList texCoordList) {
                     for (TextureCoordinates textureCoordinates : texCoordList.getTextureCoordinates()) {
                         textureCoordinates.getValue().replaceAll(this::round);
                     }
@@ -368,7 +370,7 @@ public class TextureClipper {
                     }
                 }
 
-                return basePath.relativize(target).toString().replaceAll("\\\\", "/");
+                return outputDir.relativize(target).toString().replaceAll("\\\\", "/");
             } catch (Exception e) {
                 throw new RuntimeException("Failed to save clipped texture image from " + source + ".", e);
             }
@@ -379,7 +381,7 @@ public class TextureClipper {
             if (imageURI == null) {
                 try {
                     Path target = getTargetPath(source, null);
-                    imageURI = basePath.relativize(target).toString().replaceAll("\\\\", "/");
+                    imageURI = outputDir.relativize(target).toString().replaceAll("\\\\", "/");
                     copiedImages.put(source.toString(), imageURI);
                     Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
                 } catch (Exception e) {

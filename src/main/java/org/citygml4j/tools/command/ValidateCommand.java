@@ -23,9 +23,10 @@ package org.citygml4j.tools.command;
 
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.io.InputFile;
+import org.citygml4j.tools.io.InputFiles;
 import org.citygml4j.tools.log.LogLevel;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.util.InputFiles;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXParseException;
 import org.xmlobjects.schema.SchemaHandler;
@@ -63,13 +64,14 @@ public class ValidateCommand extends CityGMLTool {
     @Override
     public Integer call() throws ExecutionException {
         log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles = InputFiles.of(inputOptions.getFiles()).find();
-        if (inputFiles.isEmpty()) {
-            log.warn("No files found at " + inputOptions.joinFiles() + ".");
-            return CommandLine.ExitCode.OK;
-        }
+        List<InputFile> inputFiles = InputFiles.of(inputOptions.getFile()).find();
 
-        log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
+        if (inputFiles.isEmpty()) {
+            log.warn("No files found at " + inputOptions.getFile() + ".");
+            return CommandLine.ExitCode.OK;
+        } else if (inputFiles.size() > 1) {
+            log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.getFile() + ".");
+        }
 
         log.debug("Loading default CityGML schemas.");
         SchemaHandler rootHandler;
@@ -95,19 +97,19 @@ public class ValidateCommand extends CityGMLTool {
         int invalid = 0;
 
         for (int i = 0; i < inputFiles.size(); i++) {
-            Path inputFile = inputFiles.get(i);
+            InputFile inputFile = inputFiles.get(i);
 
-            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Validating file " + inputFile.toAbsolutePath() + ".");
+            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Validating file " + inputFile + ".");
 
             SchemaHandler schemaHandler = new ValidationSchemaHandler(rootHandler);
 
             // read more external schemas from schemaLocation attribute of root element
             try (XMLReader reader = XMLReaderFactory.newInstance(getCityGMLContext().getXMLObjects())
                     .withSchemaHandler(schemaHandler)
-                    .createReader(inputFile, inputOptions.getEncoding())) {
+                    .createReader(inputFile.getFile(), inputOptions.getEncoding())) {
                 reader.nextTag();
             } catch (Exception e) {
-                throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
+                throw new ExecutionException("Failed to read file " + inputFile + ".", e);
             }
 
             try {
@@ -116,7 +118,7 @@ public class ValidateCommand extends CityGMLTool {
 
                 Validator validator = schema.newValidator();
                 validator.setErrorHandler(errorHandler);
-                validator.validate(new StreamSource(inputFile.toFile()));
+                validator.validate(new StreamSource(inputFile.getFile().toFile()));
 
                 if (errorHandler.getErrors() == 0) {
                     log.info("The file is valid.");

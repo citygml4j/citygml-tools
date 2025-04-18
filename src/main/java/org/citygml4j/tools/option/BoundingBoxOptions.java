@@ -26,7 +26,7 @@ import org.xmlobjects.gml.model.geometry.DirectPosition;
 import org.xmlobjects.gml.model.geometry.Envelope;
 import picocli.CommandLine;
 
-public class BoundingBoxOption implements Option {
+public class BoundingBoxOptions implements Option {
     @CommandLine.Option(names = {"-b", "--bbox"}, paramLabel = "<minx,miny,maxx,maxy>",
             required = true, description = "Bounding box to use as spatial filter. The reference system of the " +
             "coordinates must match the reference system of the input file(s).")

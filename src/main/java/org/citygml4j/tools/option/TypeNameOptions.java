@@ -29,7 +29,7 @@ import picocli.CommandLine;
 import javax.xml.namespace.QName;
 import java.util.*;
 
-public class TypeNamesOption implements Option {
+public class TypeNameOptions implements Option {
     @CommandLine.Option(names = {"-t", "--type-name"}, split = ",", paramLabel = "<[prefix:]name>", required = true,
             description = "Names of the top-level city objects to process.")
     private String[] typeNames;

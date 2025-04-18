@@ -40,7 +40,7 @@ public class GlobalObjects {
     public enum Type {
         APPEARANCE,
         CITY_OBJECT_GROUP,
-        IMPLICIT_GEOMETRY;
+        IMPLICIT_GEOMETRY
     }
 
     private final List<Appearance> appearances = new ArrayList<>();

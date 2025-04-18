@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.citygml4j.core.model.CityGMLVersion;
+import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.xmlobjects.gml.model.geometry.Envelope;
 
@@ -46,6 +47,7 @@ public class Statistics {
         APPEARANCE
     }
 
+    private final InputFile inputFile;
     private final List<Path> files = new ArrayList<>();
     private final Set<String> cityObjectIds = new LinkedHashSet<>();
     private final Set<CityGMLVersion> versions = new TreeSet<>();
@@ -64,16 +66,17 @@ public class Statistics {
     private final Map<String, String> genericAttributes = new TreeMap<>();
     private final Map<String, FeatureHierarchy> hierarchies = new TreeMap<>();
 
-    private Statistics(Path file) {
-        files.add(file.toAbsolutePath());
+    private Statistics(InputFile file) {
+        this.inputFile = file;
+        files.add(file.getFile());
     }
 
-    public static Statistics of(Path file) {
+    public static Statistics of(InputFile file) {
         return new Statistics(file);
     }
 
-    public Path getFile() {
-        return files.get(0);
+    public InputFile getFile() {
+        return inputFile;
     }
 
     public Statistics withCityObjectIds(Set<String> cityObjectIds) {
