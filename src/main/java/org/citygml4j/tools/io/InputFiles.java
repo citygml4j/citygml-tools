@@ -51,6 +51,10 @@ public class InputFiles {
         return new InputFiles(files != null ? Arrays.asList(files) : Collections.emptyList());
     }
 
+    public List<String> getFiles() {
+        return files;
+    }
+
     public InputFiles withDefaultGlob(String defaultGlob) {
         if (defaultGlob != null) {
             this.defaultGlob = defaultGlob;
@@ -60,7 +64,10 @@ public class InputFiles {
     }
 
     public InputFiles withFilter(Predicate<Path> filter) {
-        this.filter = filter;
+        if (filter != null) {
+            this.filter = filter;
+        }
+
         return this;
     }
 

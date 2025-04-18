@@ -31,7 +31,6 @@ import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.io.InputFile;
-import org.citygml4j.tools.io.InputFiles;
 import org.citygml4j.tools.log.LogLevel;
 import org.citygml4j.tools.option.IdOptions;
 import org.citygml4j.tools.option.InputOptions;
@@ -103,16 +102,9 @@ public class StatsCommand extends CityGMLTool {
 
     @Override
     public Integer call() throws ExecutionException {
-        log.debug("Searching for CityGML input files.");
-        List<InputFile> inputFiles = InputFiles.of(inputOptions.getFile())
-                .withFilter(path -> !stripFileExtension(path).endsWith(suffix))
-                .find();
-
+        List<InputFile> inputFiles = getInputFiles(inputOptions, suffix);
         if (inputFiles.isEmpty()) {
-            log.warn("No files found at " + inputOptions.getFile() + ".");
             return CommandLine.ExitCode.OK;
-        } else if (inputFiles.size() > 1) {
-            log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.getFile() + ".");
         }
 
         SchemaHandler schemaHandler;

@@ -34,6 +34,7 @@ import org.citygml4j.core.ade.ADERegistry;
 import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.io.InputFile;
+import org.citygml4j.tools.io.InputFiles;
 import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
@@ -56,10 +57,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public abstract class CityGMLTool implements Command {
     final Logger log = Logger.getInstance();
@@ -225,6 +223,27 @@ public abstract class CityGMLTool implements Command {
                     String.join(", ", unsupported) + ".");
             log.info("Non-CityGML content is skipped unless a matching ADE extension has been loaded.");
         }
+    }
+
+    List<InputFile> getInputFiles(InputOptions options) throws ExecutionException {
+        return getInputFiles(InputFiles.of(options.getFile()));
+    }
+
+    List<InputFile> getInputFiles(InputOptions options, String suffix) throws ExecutionException {
+        return getInputFiles(InputFiles.of(options.getFile())
+                .withFilter(path -> !stripFileExtension(path).endsWith(suffix)));
+    }
+
+    List<InputFile> getInputFiles(InputFiles builder) throws ExecutionException {
+        log.debug("Searching for CityGML input files.");
+        List<InputFile> inputFiles = builder.find();
+        if (inputFiles.isEmpty()) {
+            log.warn("No files found at " + String.join(", ", builder.getFiles()) + ".");
+        } else if (inputFiles.size() > 1) {
+            log.info("Found " + inputFiles.size() + " file(s) at " + String.join(", ", builder.getFiles()) + ".");
+        }
+
+        return inputFiles;
     }
 
     Path getOutputDirectory(InputFile file, CityGMLOutputOptions outputOptions) throws ExecutionException {

@@ -33,7 +33,6 @@ import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.io.InputFile;
-import org.citygml4j.tools.io.InputFiles;
 import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.option.CityJSONOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
@@ -99,14 +98,9 @@ public class ToCityJSONCommand extends CityGMLTool {
 
     @Override
     public Integer call() throws ExecutionException {
-        log.debug("Searching for CityGML input files.");
-        List<InputFile> inputFiles = InputFiles.of(inputOptions.getFile()).find();
-
+        List<InputFile> inputFiles = getInputFiles(inputOptions);
         if (inputFiles.isEmpty()) {
-            log.warn("No files found at " + inputOptions.getFile() + ".");
             return CommandLine.ExitCode.OK;
-        } else if (inputFiles.size() > 1) {
-            log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.getFile() + ".");
         }
 
         log.debug("Using CityJSON " + outputOptions.getVersion() + " for the output file(s).");

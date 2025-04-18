@@ -94,16 +94,10 @@ public class FromCityJSONCommand extends CityGMLTool {
 
     @Override
     public Integer call() throws ExecutionException {
-        log.debug("Searching for CityJSON input files.");
-        List<InputFile> inputFiles = InputFiles.of(inputOptions.getFile())
-                .withDefaultGlob("**.{json,jsonl,cityjson}")
-                .find();
-
+        List<InputFile> inputFiles = getInputFiles(InputFiles.of(inputOptions.getFile())
+                .withDefaultGlob("**.{json,jsonl,cityjson}"));
         if (inputFiles.isEmpty()) {
-            log.warn("No files found at " + inputOptions.getFile() + ".");
             return CommandLine.ExitCode.OK;
-        } else if (inputFiles.size() > 1) {
-            log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.getFile() + ".");
         }
 
         log.debug("Using CityGML " + version.getVersion() + " for the output file(s).");
