@@ -25,10 +25,13 @@ import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.io.InputFile;
+import org.citygml4j.tools.io.InputFiles;
+import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.option.*;
 import org.citygml4j.tools.util.GlobalObjects;
 import org.citygml4j.tools.util.GlobalObjectsReader;
-import org.citygml4j.tools.util.InputFiles;
+import org.citygml4j.tools.util.ResourceProcessor;
 import org.citygml4j.tools.util.SubsetFilter;
 import org.citygml4j.xml.reader.*;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
@@ -36,27 +39,26 @@ import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
 import picocli.CommandLine;
 
-import java.nio.file.Path;
 import java.util.List;
 
 @CommandLine.Command(name = "subset",
         description = "Creates a subset of city objects based on filter criteria.")
 public class SubsetCommand extends CityGMLTool {
     @CommandLine.ArgGroup(exclusive = false)
-    private TypeNamesOption typeNamesOption;
+    private TypeNameOptions typeNameOptions;
 
     @CommandLine.ArgGroup
-    private IdOption idOption;
+    private IdOptions idOptions;
 
     @CommandLine.ArgGroup(exclusive = false)
-    private BoundingBoxOption boundingBoxOption;
+    private BoundingBoxOptions boundingBoxOptions;
 
     @CommandLine.Option(names = "--invert",
             description = "Invert the filter criteria.")
     private boolean invert;
 
     @CommandLine.ArgGroup(exclusive = false)
-    private CounterOption counterOption;
+    private CounterOptions counterOptions;
 
     @CommandLine.Option(names = "--no-remove-group-members", negatable = true, defaultValue = "true",
             description = "Remove group members that do not satisfy the filter criteria from city object groups " +
@@ -70,7 +72,7 @@ public class SubsetCommand extends CityGMLTool {
     private CityGMLOutputOptions outputOptions;
 
     @CommandLine.Mixin
-    OverwriteInputOption overwriteOption;
+    OverwriteInputOptions overwriteOptions;
 
     @CommandLine.Mixin
     private InputOptions inputOptions;
@@ -80,25 +82,25 @@ public class SubsetCommand extends CityGMLTool {
     @Override
     public Integer call() throws ExecutionException {
         log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles = InputFiles.of(inputOptions.getFiles())
+        List<InputFile> inputFiles = InputFiles.of(inputOptions.getFile())
                 .withFilter(path -> !stripFileExtension(path).endsWith(suffix))
                 .find();
 
         if (inputFiles.isEmpty()) {
-            log.warn("No files found at " + inputOptions.joinFiles() + ".");
+            log.warn("No files found at " + inputOptions.getFile() + ".");
             return CommandLine.ExitCode.OK;
+        } else if (inputFiles.size() > 1) {
+            log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.getFile() + ".");
         }
-
-        log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
 
         CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
         CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
 
         for (int i = 0; i < inputFiles.size(); i++) {
-            Path inputFile = inputFiles.get(i);
-            Path outputFile = getOutputFile(inputFile, suffix, overwriteOption.isOverwrite());
+            InputFile inputFile = inputFiles.get(i);
+            OutputFile outputFile = getOutputFile(inputFile, suffix, outputOptions, overwriteOptions);
 
-            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
+            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             log.debug("Reading global appearances, groups and implicit geometries from input file.");
             GlobalObjects globalObjects = GlobalObjectsReader.defaults()
@@ -106,15 +108,16 @@ public class SubsetCommand extends CityGMLTool {
 
             SubsetFilter subsetFilter = SubsetFilter.newInstance()
                     .withGlobalObjects(globalObjects)
-                    .withTypeNamesFilter(typeNamesOption, getCityGMLContext())
-                    .withIdFilter(idOption)
-                    .withBoundingBoxFilter(boundingBoxOption != null ? boundingBoxOption.toBoundingBoxFilter() : null)
+                    .withTypeNamesFilter(typeNameOptions, getCityGMLContext())
+                    .withIdFilter(idOptions)
+                    .withBoundingBoxFilter(boundingBoxOptions != null ? boundingBoxOptions.toBoundingBoxFilter() : null)
                     .invertFilterCriteria(invert)
-                    .withCounterOption(counterOption)
+                    .withCounterOption(counterOptions)
                     .removeGroupMembers(removeGroupMembers);
 
             try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions,
-                    "CityObjectGroup", "Appearance")) {
+                    "CityObjectGroup", "Appearance");
+                 ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
                 FeatureInfo cityModelInfo = getFeatureInfo(reader);
                 if (cityModelInfo != null && subsetFilter.getBoundingBoxFilter() != null) {
                     subsetFilter.getBoundingBoxFilter().withRootReferenceSystem(cityModelInfo);
@@ -124,10 +127,10 @@ public class SubsetCommand extends CityGMLTool {
                     setCityGMLVersion(reader, out);
                 }
 
-                if (overwriteOption.isOverwrite()) {
-                    log.debug("Writing temporary output file " + outputFile.toAbsolutePath() + ".");
+                if (outputFile.isTemporary()) {
+                    log.debug("Writing temporary output file " + outputFile + ".");
                 } else {
-                    log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
+                    log.info("Writing output to file " + outputFile + ".");
                 }
 
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
@@ -136,6 +139,7 @@ public class SubsetCommand extends CityGMLTool {
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
                         if (subsetFilter.filter(feature, reader.getName(), reader.getPrefix())) {
+                            resourceProcessor.process(feature);
                             writer.writeMember(feature);
                         }
                     }
@@ -143,20 +147,22 @@ public class SubsetCommand extends CityGMLTool {
                     subsetFilter.postprocess();
 
                     for (CityObjectGroup group : globalObjects.getCityObjectGroups()) {
+                        resourceProcessor.process(group);
                         writer.writeMember(group);
                     }
 
                     for (Appearance appearance : globalObjects.getAppearances()) {
+                        resourceProcessor.process(appearance);
                         writer.writeMember(appearance);
                     }
                 }
             } catch (CityGMLReadException e) {
-                throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
+                throw new ExecutionException("Failed to read file " + inputFile + ".", e);
             } catch (CityGMLWriteException e) {
-                throw new ExecutionException("Failed to write file " + outputFile.toAbsolutePath() + ".", e);
+                throw new ExecutionException("Failed to write file " + outputFile + ".", e);
             }
 
-            if (overwriteOption.isOverwrite()) {
+            if (outputFile.isTemporary()) {
                 log.debug("Replacing input file with temporary output file.");
                 replaceInputFile(inputFile, outputFile);
             }

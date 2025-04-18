@@ -28,17 +28,22 @@ import org.citygml4j.cityjson.model.metadata.ReferenceSystem;
 import org.citygml4j.cityjson.writer.AbstractCityJSONWriter;
 import org.citygml4j.cityjson.writer.CityJSONOutputFactory;
 import org.citygml4j.cityjson.writer.CityJSONWriteException;
+import org.citygml4j.core.model.appearance.Appearance;
+import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
+import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.io.InputFile;
+import org.citygml4j.tools.io.InputFiles;
+import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.option.CityJSONOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.util.GlobalObjects;
 import org.citygml4j.tools.util.GlobalObjectsReader;
-import org.citygml4j.tools.util.InputFiles;
+import org.citygml4j.tools.util.ResourceProcessor;
 import org.citygml4j.xml.reader.*;
 import org.xmlobjects.gml.model.geometry.Envelope;
 import picocli.CommandLine;
 
-import java.nio.file.Path;
 import java.util.List;
 
 @CommandLine.Command(name = "to-cityjson",
@@ -95,14 +100,15 @@ public class ToCityJSONCommand extends CityGMLTool {
     @Override
     public Integer call() throws ExecutionException {
         log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles = InputFiles.of(inputOptions.getFiles()).find();
+        List<InputFile> inputFiles = InputFiles.of(inputOptions.getFile()).find();
 
         if (inputFiles.isEmpty()) {
-            log.warn("No files found at " + inputOptions.joinFiles() + ".");
+            log.warn("No files found at " + inputOptions.getFile() + ".");
             return CommandLine.ExitCode.OK;
+        } else if (inputFiles.size() > 1) {
+            log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.getFile() + ".");
         }
 
-        log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
         log.debug("Using CityJSON " + outputOptions.getVersion() + " for the output file(s).");
 
         CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
@@ -118,11 +124,12 @@ public class ToCityJSONCommand extends CityGMLTool {
                 .writeGenericAttributeTypes(addGenericAttributeTypes);
 
         for (int i = 0; i < inputFiles.size(); i++) {
-            Path inputFile = inputFiles.get(i);
-            Path outputFile = inputFile.resolveSibling(replaceFileExtension(inputFile,
-                    outputOptions.isJsonLines() ? "jsonl" : "json"));
+            InputFile inputFile = inputFiles.get(i);
+            OutputFile outputFile = OutputFile.of(getOutputDirectory(inputFile, outputOptions)
+                    .resolve(replaceFileExtension(inputFile.getFile(),
+                            outputOptions.isJsonLines() ? "jsonl" : "json")));
 
-            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
+            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             log.debug("Reading global appearances, groups and implicit geometries from input file.");
             GlobalObjects globalObjects = GlobalObjectsReader.defaults()
@@ -130,31 +137,42 @@ public class ToCityJSONCommand extends CityGMLTool {
                     .read(inputFile, getCityGMLContext());
 
             try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions,
-                    "CityObjectGroup", "Appearance")) {
+                    "CityObjectGroup", "Appearance");
+                 ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
                 Metadata metadata = new Metadata();
                 if (reader.hasNext()) {
                     populateMetadata(metadata, reader.getParentInfo());
                 }
 
-                log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
+                log.info("Writing output to file " + outputFile + ".");
 
                 try (AbstractCityJSONWriter<?> writer = createCityJSONWriter(out, outputFile, outputOptions)
                         .withMetadata(metadata)) {
                     log.debug("Reading city objects and converting them into CityJSON " + outputOptions.getVersion() + ".");
-                    globalObjects.getAppearances().forEach(writer::withGlobalAppearance);
-                    globalObjects.getCityObjectGroups().forEach(writer::withGlobalCityObjectGroup);
+                    for (Appearance appearance : globalObjects.getAppearances()) {
+                        resourceProcessor.process(appearance);
+                        writer.withGlobalAppearance(appearance);
+                    }
+
+                    for (CityObjectGroup group : globalObjects.getCityObjectGroups()) {
+                        resourceProcessor.process(group);
+                        writer.withGlobalCityObjectGroup(group);
+                    }
+
                     globalObjects.getTemplateGeometries().values().forEach(geometry ->
                             writer.withGlobalTemplateGeometry(geometry, geometry.getLocalProperties()
                                     .getOrDefault(GlobalObjects.TEMPLATE_LOD, Integer.class, () -> 0)));
 
                     while (reader.hasNext()) {
-                        writer.writeCityObject(reader.next());
+                        AbstractFeature feature = reader.next();
+                        resourceProcessor.process(feature);
+                        writer.writeCityObject(feature);
                     }
                 }
             } catch (CityGMLReadException e) {
-                throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
+                throw new ExecutionException("Failed to read file " + inputFile + ".", e);
             } catch (CityJSONWriteException e) {
-                throw new ExecutionException("Failed to write file " + outputFile.toAbsolutePath() + ".", e);
+                throw new ExecutionException("Failed to write file " + outputFile + ".", e);
             }
         }
 

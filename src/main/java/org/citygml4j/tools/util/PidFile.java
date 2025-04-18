@@ -44,7 +44,7 @@ public class PidFile {
     }
 
     public static PidFile create(Path path, boolean deleteOnExit, long pid) throws IOException {
-        path = path.normalize().toAbsolutePath();
+        path = path.toAbsolutePath().normalize();
         Path parent = path.getParent();
 
         if (parent != null) {

@@ -23,7 +23,7 @@ package org.citygml4j.tools.option;
 
 import picocli.CommandLine;
 
-public class CounterOption implements Option {
+public class CounterOptions implements Option {
     @CommandLine.Option(names = {"-c", "--count"},
             description = "Maximum number of top-level city objects to process.")
     private Long count;

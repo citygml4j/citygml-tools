@@ -26,6 +26,7 @@ import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.util.reference.DefaultReferenceResolver;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.reader.ChunkOptions;
@@ -34,7 +35,6 @@ import org.citygml4j.xml.reader.CityGMLReadException;
 import org.citygml4j.xml.reader.CityGMLReader;
 import org.xmlobjects.gml.util.reference.ReferenceResolver;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,7 +96,7 @@ public class UpgradeProcessor {
         return propertiesProcessor.getCityObjectGroups();
     }
 
-    public void readGlobalObjects(Path file, CityGMLContext context) throws ExecutionException {
+    public void readGlobalObjects(InputFile file, CityGMLContext context) throws ExecutionException {
         try {
             try (CityGMLReader reader = createCityGMLReader(file, context, false)) {
                 List<Appearance> appearances = new ArrayList<>();
@@ -167,12 +167,12 @@ public class UpgradeProcessor {
         return new ResultStatistics();
     }
 
-    private CityGMLReader createCityGMLReader(Path file, CityGMLContext context, boolean skipAppearance) throws CityGMLReadException {
+    private CityGMLReader createCityGMLReader(InputFile file, CityGMLContext context, boolean skipAppearance) throws CityGMLReadException {
         CityGMLInputFactory in = context.createCityGMLInputFactory()
                 .withChunking(ChunkOptions.defaults())
                 .withIdCreator(new IdCreator());
 
-        CityGMLReader reader = in.createCityGMLReader(file);
+        CityGMLReader reader = in.createCityGMLReader(file.getFile());
         if (skipAppearance) {
             return in.createFilteredCityGMLReader(reader, name -> !"Appearance".equals(name.getLocalPart())
                     || !CityGMLModules.isCityGMLNamespace(name.getNamespaceURI()));

@@ -33,10 +33,13 @@ import org.citygml4j.cityjson.writer.CityJSONWriteException;
 import org.citygml4j.core.ade.ADERegistry;
 import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.io.InputFile;
+import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityJSONOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
+import org.citygml4j.tools.option.OverwriteInputOptions;
 import org.citygml4j.tools.util.IdCreator;
 import org.citygml4j.xml.CityGMLADELoader;
 import org.citygml4j.xml.CityGMLContext;
@@ -95,11 +98,11 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    CityGMLReader createCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options) throws ExecutionException, CityGMLReadException {
+    CityGMLReader createCityGMLReader(CityGMLInputFactory in, InputFile file, InputOptions options) throws ExecutionException, CityGMLReadException {
         return createCityGMLReader(in, file, options, null);
     }
 
-    CityGMLReader createSkippingCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options, String... localNames) throws ExecutionException, CityGMLReadException {
+    CityGMLReader createSkippingCityGMLReader(CityGMLInputFactory in, InputFile file, InputOptions options, String... localNames) throws ExecutionException, CityGMLReadException {
         CityGMLInputFilter filter = null;
         if (localNames != null) {
             Set<String> names = new HashSet<>(Arrays.asList(localNames));
@@ -110,10 +113,10 @@ public abstract class CityGMLTool implements Command {
         return createCityGMLReader(in, file, options, filter);
     }
 
-    private CityGMLReader createCityGMLReader(CityGMLInputFactory in, Path file, InputOptions options, CityGMLInputFilter filter) throws ExecutionException, CityGMLReadException {
+    private CityGMLReader createCityGMLReader(CityGMLInputFactory in, InputFile file, InputOptions options, CityGMLInputFilter filter) throws ExecutionException, CityGMLReadException {
         CityGMLReader reader;
         try {
-            reader = in.createCityGMLReader(file, options.getEncoding());
+            reader = in.createCityGMLReader(file.getFile(), options.getEncoding());
             if (filter != null) {
                 reader = in.createFilteredCityGMLReader(reader, filter);
             }
@@ -129,9 +132,9 @@ public abstract class CityGMLTool implements Command {
         return getCityGMLContext().createCityGMLOutputFactory(version);
     }
 
-    CityGMLChunkWriter createCityGMLChunkWriter(CityGMLOutputFactory out, Path file, CityGMLOutputOptions options) throws ExecutionException {
+    CityGMLChunkWriter createCityGMLChunkWriter(CityGMLOutputFactory out, OutputFile file, CityGMLOutputOptions options) throws ExecutionException {
         try {
-            return out.createCityGMLChunkWriter(file, options.getEncoding())
+            return out.createCityGMLChunkWriter(file.getFile(), options.getEncoding())
                     .withDefaultPrefixes()
                     .withDefaultSchemaLocations()
                     .withDefaultNamespace(CoreModule.of(out.getVersion()).getNamespaceURI())
@@ -145,11 +148,11 @@ public abstract class CityGMLTool implements Command {
         return getCityJSONContext().createCityJSONInputFactory();
     }
 
-    CityJSONReader createCityJSONReader(CityJSONInputFactory in, Path file, InputOptions options) throws ExecutionException {
+    CityJSONReader createCityJSONReader(CityJSONInputFactory in, InputFile file, InputOptions options) throws ExecutionException {
         try {
             return options.isSetEncoding() ?
-                    in.createCityJSONReader(file, options.getEncoding()) :
-                    in.createCityJSONReader(file);
+                    in.createCityJSONReader(file.getFile(), options.getEncoding()) :
+                    in.createCityJSONReader(file.getFile());
         } catch (CityJSONReadException e) {
             throw new ExecutionException("Failed to create CityJSON reader.", e);
         }
@@ -159,11 +162,11 @@ public abstract class CityGMLTool implements Command {
         return getCityJSONContext().createCityJSONOutputFactory(version);
     }
 
-    AbstractCityJSONWriter<?> createCityJSONWriter(CityJSONOutputFactory out, Path file, CityJSONOutputOptions options) throws ExecutionException {
+    AbstractCityJSONWriter<?> createCityJSONWriter(CityJSONOutputFactory out, OutputFile file, CityJSONOutputOptions options) throws ExecutionException {
         try {
             AbstractCityJSONWriter<?> writer = options.isJsonLines() ?
-                    out.createCityJSONFeatureWriter(file, options.getEncoding()) :
-                    out.createCityJSONWriter(file, options.getEncoding())
+                    out.createCityJSONFeatureWriter(file.getFile(), options.getEncoding()) :
+                    out.createCityJSONWriter(file.getFile(), options.getEncoding())
                             .withIndent(options.isPrettyPrint() ? "  " : null);
 
             return writer.setHtmlSafe(options.isHtmlSafe());
@@ -224,23 +227,48 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    Path getOutputFile(Path file, String suffix, boolean overwrite) throws ExecutionException {
-        return overwrite ?
-                createTempFile() :
-                file.resolveSibling(appendFileNameSuffix(file, suffix));
+    Path getOutputDirectory(InputFile file, CityGMLOutputOptions outputOptions) throws ExecutionException {
+        return getOutputDirectory(file, outputOptions.getOutputDirectory());
     }
 
-    Path createTempFile() throws ExecutionException {
-        try {
-            return Files.createTempFile("citygml-tools-", "");
-        } catch (IOException e) {
-            throw new ExecutionException("Failed to create temp file.", e);
+    Path getOutputDirectory(InputFile file, CityJSONOutputOptions outputOptions) throws ExecutionException {
+        return getOutputDirectory(file, outputOptions.getOutputDirectory());
+    }
+
+    private Path getOutputDirectory(InputFile file, Path outputDir) throws ExecutionException {
+        if (outputDir != null && !outputDir.equals(file.getBasePath())) {
+            if (!file.getBasePath().equals(file.getFile().getParent())) {
+                outputDir = outputDir.resolve(file.getBasePath().relativize(file.getFile().getParent()));
+            }
+
+            try {
+                return Files.createDirectories(outputDir);
+            } catch (Exception e) {
+                throw new ExecutionException("Failed to create output directory " + outputDir + ".", e);
+            }
+        } else {
+            return file.getFile().getParent();
         }
     }
 
-    void replaceInputFile(Path targetFile, Path sourceFile) throws ExecutionException {
+    OutputFile getOutputFile(InputFile file, String suffix, CityGMLOutputOptions outputOptions, OverwriteInputOptions overwriteInputOptions) throws ExecutionException {
+        if (outputOptions.getOutputDirectory() != null) {
+            return OutputFile.of(getOutputDirectory(file, outputOptions.getOutputDirectory())
+                    .resolve(file.getFile().getFileName()));
+        } else if (overwriteInputOptions.isOverwrite()) {
+            try {
+                return OutputFile.temp("citygml-tools-", "");
+            } catch (IOException e) {
+                throw new ExecutionException("Failed to create temporary output file.", e);
+            }
+        } else {
+            return OutputFile.of(file.getFile().resolveSibling(appendFileNameSuffix(file.getFile(), suffix)));
+        }
+    }
+
+    void replaceInputFile(InputFile targetFile, OutputFile sourceFile) throws ExecutionException {
         try {
-            Files.move(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(sourceFile.getFile(), targetFile.getFile(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new ExecutionException("Failed to replace input file.", e);
         }

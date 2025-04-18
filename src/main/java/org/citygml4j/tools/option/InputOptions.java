@@ -24,20 +24,16 @@ package org.citygml4j.tools.option;
 import picocli.CommandLine;
 
 public class InputOptions implements Option {
-    @CommandLine.Parameters(paramLabel = "<file>", arity = "1",
-            description = "One or more files and directories to process (glob patterns allowed).")
-    private String[] files;
+    @CommandLine.Parameters(paramLabel = "<file>",
+            description = "File or directory to process (glob patterns allowed).")
+    private String file;
 
     @CommandLine.Option(names = "--input-encoding",
             description = "Encoding of input file(s).")
     private String encoding;
 
-    public String[] getFiles() {
-        return files;
-    }
-
-    public String joinFiles() {
-        return String.join(", ", files);
+    public String getFile() {
+        return file;
     }
 
     public boolean isSetEncoding() {

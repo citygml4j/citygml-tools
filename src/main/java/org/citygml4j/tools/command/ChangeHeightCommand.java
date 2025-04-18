@@ -24,13 +24,16 @@ package org.citygml4j.tools.command;
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.io.InputFile;
+import org.citygml4j.tools.io.InputFiles;
+import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.option.OverwriteInputOption;
+import org.citygml4j.tools.option.OverwriteInputOptions;
 import org.citygml4j.tools.util.GlobalObjectsReader;
 import org.citygml4j.tools.util.HeightChanger;
-import org.citygml4j.tools.util.InputFiles;
+import org.citygml4j.tools.util.ResourceProcessor;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
 import org.citygml4j.xml.reader.CityGMLReadException;
@@ -40,13 +43,12 @@ import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
 import picocli.CommandLine;
 
-import java.nio.file.Path;
 import java.util.List;
 
 @CommandLine.Command(name = "change-height",
         description = "Changes the height values of city objects by a given offset.")
 public class ChangeHeightCommand extends CityGMLTool {
-    @CommandLine.Option(names = {"-o", "--offset"}, paramLabel = "<double>", required = true,
+    @CommandLine.Option(names = {"-z", "--offset"}, paramLabel = "<double>", required = true,
             description = "Offset to add to height values.")
     private double offset;
 
@@ -61,7 +63,7 @@ public class ChangeHeightCommand extends CityGMLTool {
     private CityGMLOutputOptions outputOptions;
 
     @CommandLine.Mixin
-    OverwriteInputOption overwriteOption;
+    OverwriteInputOptions overwriteOptions;
 
     @CommandLine.Mixin
     private InputOptions inputOptions;
@@ -77,25 +79,25 @@ public class ChangeHeightCommand extends CityGMLTool {
         }
 
         log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles = InputFiles.of(inputOptions.getFiles())
+        List<InputFile> inputFiles = InputFiles.of(inputOptions.getFile())
                 .withFilter(path -> !stripFileExtension(path).endsWith(suffix))
                 .find();
 
         if (inputFiles.isEmpty()) {
-            log.warn("No files found at " + inputOptions.joinFiles() + ".");
+            log.warn("No files found at " + inputOptions.getFile() + ".");
             return CommandLine.ExitCode.OK;
+        } else if (inputFiles.size() > 1) {
+            log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.getFile() + ".");
         }
-
-        log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
 
         CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
         CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
 
         for (int i = 0; i < inputFiles.size(); i++) {
-            Path inputFile = inputFiles.get(i);
-            Path outputFile = getOutputFile(inputFile, suffix, overwriteOption.isOverwrite());
+            InputFile inputFile = inputFiles.get(i);
+            OutputFile outputFile = getOutputFile(inputFile, suffix, outputOptions, overwriteOptions);
 
-            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
+            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             HeightChanger heightChanger = HeightChanger.of(offset).withMode(mode);
 
@@ -104,15 +106,16 @@ public class ChangeHeightCommand extends CityGMLTool {
                     .read(inputFile, getCityGMLContext())
                     .getTemplateGeometries());
 
-            try (CityGMLReader reader = createCityGMLReader(in, inputFile, inputOptions)) {
+            try (CityGMLReader reader = createCityGMLReader(in, inputFile, inputOptions);
+                 ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
                 if (!version.isSetVersion()) {
                     setCityGMLVersion(reader, out);
                 }
 
-                if (overwriteOption.isOverwrite()) {
-                    log.debug("Writing temporary output file " + outputFile.toAbsolutePath() + ".");
+                if (outputFile.isTemporary()) {
+                    log.debug("Writing temporary output file " + outputFile + ".");
                 } else {
-                    log.info("Writing output to file " + outputFile.toAbsolutePath() + ".");
+                    log.info("Writing output to file " + outputFile + ".");
                 }
 
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
@@ -124,16 +127,17 @@ public class ChangeHeightCommand extends CityGMLTool {
                             heightChanger.changeHeight(feature);
                         }
 
+                        resourceProcessor.process(feature);
                         writer.writeMember(feature);
                     }
                 }
             } catch (CityGMLReadException e) {
-                throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
+                throw new ExecutionException("Failed to read file " + inputFile + ".", e);
             } catch (CityGMLWriteException e) {
-                throw new ExecutionException("Failed to write file " + outputFile.toAbsolutePath() + ".", e);
+                throw new ExecutionException("Failed to write file " + outputFile + ".", e);
             }
 
-            if (overwriteOption.isOverwrite()) {
+            if (outputFile.isTemporary()) {
                 log.debug("Replacing input file with temporary output file.");
                 replaceInputFile(inputFile, outputFile);
             }

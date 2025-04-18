@@ -27,6 +27,7 @@ import org.citygml4j.core.model.common.GeometryInfo;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.model.core.ImplicitGeometryProperty;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.reader.ChunkOptions;
@@ -34,7 +35,6 @@ import org.citygml4j.xml.reader.CityGMLInputFactory;
 import org.citygml4j.xml.reader.CityGMLReadException;
 import org.citygml4j.xml.reader.CityGMLReader;
 
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -77,7 +77,7 @@ public class GlobalObjectsReader {
         return this;
     }
 
-    public GlobalObjects read(Path file, CityGMLContext context) throws ExecutionException {
+    public GlobalObjects read(InputFile file, CityGMLContext context) throws ExecutionException {
         try {
             GlobalObjects globalObjects = new GlobalObjects();
             try (CityGMLReader reader = createReader(file, context)) {
@@ -116,13 +116,13 @@ public class GlobalObjectsReader {
         }
     }
 
-    private CityGMLReader createReader(Path file, CityGMLContext context) throws ExecutionException {
+    private CityGMLReader createReader(InputFile file, CityGMLContext context) throws ExecutionException {
         try {
             CityGMLInputFactory in = context.createCityGMLInputFactory()
                     .withChunking(ChunkOptions.defaults())
                     .withIdCreator(new IdCreator());
 
-            CityGMLReader reader = in.createCityGMLReader(file);
+            CityGMLReader reader = in.createCityGMLReader(file.getFile());
             if (!types.contains(GlobalObjects.Type.IMPLICIT_GEOMETRY)) {
                 Set<String> localNames = new HashSet<>();
                 if (types.contains(GlobalObjects.Type.APPEARANCE)) {

@@ -25,7 +25,7 @@ import picocli.CommandLine;
 
 import java.util.Set;
 
-public class IdOption implements Option {
+public class IdOptions implements Option {
     @CommandLine.Option(names = {"-i", "--id"}, split = ",", paramLabel = "<id>",
             description = "Only process city objects with a matching gml:id.")
     private Set<String> ids;

@@ -30,10 +30,15 @@ import org.citygml4j.core.model.core.AbstractGenericAttribute;
 import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.io.InputFile;
+import org.citygml4j.tools.io.InputFiles;
 import org.citygml4j.tools.log.LogLevel;
-import org.citygml4j.tools.option.IdOption;
+import org.citygml4j.tools.option.IdOptions;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.util.*;
+import org.citygml4j.tools.util.GlobalObjectsReader;
+import org.citygml4j.tools.util.SchemaHelper;
+import org.citygml4j.tools.util.Statistics;
+import org.citygml4j.tools.util.StatisticsProcessor;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.schema.CityGMLSchemaHandler;
 import org.xmlobjects.gml.adapter.feature.BoundingShapeAdapter;
@@ -62,7 +67,7 @@ public class StatsCommand extends CityGMLTool {
     private boolean computeEnvelope;
 
     @CommandLine.ArgGroup
-    private IdOption idOption;
+    private IdOptions idOptions;
 
     @CommandLine.Option(names = {"-t", "--only-top-level"},
             description = "Only count top-level city objects.")
@@ -99,16 +104,16 @@ public class StatsCommand extends CityGMLTool {
     @Override
     public Integer call() throws ExecutionException {
         log.debug("Searching for CityGML input files.");
-        List<Path> inputFiles = InputFiles.of(inputOptions.getFiles())
+        List<InputFile> inputFiles = InputFiles.of(inputOptions.getFile())
                 .withFilter(path -> !stripFileExtension(path).endsWith(suffix))
                 .find();
 
         if (inputFiles.isEmpty()) {
-            log.warn("No files found at " + inputOptions.joinFiles() + ".");
+            log.warn("No files found at " + inputOptions.getFile() + ".");
             return CommandLine.ExitCode.OK;
+        } else if (inputFiles.size() > 1) {
+            log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.getFile() + ".");
         }
-
-        log.info("Found " + inputFiles.size() + " file(s) at " + inputOptions.joinFiles() + ".");
 
         SchemaHandler schemaHandler;
         try {
@@ -136,9 +141,9 @@ public class StatsCommand extends CityGMLTool {
                 .failOnMissingSchema(failOnMissingSchema);
 
         for (int i = 0; i < inputFiles.size(); i++) {
-            Path inputFile = inputFiles.get(i);
+            InputFile inputFile = inputFiles.get(i);
 
-            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile.toAbsolutePath() + ".");
+            log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             Statistics statistics = Statistics.of(inputFile);
             StatisticsProcessor processor = StatisticsProcessor.of(statistics, getCityGMLContext())
@@ -146,8 +151,8 @@ public class StatsCommand extends CityGMLTool {
                     .onlyTopLevelFeatures(onlyTopLevelFeatures)
                     .generateObjectHierarchy(generateObjectHierarchy);
 
-            if (idOption != null) {
-                statistics.withCityObjectIds(idOption.getIds());
+            if (idOptions != null) {
+                statistics.withCityObjectIds(idOptions.getIds());
 
                 log.debug("Reading global appearances from input file.");
                 processor.withGlobalAppearances(GlobalObjectsReader.onlyAppearances()
@@ -159,7 +164,7 @@ public class StatsCommand extends CityGMLTool {
 
             try (XMLReader reader = XMLReaderFactory.newInstance(getCityGMLContext().getXMLObjects())
                     .withSchemaHandler(schemaHandler)
-                    .createReader(inputFile, inputOptions.getEncoding())) {
+                    .createReader(inputFile.getFile(), inputOptions.getEncoding())) {
                 Deque<QName> elements = new ArrayDeque<>();
                 Deque<Integer> features = new ArrayDeque<>();
                 boolean isTopLevel = false;
@@ -169,7 +174,7 @@ public class StatsCommand extends CityGMLTool {
                     QName lastElement = elements.peek();
                     int depth = reader.getDepth();
                     int lastFeature = Objects.requireNonNullElseGet(features.peek(),
-                            () -> idOption == null ? 0 : Integer.MAX_VALUE);
+                            () -> idOptions == null ? 0 : Integer.MAX_VALUE);
 
                     if (event == EventType.START_ELEMENT) {
                         QName element = reader.getName();
@@ -179,7 +184,7 @@ public class StatsCommand extends CityGMLTool {
                             if (schemaHelper.isAppearance(element) && depth > lastFeature) {
                                 processor.process(element, reader.getObject(Appearance.class), isTopLevel);
                             } else if (schemaHelper.isFeature(element)
-                                    && (idOption == null || depth > lastFeature || hasMatchingIdentifier(reader))) {
+                                    && (idOptions == null || depth > lastFeature || hasMatchingIdentifier(reader))) {
                                 processor.process(element, reader.getPrefix(), isTopLevel, depth, statistics);
                                 features.push(depth);
                             } else if (schemaHelper.isBoundingShape(element)) {
@@ -213,7 +218,7 @@ public class StatsCommand extends CityGMLTool {
                     }
                 }
             } catch (Exception e) {
-                throw new ExecutionException("Failed to read file " + inputFile.toAbsolutePath() + ".", e);
+                throw new ExecutionException("Failed to read file " + inputFile + ".", e);
             }
 
             if (schemaHelper.hasMissingSchemas()) {
@@ -221,8 +226,8 @@ public class StatsCommand extends CityGMLTool {
             }
 
             if (jsonReport) {
-                Path outputFile = inputFile.resolveSibling(appendFileNameSuffix(inputFile.resolveSibling(
-                        replaceFileExtension(inputFile, "json")), suffix));
+                Path outputFile = inputFile.getFile().resolveSibling(appendFileNameSuffix(inputFile.getFile()
+                        .resolveSibling(replaceFileExtension(inputFile.getFile(), "json")), suffix));
 
                 log.info("Writing statistics as JSON report to file " + outputFile + ".");
                 writeStatistics(outputFile, statistics, objectMapper);
@@ -261,7 +266,7 @@ public class StatsCommand extends CityGMLTool {
                 id = attributes.getValue(GMLConstants.GML_3_1_NAMESPACE, "id").get();
             }
 
-            return id != null && idOption.getIds().contains(id);
+            return id != null && idOptions.getIds().contains(id);
         } catch (XMLReadException e) {
             return false;
         }
