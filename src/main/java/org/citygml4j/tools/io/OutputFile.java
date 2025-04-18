@@ -31,12 +31,11 @@ public class OutputFile {
     private final boolean isTemporary;
 
     private OutputFile(Path file, boolean isTemporary) {
-        this.file = Objects.requireNonNull(file, "The output file must not be null.");
+        this.file = Objects.requireNonNull(file, "The output file must not be null.").toAbsolutePath().normalize();
         this.isTemporary = isTemporary;
     }
 
     public static OutputFile of(Path file) {
-        Objects.requireNonNull(file, "The output file must not be null.");
         return new OutputFile(file, false);
     }
 

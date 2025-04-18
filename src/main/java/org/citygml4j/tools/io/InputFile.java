@@ -29,8 +29,8 @@ public class InputFile {
     private final Path basePath;
 
     private InputFile(Path file, Path basePath) {
-        this.file = Objects.requireNonNull(file, "The input file must not be null.");
-        this.basePath = Objects.requireNonNull(basePath, "The base path must not be null.");
+        this.file = Objects.requireNonNull(file, "The input file must not be null.").toAbsolutePath().normalize();
+        this.basePath = Objects.requireNonNull(basePath, "The base path must not be null.").toAbsolutePath().normalize();
     }
 
     public static InputFile of(Path file) {

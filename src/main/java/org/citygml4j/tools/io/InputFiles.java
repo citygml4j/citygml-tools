@@ -28,159 +28,116 @@ import org.citygml4j.tools.log.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class InputFiles {
-    private final List<Path> inputFiles;
-    private final Path basePath;
+    private final List<String> files;
+    private String defaultGlob = "**.{gml,xml}";
+    private Predicate<Path> filter;
 
-    private InputFiles(List<Path> inputFiles, Path basePath) {
-        this.inputFiles = inputFiles != null ? inputFiles : Collections.emptyList();
-        this.basePath = basePath != null ? basePath : CityGMLTools.WORKING_DIR;
+    private InputFiles(List<String> files) {
+        this.files = files.stream().filter(Objects::nonNull).toList();
     }
 
-    private static InputFiles of(List<Path> inputFiles, Path basePath) {
-        return new InputFiles(inputFiles, basePath);
+    public static InputFiles of(List<String> files) {
+        return new InputFiles(files != null ? files : Collections.emptyList());
     }
 
-    private static InputFiles of(Path inputFile) {
-        return new InputFiles(List.of(inputFile), inputFile.getParent());
+    public static InputFiles of(String... files) {
+        return new InputFiles(files != null ? Arrays.asList(files) : Collections.emptyList());
     }
 
-    private static InputFiles empty() {
-        return new InputFiles(null, null);
+    public InputFiles withDefaultGlob(String defaultGlob) {
+        if (defaultGlob != null) {
+            this.defaultGlob = defaultGlob;
+        }
+
+        return this;
     }
 
-    public static InputFilesBuilder of(String file) {
-        return new InputFilesBuilder(file);
+    public InputFiles withFilter(Predicate<Path> filter) {
+        this.filter = filter;
+        return this;
     }
 
-    public List<Path> getInputFiles() {
+    public List<InputFile> find() throws ExecutionException {
+        List<InputFile> inputFiles = new ArrayList<>();
+        for (String file : files) {
+            LinkedList<String> elements = parse(file);
+            Path path = Paths.get(elements.pop()).toAbsolutePath().normalize();
+
+            if (elements.isEmpty() && Files.isRegularFile(path)) {
+                inputFiles.add(InputFile.of(path));
+            } else {
+                // construct a glob pattern from the path and the truncated elements
+                String glob = "glob:" + path;
+                if (!elements.isEmpty()) {
+                    glob += File.separator + String.join(File.separator, elements);
+                } else if (Files.isDirectory(path) && defaultGlob != null) {
+                    glob += File.separator + defaultGlob;
+                }
+
+                // find files matching the glob pattern
+                PathMatcher matcher = FileSystems.getDefault().getPathMatcher(glob.replace("\\", "\\\\"));
+                try (Stream<Path> stream = Files.walk(path, FileVisitOption.FOLLOW_LINKS)) {
+                    stream.filter(Files::isRegularFile).forEach(p -> {
+                        if (matcher.matches(p.toAbsolutePath().normalize())) {
+                            if (filter != null && !filter.test(p)) {
+                                Logger.getInstance().debug("Skipping file " + p.toAbsolutePath() + ".");
+                            } else {
+                                inputFiles.add(InputFile.of(p, path));
+                            }
+                        }
+                    });
+                } catch (IOException e) {
+                    throw new ExecutionException("Failed to create list of input files.", e);
+                }
+            }
+        }
+
         return inputFiles;
     }
 
-    public Path get(int index) {
-        return inputFiles.get(index);
-    }
+    private LinkedList<String> parse(String file) {
+        Matcher matcher = Pattern.compile("[^*?{}!\\[\\]]+").matcher("");
+        LinkedList<String> elements = new LinkedList<>();
+        Path path = null;
 
-    public Path getBasePath() {
-        return basePath;
-    }
-
-    public boolean isEmpty() {
-        return inputFiles.isEmpty();
-    }
-
-    public int size() {
-        return inputFiles.size();
-    }
-
-    public static class InputFilesBuilder {
-        private final String file;
-        private String defaultGlob = "**.{gml,xml}";
-        private Predicate<Path> filter;
-
-        private InputFilesBuilder(String file) {
-            this.file = file;
+        if (file.startsWith("~" + File.separator)) {
+            file = System.getProperty("user.home") + file.substring(1);
         }
 
-        public InputFilesBuilder withDefaultGlob(String defaultGlob) {
-            if (defaultGlob != null) {
-                this.defaultGlob = defaultGlob;
-            }
-
-            return this;
-        }
-
-        public InputFilesBuilder withFilter(Predicate<Path> filter) {
-            this.filter = filter;
-            return this;
-        }
-
-        public List<InputFile> find() throws ExecutionException {
-            if (file != null) {
-                LinkedList<String> elements = parse(file);
-                Path path = Paths.get(elements.pop()).toAbsolutePath().normalize();
-
-                if (elements.isEmpty() && Files.isRegularFile(path)) {
-                    return List.of(InputFile.of(path));
-                } else {
-                    // construct a glob pattern from the path and the truncated elements
-                    String glob = "glob:" + path;
-                    if (!elements.isEmpty()) {
-                        glob += File.separator + String.join(File.separator, elements);
-                    } else if (Files.isDirectory(path) && defaultGlob != null) {
-                        glob += File.separator + defaultGlob;
-                    }
-
-                    // find files matching the glob pattern
-                    List<InputFile> inputFiles = new ArrayList<>();
-                    PathMatcher matcher = FileSystems.getDefault().getPathMatcher(glob.replace("\\", "\\\\"));
-                    try (Stream<Path> stream = Files.walk(path, FileVisitOption.FOLLOW_LINKS)) {
-                        stream.filter(Files::isRegularFile).forEach(p -> {
-                            if (matcher.matches(p.toAbsolutePath().normalize())) {
-                                if (filter != null && !filter.test(p)) {
-                                    Logger.getInstance().debug("Skipping file " + p.toAbsolutePath() + ".");
-                                } else {
-                                    inputFiles.add(InputFile.of(p, path));
-                                }
-                            }
-                        });
-                    } catch (IOException e) {
-                        throw new ExecutionException("Failed to create list of input files.", e);
-                    }
-
-                    return inputFiles;
+        do {
+            if (matcher.reset(file).matches()) {
+                try {
+                    path = Paths.get(file);
+                } catch (Exception e) {
+                    //
                 }
             }
 
-            return Collections.emptyList();
-        }
+            if (path == null) {
+                // the file is not a valid path, possibly because of glob patterns.
+                // so, let's iteratively truncate the last path element and try again.
+                int index = file.lastIndexOf(File.separator);
+                String pathElement = file.substring(index + 1);
+                file = file.substring(0, index != -1 ? index : 0);
 
-        private LinkedList<String> parse(String file) {
-            Matcher matcher = Pattern.compile("[^*?{}!\\[\\]]+").matcher("");
-            LinkedList<String> elements = new LinkedList<>();
-            Path path = null;
-
-            if (file.startsWith("~" + File.separator)) {
-                file = System.getProperty("user.home") + file.substring(1);
+                // remember the truncated element
+                elements.addFirst(pathElement);
             }
+        } while (path == null && !file.isEmpty());
 
-            do {
-                if (matcher.reset(file).matches()) {
-                    try {
-                        path = Paths.get(file);
-                    } catch (Exception e) {
-                        //
-                    }
-                }
+        // resolve path against the working directory
+        path = path == null ?
+                CityGMLTools.WORKING_DIR :
+                CityGMLTools.WORKING_DIR.resolve(path);
 
-                if (path == null) {
-                    // the file is not a valid path, possibly because of glob patterns.
-                    // so, let's iteratively truncate the last path element and try again.
-                    int index = file.lastIndexOf(File.separator);
-                    String pathElement = file.substring(index + 1);
-                    file = file.substring(0, index != -1 ? index : 0);
-
-                    // remember the truncated element
-                    elements.addFirst(pathElement);
-                }
-            } while (path == null && !file.isEmpty());
-
-            // resolve path against the working directory
-            path = path == null ?
-                    CityGMLTools.WORKING_DIR :
-                    CityGMLTools.WORKING_DIR.resolve(path);
-
-            elements.addFirst(path.toAbsolutePath().toString());
-            return elements;
-        }
+        elements.addFirst(path.toAbsolutePath().toString());
+        return elements;
     }
 }
