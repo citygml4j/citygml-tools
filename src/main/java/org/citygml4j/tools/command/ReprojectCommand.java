@@ -147,7 +147,6 @@ public class ReprojectCommand extends CityGMLTool {
             }
 
             if (outputFile.isTemporary()) {
-                log.debug("Replacing input file with temporary output file.");
                 replaceInputFile(inputFile, outputFile);
             }
         }

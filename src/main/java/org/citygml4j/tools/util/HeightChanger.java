@@ -118,8 +118,7 @@ public class HeightChanger {
         public void visit(Curve curve) {
             if (curve.getSegments() != null && curve.getSegments().isSetObjects()) {
                 for (AbstractCurveSegment segment : curve.getSegments().getObjects()) {
-                    if (segment instanceof LineStringSegment) {
-                        LineStringSegment lineString = (LineStringSegment) segment;
+                    if (segment instanceof LineStringSegment lineString) {
                         lineString.getControlPoints().setPosList(changePositionList(lineString));
                     }
                 }

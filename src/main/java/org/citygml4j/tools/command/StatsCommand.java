@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.core.AbstractGenericAttribute;
 import org.citygml4j.core.model.core.ImplicitGeometry;
-import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.log.LogLevel;
@@ -110,20 +109,9 @@ public class StatsCommand extends CityGMLTool {
         SchemaHandler schemaHandler;
         try {
             schemaHandler = CityGMLSchemaHandler.newInstance();
+            loadSchemas(schemas, schemaHandler);
         } catch (Exception e) {
             throw new ExecutionException("Failed to create schema handler.", e);
-        }
-
-        if (schemas != null) {
-            for (String schema : schemas) {
-                try {
-                    Path schemaFile = CityGMLTools.WORKING_DIR.resolve(schema).toAbsolutePath();
-                    log.debug("Reading additional XML schema from " + schemaFile + ".");
-                    schemaHandler.parseSchema(schema);
-                } catch (Exception e) {
-                    throw new ExecutionException("Failed to read XML schema from " + schema + ".", e);
-                }
-            }
         }
 
         Statistics summary = null;

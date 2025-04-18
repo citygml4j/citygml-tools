@@ -303,8 +303,7 @@ public class GlobalAppearanceConverter {
             }
 
             for (AbstractAppearanceProperty property : appearances) {
-                if (property.getObject() instanceof Appearance) {
-                    Appearance appearance = (Appearance) property.getObject();
+                if (property.getObject() instanceof Appearance appearance) {
                     if (globalAppearance.getLocalProperties().getAndCompare(ID, appearance.getLocalProperties().get(ID))) {
                         return appearance;
                     }

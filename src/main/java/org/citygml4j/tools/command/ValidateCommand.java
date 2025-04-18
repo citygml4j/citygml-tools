@@ -21,7 +21,6 @@
 
 package org.citygml4j.tools.command;
 
-import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.log.LogLevel;
@@ -40,7 +39,6 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 import java.net.URI;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
@@ -71,20 +69,9 @@ public class ValidateCommand extends CityGMLTool {
         SchemaHandler rootHandler;
         try {
             rootHandler = getCityGMLContext().getDefaultSchemaHandler();
+            loadSchemas(schemas, rootHandler);
         } catch (SchemaHandlerException e) {
             throw new ExecutionException("Failed to load default CityGML schemas.", e);
-        }
-
-        if (schemas != null) {
-            for (String schema : schemas) {
-                try {
-                    Path schemaFile = CityGMLTools.WORKING_DIR.resolve(schema).toAbsolutePath();
-                    log.debug("Reading additional XML schema from " + schemaFile + ".");
-                    rootHandler.parseSchema(schema);
-                } catch (Exception e) {
-                    throw new ExecutionException("Failed to read XML schema from " + schema + ".", e);
-                }
-            }
         }
 
         ValidationErrorHandler errorHandler = new ValidationErrorHandler();
@@ -97,7 +84,7 @@ public class ValidateCommand extends CityGMLTool {
 
             SchemaHandler schemaHandler = new ValidationSchemaHandler(rootHandler);
 
-            // read more external schemas from schemaLocation attribute of root element
+            // read more external schemas from the schemaLocation attribute of the root element
             try (XMLReader reader = XMLReaderFactory.newInstance(getCityGMLContext().getXMLObjects())
                     .withSchemaHandler(schemaHandler)
                     .createReader(inputFile.getFile(), inputOptions.getEncoding())) {

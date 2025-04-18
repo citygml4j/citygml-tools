@@ -99,19 +99,12 @@ public class SchemaHelper {
     }
 
     public boolean isGenericAttribute(QName element) {
-        switch (element.getLocalPart().toLowerCase()) {
-            case "codeattribute":
-            case "dateattribute":
-            case "doubleattribute":
-            case "genericattributeset":
-            case "intattribute":
-            case "measureattribute":
-            case "stringattribute":
-            case "uriattribute":
-                return CityGMLModules.isCityGMLNamespace(element.getNamespaceURI());
-            default:
-                return false;
-        }
+        return switch (element.getLocalPart().toLowerCase()) {
+            case "codeattribute", "dateattribute", "doubleattribute", "genericattributeset", "intattribute",
+                 "measureattribute", "stringattribute", "uriattribute" ->
+                    CityGMLModules.isCityGMLNamespace(element.getNamespaceURI());
+            default -> false;
+        };
     }
 
     public boolean isBoundingShape(QName element) {

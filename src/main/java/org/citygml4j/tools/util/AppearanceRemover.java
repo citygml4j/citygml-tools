@@ -94,8 +94,7 @@ public class AppearanceRemover {
             Appearance appearance = iterator.next();
             if (!appearance.isSetSurfaceData()) {
                 iterator.remove();
-                if (appearance.getParent() != null && appearance.getParent().getParent() instanceof GMLObject) {
-                    GMLObject parent = (GMLObject) appearance.getParent().getParent();
+                if (appearance.getParent() != null && appearance.getParent().getParent() instanceof GMLObject parent) {
                     parent.unsetProperty(appearance.getParent(), true);
                 }
             }

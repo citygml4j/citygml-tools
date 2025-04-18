@@ -32,6 +32,7 @@ import org.citygml4j.cityjson.writer.CityJSONOutputFactory;
 import org.citygml4j.cityjson.writer.CityJSONWriteException;
 import org.citygml4j.core.ade.ADERegistry;
 import org.citygml4j.core.model.CityGMLVersion;
+import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.io.InputFiles;
@@ -51,6 +52,7 @@ import org.citygml4j.xml.reader.*;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
+import org.xmlobjects.schema.SchemaHandler;
 
 import javax.xml.XMLConstants;
 import java.io.IOException;
@@ -285,9 +287,24 @@ public abstract class CityGMLTool implements Command {
 
     void replaceInputFile(InputFile targetFile, OutputFile sourceFile) throws ExecutionException {
         try {
+            log.debug("Replacing input file with temporary output file.");
             Files.move(sourceFile.getFile(), targetFile.getFile(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new ExecutionException("Failed to replace input file.", e);
+        }
+    }
+
+    void loadSchemas(Set<String> schemas, SchemaHandler schemaHandler) throws ExecutionException {
+        if (schemas != null) {
+            for (String schema : schemas) {
+                try {
+                    Path schemaFile = CityGMLTools.WORKING_DIR.resolve(schema).toAbsolutePath();
+                    log.debug("Reading additional XML schema from " + schemaFile + ".");
+                    schemaHandler.parseSchema(schema);
+                } catch (Exception e) {
+                    throw new ExecutionException("Failed to read XML schema from " + schema + ".", e);
+                }
+            }
         }
     }
 
