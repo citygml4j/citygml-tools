@@ -236,18 +236,16 @@ public abstract class CityGMLTool implements Command {
     }
 
     private Path getOutputDirectory(InputFile file, Path outputDir) throws ExecutionException {
-        if (outputDir != null && !outputDir.equals(file.getBasePath())) {
-            if (!file.getBasePath().equals(file.getFile().getParent())) {
-                outputDir = outputDir.resolve(file.getBasePath().relativize(file.getFile().getParent()));
-            }
-
-            try {
-                return Files.createDirectories(outputDir);
-            } catch (Exception e) {
-                throw new ExecutionException("Failed to create output directory " + outputDir + ".", e);
-            }
-        } else {
+        if (outputDir == null || outputDir.equals(file.getBasePath())) {
             return file.getFile().getParent();
+        } else if (!file.getBasePath().equals(file.getFile().getParent())) {
+            outputDir = outputDir.resolve(file.getBasePath().relativize(file.getFile().getParent()));
+        }
+
+        try {
+            return Files.createDirectories(outputDir);
+        } catch (Exception e) {
+            throw new ExecutionException("Failed to create output directory " + outputDir + ".", e);
         }
     }
 
