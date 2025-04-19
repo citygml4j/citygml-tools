@@ -54,6 +54,9 @@ import java.util.Map;
 @CommandLine.Command(name = "from-cityjson",
         description = "Convert CityJSON files into CityGML format.")
 public class FromCityJSONCommand extends CityGMLTool {
+    @CommandLine.Mixin
+    InputOptions inputOptions;
+
     @CommandLine.Option(names = "--no-map-unknown-types", negatable = true, defaultValue = "true",
             description = "Map city objects from unsupported extensions onto generic city objects " +
                     "(default: ${DEFAULT-VALUE}).")
@@ -79,9 +82,6 @@ public class FromCityJSONCommand extends CityGMLTool {
                     "lacks the defined CityJSON LoD.")
     private Map<Integer, Double> lodMappings;
 
-    @CommandLine.Mixin
-    private CityGMLOutputVersion version;
-
     @CommandLine.Option(names = {"--srs-name"},
             description = "Name of the CRS to use in the output files.")
     private String srsName;
@@ -90,7 +90,7 @@ public class FromCityJSONCommand extends CityGMLTool {
     private CityGMLOutputOptions outputOptions;
 
     @CommandLine.Mixin
-    InputOptions inputOptions;
+    private CityGMLOutputVersion version;
 
     @Override
     public Integer call() throws ExecutionException {

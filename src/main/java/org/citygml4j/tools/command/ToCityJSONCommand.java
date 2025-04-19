@@ -48,6 +48,9 @@ import java.util.List;
 @CommandLine.Command(name = "to-cityjson",
         description = "Convert CityGML files into CityJSON format.")
 public class ToCityJSONCommand extends CityGMLTool {
+    @CommandLine.Mixin
+    private InputOptions inputOptions;
+
     @CommandLine.Option(names = {"-e", "--epsg"}, paramLabel = "<code>",
             description = "EPSG code to include as CRS in the metadata.")
     private int epsg;
@@ -91,9 +94,6 @@ public class ToCityJSONCommand extends CityGMLTool {
 
     @CommandLine.Mixin
     private CityJSONOutputOptions outputOptions;
-
-    @CommandLine.Mixin
-    private InputOptions inputOptions;
 
     @Override
     public Integer call() throws ExecutionException {

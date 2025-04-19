@@ -50,13 +50,13 @@ import java.util.List;
 @CommandLine.Command(name = "to-local-apps",
         description = "Convert global appearances into local ones.")
 public class ToLocalAppsCommand extends CityGMLTool {
+    @CommandLine.Mixin
+    private InputOptions inputOptions;
+
     @CommandLine.Option(names = {"-t", "--target-object"}, paramLabel = "<level>", defaultValue = "toplevel",
             description = "City object level to assign the local appearance to: ${COMPLETION-CANDIDATES} " +
                     "(default: ${DEFAULT-VALUE}).")
     private GlobalAppearanceConverter.Mode mode;
-
-    @CommandLine.Mixin
-    private CityGMLOutputVersion version;
 
     @CommandLine.Mixin
     private CityGMLOutputOptions outputOptions;
@@ -65,7 +65,7 @@ public class ToLocalAppsCommand extends CityGMLTool {
     OverwriteInputOptions overwriteOptions;
 
     @CommandLine.Mixin
-    private InputOptions inputOptions;
+    private CityGMLOutputVersion version;
 
     private final String suffix = "__local_apps";
 

@@ -58,6 +58,9 @@ import java.util.*;
 @CommandLine.Command(name = "stats",
         description = "Generate statistics about the content of CityGML files.")
 public class StatsCommand extends CityGMLTool {
+    @CommandLine.Mixin
+    private InputOptions inputOptions;
+
     @CommandLine.Option(names = {"-c", "--compute-extent"},
             description = "Compute the extent of the entire CityGML file. By default, the extent is taken from " +
                     "the CityModel and only computed if missing.")
@@ -90,9 +93,6 @@ public class StatsCommand extends CityGMLTool {
             description = "One or more XML schema files or URLs to include. Official CityGML schemas cannot " +
                     "be overridden.")
     private Set<String> schemas;
-
-    @CommandLine.Mixin
-    private InputOptions inputOptions;
 
     private final String suffix = "__statistics";
 

@@ -47,6 +47,9 @@ import java.util.stream.Collectors;
 @CommandLine.Command(name = "remove-apps",
         description = "Remove appearances from city objects.")
 public class RemoveAppsCommand extends CityGMLTool {
+    @CommandLine.Mixin
+    private InputOptions inputOptions;
+
     @CommandLine.Option(names = {"-t", "--theme"}, split = ",", paramLabel = "<name>",
             description = "Remove appearances with a matching theme. Use '" + AppearanceFilter.NULL_THEME + "' to " +
                     "remove appearances without a theme.")
@@ -61,16 +64,13 @@ public class RemoveAppsCommand extends CityGMLTool {
     private boolean onlyMaterials;
 
     @CommandLine.Mixin
-    private CityGMLOutputVersion version;
-
-    @CommandLine.Mixin
     private CityGMLOutputOptions outputOptions;
 
     @CommandLine.Mixin
     OverwriteInputOptions overwriteOptions;
 
     @CommandLine.Mixin
-    private InputOptions inputOptions;
+    private CityGMLOutputVersion version;
 
     private final String suffix = "__removed_apps";
 

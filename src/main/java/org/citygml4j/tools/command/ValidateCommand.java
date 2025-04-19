@@ -46,6 +46,9 @@ import java.util.Set;
 @CommandLine.Command(name = "validate",
         description = "Validate CityGML files against the CityGML XML schemas.")
 public class ValidateCommand extends CityGMLTool {
+    @CommandLine.Mixin
+    private InputOptions inputOptions;
+
     @CommandLine.Option(names = {"-e", "--suppress-errors"},
             description = "Do not print validation error messages for a more concise report.")
     private boolean suppressMessages;
@@ -54,9 +57,6 @@ public class ValidateCommand extends CityGMLTool {
             description = "One or more XML schema files or URLs to include. Official CityGML schemas cannot " +
                     "be overridden.")
     private Set<String> schemas;
-
-    @CommandLine.Mixin
-    private InputOptions inputOptions;
 
     @Override
     public Integer call() throws ExecutionException {

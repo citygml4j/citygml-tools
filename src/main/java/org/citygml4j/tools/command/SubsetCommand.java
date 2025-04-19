@@ -43,6 +43,9 @@ import java.util.List;
 @CommandLine.Command(name = "subset",
         description = "Create a subset of city objects based on filter criteria.")
 public class SubsetCommand extends CityGMLTool {
+    @CommandLine.Mixin
+    private InputOptions inputOptions;
+
     @CommandLine.ArgGroup(exclusive = false)
     private TypeNameOptions typeNameOptions;
 
@@ -64,16 +67,13 @@ public class SubsetCommand extends CityGMLTool {
     private boolean removeGroupMembers;
 
     @CommandLine.Mixin
-    private CityGMLOutputVersion version;
-
-    @CommandLine.Mixin
     private CityGMLOutputOptions outputOptions;
 
     @CommandLine.Mixin
     OverwriteInputOptions overwriteOptions;
 
     @CommandLine.Mixin
-    private InputOptions inputOptions;
+    private CityGMLOutputVersion version;
 
     private final String suffix = "__subset";
 

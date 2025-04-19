@@ -43,6 +43,9 @@ import java.util.List;
 @CommandLine.Command(name = "reproject",
         description = "Reproject city objects to a new coordinate reference system.")
 public class ReprojectCommand extends CityGMLTool {
+    @CommandLine.Mixin
+    private InputOptions inputOptions;
+
     @CommandLine.Option(names = {"-t", "--target-crs"}, paramLabel = "<crs>", required = true,
             description = "Target CRS as EPSG code, or in OGC URL, OGC URN, or OGC Well-Known Text (WKT) format.")
     private String targetCRS;
@@ -73,16 +76,13 @@ public class ReprojectCommand extends CityGMLTool {
     private boolean lenientTransform;
 
     @CommandLine.Mixin
-    private CityGMLOutputVersion version;
-
-    @CommandLine.Mixin
     private CityGMLOutputOptions outputOptions;
 
     @CommandLine.Mixin
     OverwriteInputOptions overwriteOptions;
 
     @CommandLine.Mixin
-    private InputOptions inputOptions;
+    private CityGMLOutputVersion version;
 
     private final String suffix = "__reprojected";
 

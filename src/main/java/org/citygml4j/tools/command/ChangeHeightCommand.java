@@ -47,6 +47,9 @@ import java.util.List;
 @CommandLine.Command(name = "change-height",
         description = "Change the height values of city objects by a given offset.")
 public class ChangeHeightCommand extends CityGMLTool {
+    @CommandLine.Mixin
+    private InputOptions inputOptions;
+
     @CommandLine.Option(names = {"-z", "--offset"}, paramLabel = "<double>", required = true,
             description = "Offset to add to height values.")
     private double offset;
@@ -56,16 +59,13 @@ public class ChangeHeightCommand extends CityGMLTool {
     private HeightChanger.Mode mode;
 
     @CommandLine.Mixin
-    private CityGMLOutputVersion version;
-
-    @CommandLine.Mixin
     private CityGMLOutputOptions outputOptions;
 
     @CommandLine.Mixin
     OverwriteInputOptions overwriteOptions;
 
     @CommandLine.Mixin
-    private InputOptions inputOptions;
+    private CityGMLOutputVersion version;
 
     private final String suffix = "__changed_height";
 

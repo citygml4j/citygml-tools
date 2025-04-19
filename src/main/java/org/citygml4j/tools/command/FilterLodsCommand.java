@@ -49,6 +49,9 @@ import java.util.List;
 @CommandLine.Command(name = "filter-lods",
         description = "Filter LoD representations of city objects.")
 public class FilterLodsCommand extends CityGMLTool {
+    @CommandLine.Mixin
+    private InputOptions inputOptions;
+
     @CommandLine.Option(names = {"-l", "--lod"}, required = true, split = ",", paramLabel = "<0..4>",
             description = "LoD levels to filter.")
     private int[] lods;
@@ -67,16 +70,13 @@ public class FilterLodsCommand extends CityGMLTool {
     private boolean updateExtents;
 
     @CommandLine.Mixin
-    private CityGMLOutputVersion version;
-
-    @CommandLine.Mixin
     private CityGMLOutputOptions outputOptions;
 
     @CommandLine.Mixin
     private OverwriteInputOptions overwriteOptions;
 
     @CommandLine.Mixin
-    private InputOptions inputOptions;
+    private CityGMLOutputVersion version;
 
     private final String suffix = "__filtered_lods";
 

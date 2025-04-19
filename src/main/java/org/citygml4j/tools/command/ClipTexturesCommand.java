@@ -45,6 +45,9 @@ import java.util.List;
 @CommandLine.Command(name = "clip-textures",
         description = "Clip texture images to the extent of the target surface.")
 public class ClipTexturesCommand extends CityGMLTool {
+    @CommandLine.Mixin
+    private InputOptions inputOptions;
+
     @CommandLine.Option(names = {"-j", "--force-jpeg"},
             description = "Force JPEG as the output format for texture images.")
     private boolean forceJpeg;
@@ -75,16 +78,13 @@ public class ClipTexturesCommand extends CityGMLTool {
     private int textureBuckets = 10;
 
     @CommandLine.Mixin
-    private CityGMLOutputVersion version;
-
-    @CommandLine.Mixin
     private CityGMLOutputOptions outputOptions;
 
     @CommandLine.Mixin
     OverwriteInputOptions overwriteOptions;
 
     @CommandLine.Mixin
-    private InputOptions inputOptions;
+    private CityGMLOutputVersion version;
 
     private final String suffix = "__clipped_textures";
 

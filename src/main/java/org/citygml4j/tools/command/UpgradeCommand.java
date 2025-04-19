@@ -47,6 +47,9 @@ import java.util.List;
 @CommandLine.Command(name = "upgrade",
         description = "Upgrade CityGML files to version 3.0.")
 public class UpgradeCommand extends CityGMLTool {
+    @CommandLine.Mixin
+    private InputOptions inputOptions;
+
     @CommandLine.Option(names = {"-l", "--use-lod4-as-lod3"},
             description = "Use LoD4 as LoD3, replacing an existing LoD3.")
     private boolean useLod4AsLod3;
@@ -78,9 +81,6 @@ public class UpgradeCommand extends CityGMLTool {
 
     @CommandLine.Mixin
     private OverwriteInputOptions overwriteOptions;
-
-    @CommandLine.Mixin
-    private InputOptions inputOptions;
 
     private final String suffix = "__v3";
 
