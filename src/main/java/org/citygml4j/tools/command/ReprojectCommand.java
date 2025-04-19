@@ -41,7 +41,7 @@ import picocli.CommandLine;
 import java.util.List;
 
 @CommandLine.Command(name = "reproject",
-        description = "Reprojects city objects to a new coordinate reference system.")
+        description = "Reproject city objects to a new coordinate reference system.")
 public class ReprojectCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-t", "--target-crs"}, paramLabel = "<crs>", required = true,
             description = "Target CRS as EPSG code, or in OGC URL, OGC URN, or OGC Well-Known Text (WKT) format.")

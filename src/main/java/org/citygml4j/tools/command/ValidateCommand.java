@@ -44,7 +44,7 @@ import java.util.List;
 import java.util.Set;
 
 @CommandLine.Command(name = "validate",
-        description = "Validates CityGML files against the CityGML XML schemas.")
+        description = "Validate CityGML files against the CityGML XML schemas.")
 public class ValidateCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-e", "--suppress-errors"},
             description = "Do not print validation error messages for a more concise report.")

@@ -52,7 +52,7 @@ import java.util.List;
 import java.util.Map;
 
 @CommandLine.Command(name = "from-cityjson",
-        description = "Converts CityJSON files into CityGML format.")
+        description = "Convert CityJSON files into CityGML format.")
 public class FromCityJSONCommand extends CityGMLTool {
     @CommandLine.Option(names = "--no-map-unknown-types", negatable = true, defaultValue = "true",
             description = "Map city objects from unsupported extensions onto generic city objects " +

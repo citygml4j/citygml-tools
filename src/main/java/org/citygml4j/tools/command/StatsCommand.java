@@ -56,7 +56,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 @CommandLine.Command(name = "stats",
-        description = "Generates statistics about the content of CityGML files.")
+        description = "Generate statistics about the content of CityGML files.")
 public class StatsCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-c", "--compute-extent"},
             description = "Compute the extent of the entire CityGML file. By default, the extent is taken from " +

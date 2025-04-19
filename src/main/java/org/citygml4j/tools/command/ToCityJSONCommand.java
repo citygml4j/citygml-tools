@@ -46,7 +46,7 @@ import picocli.CommandLine;
 import java.util.List;
 
 @CommandLine.Command(name = "to-cityjson",
-        description = "Converts CityGML files into CityJSON format.")
+        description = "Convert CityGML files into CityJSON format.")
 public class ToCityJSONCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-e", "--epsg"}, paramLabel = "<code>",
             description = "EPSG code to include as CRS in the metadata.")

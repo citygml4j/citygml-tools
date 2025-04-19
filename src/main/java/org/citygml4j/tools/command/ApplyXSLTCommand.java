@@ -48,7 +48,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @CommandLine.Command(name = "apply-xslt",
-        description = "Transforms city objects based on XSLT stylesheets.")
+        description = "Transform city objects based on XSLT stylesheets.")
 public class ApplyXSLTCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-x", "--xsl-transform"}, split = ",", paramLabel = "<stylesheet>", required = true,
             description = "One ore more XSLT stylesheets to transform top-level city objects, applied in " +

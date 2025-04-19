@@ -47,7 +47,7 @@ import picocli.CommandLine;
 import java.util.List;
 
 @CommandLine.Command(name = "filter-lods",
-        description = "Filters LoD representations of city objects.")
+        description = "Filter LoD representations of city objects.")
 public class FilterLodsCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-l", "--lod"}, required = true, split = ",", paramLabel = "<0..4>",
             description = "LoD levels to filter.")

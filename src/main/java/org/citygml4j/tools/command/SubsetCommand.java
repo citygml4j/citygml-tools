@@ -41,7 +41,7 @@ import picocli.CommandLine;
 import java.util.List;
 
 @CommandLine.Command(name = "subset",
-        description = "Creates a subset of city objects based on filter criteria.")
+        description = "Create a subset of city objects based on filter criteria.")
 public class SubsetCommand extends CityGMLTool {
     @CommandLine.ArgGroup(exclusive = false)
     private TypeNameOptions typeNameOptions;

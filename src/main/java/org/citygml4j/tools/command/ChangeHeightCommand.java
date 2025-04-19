@@ -45,7 +45,7 @@ import picocli.CommandLine;
 import java.util.List;
 
 @CommandLine.Command(name = "change-height",
-        description = "Changes the height values of city objects by a given offset.")
+        description = "Change the height values of city objects by a given offset.")
 public class ChangeHeightCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-z", "--offset"}, paramLabel = "<double>", required = true,
             description = "Offset to add to height values.")

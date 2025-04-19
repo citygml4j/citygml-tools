@@ -50,19 +50,19 @@ Collection of tools for processing CityGML files.
   -V, --version             Print version information and exit.
 Commands:
   help           Display help information about the specified command.
-  stats          Generates statistics about the content of CityGML files.
-  validate       Validates CityGML files against the CityGML XML schemas.
-  apply-xslt     Transforms city objects based on XSLT stylesheets.
-  change-height  Changes the height values of city objects by a given offset.
-  remove-apps    Removes appearances from city objects.
-  to-local-apps  Converts global appearances into local ones.
-  clip-textures  Clips texture images to the extent of the target surface.
-  subset         Creates a subset of city objects based on filter criteria.
-  filter-lods    Filters LoD representations of city objects.
-  reproject      Reprojects city objects to a new coordinate reference system.
-  from-cityjson  Converts CityJSON files into CityGML format.
-  to-cityjson    Converts CityGML files into CityJSON format.
-  upgrade        Upgrades CityGML files to version 3.0.
+  stats          Generate statistics about the content of CityGML files.
+  validate       Validate CityGML files against the CityGML XML schemas.
+  apply-xslt     Transform city objects based on XSLT stylesheets.
+  change-height  Change the height values of city objects by a given offset.
+  remove-apps    Remove appearances from city objects.
+  to-local-apps  Convert global appearances into local ones.
+  clip-textures  Clip texture images to the extent of the target surface.
+  subset         Create a subset of city objects based on filter criteria.
+  filter-lods    Filter LoD representations of city objects.
+  reproject      Reproject city objects to a new coordinate reference system.
+  from-cityjson  Convert CityJSON files into CityGML format.
+  to-cityjson    Convert CityGML files into CityJSON format.
+  upgrade        Upgrade CityGML files to version 3.0.
 ```
 
 To get help about a specific command of citygml-tools, enter the following and replace `COMMAND` with the name of
