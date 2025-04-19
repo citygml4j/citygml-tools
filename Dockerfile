@@ -11,7 +11,8 @@ WORKDIR /build
 COPY . /build
 
 # Build
-RUN chmod u+x ./gradlew && ./gradlew installDist
+RUN set -x && \
+    chmod u+x ./gradlew && ./gradlew installDist
 
 # Runtime stage ###############################################################
 # Base image
@@ -25,12 +26,11 @@ ENV CITYGML_TOOLS_VERSION=${CITYGML_TOOLS_VERSION}
 COPY --from=builder /build/build/install/ /opt/
 
 # Run as non-root user, add start script in path and set permissions
-RUN groupadd --gid 1000 -r citygml-tools && \
-    useradd --uid 1000 --gid 1000 -d /data -m -r --no-log-init citygml-tools && \
+RUN set -x && \
     ln -sf /opt/citygml-tools/citygml-tools /usr/local/bin/
 
-WORKDIR /data
 USER 1000
+WORKDIR /data
 
 ENTRYPOINT ["citygml-tools"]
 CMD ["--help"]
