@@ -77,15 +77,7 @@ application {
 }
 
 distributions.main.contents {
-    from('resources/README') {
-        filter(ReplaceTokens, tokens: [
-                name: project.name,
-                version: project.version,
-                date: date.format('yyyy-MM-dd'),
-                copyright: date.format('yyyy'),
-                javaCompatibility: java.sourceCompatibility.toString()
-        ])
-    }
+    from 'README.md'
     into('license') {
         from 'LICENSE'
     }
