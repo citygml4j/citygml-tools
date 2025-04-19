@@ -1,7 +1,7 @@
 # Build stage #################################################################
 # Arguments
-ARG BUILDER_IMAGE_TAG='17-jdk-jammy'
-ARG RUNTIME_IMAGE_TAG='17-jdk-jammy'
+ARG BUILDER_IMAGE_TAG='21-jdk-noble'
+ARG RUNTIME_IMAGE_TAG='21-jre-noble'
 
 # Base image
 FROM eclipse-temurin:${BUILDER_IMAGE_TAG} AS builder
