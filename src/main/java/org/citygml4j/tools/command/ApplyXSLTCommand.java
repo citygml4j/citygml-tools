@@ -107,7 +107,7 @@ public class ApplyXSLTCommand extends CityGMLTool {
 
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(getFeatureInfo(reader))) {
-                    log.debug("Reading and transforming city objects using the specified XSLT stylesheet(s).");
+                    log.debug("Reading and transforming city objects using the specified XSLT stylesheets.");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
                         resourceProcessor.process(feature);

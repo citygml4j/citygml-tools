@@ -102,7 +102,7 @@ public class ToCityJSONCommand extends CityGMLTool {
             return CommandLine.ExitCode.OK;
         }
 
-        log.debug("Using CityJSON " + outputOptions.getVersion() + " for the output file(s).");
+        log.debug("Using CityJSON " + outputOptions.getVersion() + " for the output files.");
 
         CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
         CityJSONOutputFactory out = createCityJSONOutputFactory(outputOptions.getVersion())

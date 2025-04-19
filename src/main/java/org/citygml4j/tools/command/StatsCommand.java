@@ -220,12 +220,12 @@ public class StatsCommand extends CityGMLTool {
         int exitCode = CommandLine.ExitCode.OK;
         if (summary != null) {
             if (summaryFile != null) {
-                log.info("Writing overall statistics over all input file(s) as JSON report to file " + summaryFile + ".");
+                log.info("Writing overall statistics over all input files as JSON report to file " + summaryFile + ".");
                 writeStatistics(summaryFile, summary, objectMapper);
             }
 
             if (summary.hasMissingSchemas()) {
-                log.warn("The statistics might be incomplete due to missing XML schemas in the input file(s).");
+                log.warn("The statistics might be incomplete due to missing XML schemas in the input files.");
                 exitCode = 3;
             }
 

@@ -139,7 +139,7 @@ public class ToLocalAppsCommand extends CityGMLTool {
 
                     if (!converter.getCounter().isEmpty()) {
                         converter.getCounter().forEach((key, value) ->
-                                log.debug("Created local " + key + " element(s): " + value));
+                                log.debug("Created local " + key + " elements: " + value));
                     }
                 }
             } catch (CityGMLReadException e) {

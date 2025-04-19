@@ -100,7 +100,7 @@ public class FromCityJSONCommand extends CityGMLTool {
             return CommandLine.ExitCode.OK;
         }
 
-        log.debug("Using CityGML " + version.getVersion() + " for the output file(s).");
+        log.debug("Using CityGML " + version.getVersion() + " for the output files.");
 
         LodMapper lodMapper = LodMapper.newInstance()
                 .withMode(mode)

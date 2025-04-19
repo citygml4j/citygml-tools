@@ -221,8 +221,7 @@ public abstract class CityGMLTool implements Command {
         }
 
         if (!unsupported.isEmpty()) {
-            log.warn("The input file uses unsupported non-CityGML namespace(s): " +
-                    String.join(", ", unsupported) + ".");
+            log.warn("The input file uses unsupported non-CityGML namespaces: " + String.join(", ", unsupported) + ".");
             log.info("Non-CityGML content is skipped unless a matching ADE extension has been loaded.");
         }
     }

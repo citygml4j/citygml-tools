@@ -51,8 +51,8 @@ public class RemoveAppsCommand extends CityGMLTool {
     private InputOptions inputOptions;
 
     @CommandLine.Option(names = {"-t", "--theme"}, split = ",", paramLabel = "<name>",
-            description = "Remove appearances with a matching theme. Use '" + AppearanceFilter.NULL_THEME + "' to " +
-                    "remove appearances without a theme.")
+            description = "Only remove appearances with a matching theme. Use '" + AppearanceFilter.NULL_THEME + "' " +
+                    "to remove appearances without a theme.")
     private Set<String> themes;
 
     @CommandLine.Option(names = "--only-textures",
@@ -109,7 +109,7 @@ public class RemoveAppsCommand extends CityGMLTool {
 
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(getFeatureInfo(reader))) {
-                    String themes = this.themes != null ? " with theme(s) " + this.themes.stream()
+                    String themes = this.themes != null ? " with themes " + this.themes.stream()
                             .map(theme -> "'" + theme + "'")
                             .collect(Collectors.joining(", ")) : "";
                     log.debug("Reading city objects and removing appearances" + themes + ".");
@@ -123,7 +123,8 @@ public class RemoveAppsCommand extends CityGMLTool {
                     }
 
                     if (!remover.getCounter().isEmpty()) {
-                        remover.getCounter().forEach((key, value) -> log.debug("Removed " + key + " element(s): " + value));
+                        remover.getCounter().forEach((key, value) ->
+                                log.debug("Removed " + key + " elements: " + value));
                     } else {
                         log.debug("No appearance elements removed based on input parameters.");
                     }
