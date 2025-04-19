@@ -46,14 +46,14 @@ import picocli.CommandLine;
 import java.util.List;
 
 @CommandLine.Command(name = "to-cityjson",
-        description = "Converts CityGML files into CityJSON.")
+        description = "Converts CityGML files into CityJSON format.")
 public class ToCityJSONCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-e", "--epsg"}, paramLabel = "<code>",
-            description = "EPSG code to use as CRS in the metadata.")
+            description = "EPSG code to include as CRS in the metadata.")
     private int epsg;
 
     @CommandLine.Option(names = {"-c", "--compute-extent"},
-            description = "Compute city model extent to use in the metadata.")
+            description = "Compute city model extent to include in the metadata.")
     private boolean computeExtent;
 
     @CommandLine.Option(names = "--vertex-precision", paramLabel = "<digits>",
@@ -69,20 +69,19 @@ public class ToCityJSONCommand extends CityGMLTool {
     private int textureVertexPrecision = AppearanceSerializer.DEFAULT_TEXTURE_VERTEX_PRECISION;
 
     @CommandLine.Option(names = {"-t", "--transform-coordinates"},
-            description = "Transform the coordinates of vertices to integers to reduce the file size. The " +
-                    "transformation is always applied for CityJSON 1.1 and later.")
+            description = "Transform coordinates to integer values when exporting in CityJSON 1.0.")
     private boolean transformCoordinates;
 
-    @CommandLine.Option(names = {"-r", "--replace-implicit-geometries"},
-            description = "Replace implicit geometries with their absolute coordinates.")
-    private boolean replaceImplicitGeometries;
+    @CommandLine.Option(names = {"-r", "--replace-templates"},
+            description = "Replace template geometries with real coordinates.")
+    private boolean replaceTemplates;
 
     @CommandLine.Option(names = "--no-material-defaults", negatable = true, defaultValue = "true",
             description = "Use CityGML default values for material properties (default: ${DEFAULT-VALUE}).")
     private boolean useMaterialDefaults;
 
     @CommandLine.Option(names = "--fallback-theme", paramLabel = "<theme>",
-            description = "Theme to use for materials and textures if not defined in the input file(s) " +
+            description = "Theme to use for materials and textures if not defined in the input files " +
                     "(default: ${DEFAULT-VALUE}).")
     private String fallbackTheme = AppearanceSerializer.FALLBACK_THEME;
 
@@ -112,7 +111,7 @@ public class ToCityJSONCommand extends CityGMLTool {
                 .withTemplatePrecision(templatePrecision)
                 .withTextureVertexPrecision(textureVertexPrecision)
                 .applyTransformation(transformCoordinates)
-                .transformTemplateGeometries(replaceImplicitGeometries)
+                .transformTemplateGeometries(replaceTemplates)
                 .useMaterialDefaults(useMaterialDefaults)
                 .withFallbackTheme(fallbackTheme)
                 .writeGenericAttributeTypes(addGenericAttributeTypes);

@@ -33,7 +33,7 @@ import org.xmlobjects.model.Child;
 import java.util.*;
 
 public class AppearanceFilter {
-    public static final String NULL_THEME = "null";
+    public static final String NULL_THEME = "none";
     private final AppearanceProcessor appearanceProcessor = new AppearanceProcessor();
     private final Map<String, Integer> counter = new TreeMap<>();
 

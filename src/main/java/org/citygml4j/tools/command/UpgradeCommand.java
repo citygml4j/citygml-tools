@@ -33,7 +33,6 @@ import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOptions;
 import org.citygml4j.tools.util.ResourceProcessor;
 import org.citygml4j.tools.util.UpgradeProcessor;
-import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
 import org.citygml4j.xml.reader.CityGMLReadException;
@@ -48,29 +47,30 @@ import java.util.List;
 @CommandLine.Command(name = "upgrade",
         description = "Upgrades CityGML files to version 3.0.")
 public class UpgradeCommand extends CityGMLTool {
-    @CommandLine.Option(names = {"-u", "--use-lod4-as-lod3"},
-            description = "Use the LoD4 representation of city objects as LoD3, replacing an existing LoD3.")
+    @CommandLine.Option(names = {"-l", "--use-lod4-as-lod3"},
+            description = "Use LoD4 as LoD3, replacing an existing LoD3.")
     private boolean useLod4AsLod3;
 
     @CommandLine.Option(names = {"-r", "--map-lod0-roof-edge"},
-            description = "Map the LoD0 roof edge representation of buildings onto a roof surface.")
+            description = "Map LoD0 roof edges onto roof surfaces.")
     private boolean mapLod0RoofEdge;
 
-    @CommandLine.Option(names = {"-m", "--map-lod1-multi-surfaces"},
-            description = "Map the LoD1 multi-surface representation of city objects onto generic thematic surfaces.")
+    @CommandLine.Option(names = {"-s", "--map-lod1-surface"},
+            description = "Map LoD1 multi-surfaces onto generic thematic surfaces.")
     private boolean mapLod1MultiSurfaces;
 
-    @CommandLine.Option(names = {"-x", "--resolve-cross-lod-references"},
-            description = "Resolve geometry references between different LoDs of the same top-level city object.")
+    @CommandLine.Option(names = "--no-resolve-cross-lod-references", negatable = true, defaultValue = "true",
+            description = "Resolve geometry references across LoDs of the same top-level city object " +
+                    "(default: ${DEFAULT-VALUE}).")
     private boolean resolveCrossLodReferences;
 
-    @CommandLine.Option(names = {"-g", "--resolve-geometry-references"},
-            description = "Resolve geometry references between top-level city objects.")
+    @CommandLine.Option(names = "--no-resolve-geometry-references", negatable = true, defaultValue = "true",
+            description = "Resolve geometry references between top-level city objects (default: ${DEFAULT-VALUE}).")
     private boolean resolveGeometryReferences;
 
-    @CommandLine.Option(names = {"-l", "--add-object-links"},
+    @CommandLine.Option(names = {"-a", "--add-object-relations"},
             description = "Add CityObjectRelation links between top-level city objects sharing a common geometry. " +
-                    "Use only when resolving geometry references between top-level city objects references is enabled.")
+                    "Use only when resolving geometry references is enabled.")
     private boolean createCityObjectRelations;
 
     @CommandLine.Mixin
@@ -102,14 +102,6 @@ public class UpgradeCommand extends CityGMLTool {
 
             try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions);
                  ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
-                if (reader.hasNext()) {
-                    CityGMLVersion version = CityGMLModules.getCityGMLVersion(reader.getName().getNamespaceURI());
-                    if (version == CityGMLVersion.v3_0) {
-                        log.info("This is already a CityGML 3.0 file. No action required.");
-                        continue;
-                    }
-                }
-
                 UpgradeProcessor processor = UpgradeProcessor.newInstance()
                         .useLod4AsLod3(useLod4AsLod3)
                         .mapLod0RoofEdge(mapLod0RoofEdge)
@@ -197,7 +189,7 @@ public class UpgradeCommand extends CityGMLTool {
     public void preprocess(CommandLine commandLine) throws Exception {
         if (createCityObjectRelations && !resolveGeometryReferences) {
             throw new CommandLine.ParameterException(commandLine,
-                    "Error: --create-object-relations can only be used together with --resolve-geometry-references");
+                    "Error: --add-object-relations can only be used together with --resolve-geometry-references");
         }
     }
 }

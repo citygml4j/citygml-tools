@@ -44,25 +44,24 @@ import java.util.List;
         description = "Reprojects city objects to a new coordinate reference system.")
 public class ReprojectCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-t", "--target-crs"}, paramLabel = "<crs>", required = true,
-            description = "Target CRS given as either EPSG code, OGC URL, OGC URN, or OGC Well-Known Text (WKT).")
+            description = "Target CRS as EPSG code, or in OGC URL, OGC URN, or OGC Well-Known Text (WKT) format.")
     private String targetCRS;
 
-    @CommandLine.Option(names = {"-n", "--target-name"}, paramLabel = "<name>",
-            description = "Name of the target CRS to use as gml:srsName attribute in the output file(s).")
+    @CommandLine.Option(names = {"-c", "--crs-name"}, paramLabel = "<name>",
+            description = "Name of the target CRS for the gml:srsName attribute in the output.")
     private String targetName;
 
-    @CommandLine.Option(names = {"-l", "--target-longitude-first"},
-            description = "Force axis order of the target CRS to longitude, latitude.")
+    @CommandLine.Option(names = {"-f", "--force-lon-lat"},
+            description = "Force target CRS axis order to longitude, latitude.")
     private boolean forceLongitudeFirst;
 
     @CommandLine.Option(names = {"-s", "--source-crs"}, paramLabel = "<crs>",
-            description = "Source CRS given as either EPSG code, OGC URL, OGC URN, or OGC Well-Known Text (WKT). " +
-                    "If specified, the source CRS takes precedence over any reference systems defined in the " +
-                    "input file(s).")
+            description = "Source CRS as EPSG code, or in OGC URL, OGC URN, or OGC Well-Known Text (WKT) format. " +
+                    "Overrides any reference system in the input files if specified.")
     private String sourceCRS;
 
-    @CommandLine.Option(names = "--source-swap-axis-order",
-            description = "Swap X and Y axes for all input geometries before performing the reprojection.")
+    @CommandLine.Option(names = "--swap-axis-order",
+            description = "Swap X and Y axes for all input geometries before reprojection.")
     private boolean swapAxisOrder;
 
     @CommandLine.Option(names = "--keep-height-values",
@@ -70,7 +69,7 @@ public class ReprojectCommand extends CityGMLTool {
     private boolean keepHeightValues;
 
     @CommandLine.Option(names = "--lenient-transform",
-            description = "Perform transformation even when there is no information available for a datum shift.")
+            description = "Allow transformation even without datum shift information.")
     private boolean lenientTransform;
 
     @CommandLine.Mixin

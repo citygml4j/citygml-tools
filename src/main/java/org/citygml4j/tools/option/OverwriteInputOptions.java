@@ -25,7 +25,7 @@ import picocli.CommandLine;
 
 public class OverwriteInputOptions implements Option {
     @CommandLine.Option(names = {"-O", "--overwrite"},
-            description = "Overwrite input file(s).")
+            description = "Overwrite input files.")
     private boolean overwrite;
 
     public boolean isOverwrite() {

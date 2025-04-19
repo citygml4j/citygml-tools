@@ -57,11 +57,10 @@ public class SubsetCommand extends CityGMLTool {
     private boolean invert;
 
     @CommandLine.ArgGroup(exclusive = false)
-    private CounterOptions counterOptions;
+    private CountOptions countOptions;
 
     @CommandLine.Option(names = "--no-remove-group-members", negatable = true, defaultValue = "true",
-            description = "Remove group members that do not satisfy the filter criteria from city object groups " +
-                    "(default: ${DEFAULT-VALUE}).")
+            description = "Remove group members that do not meet the filter criteria (default: ${DEFAULT-VALUE}).")
     private boolean removeGroupMembers;
 
     @CommandLine.Mixin
@@ -104,7 +103,7 @@ public class SubsetCommand extends CityGMLTool {
                     .withIdFilter(idOptions)
                     .withBoundingBoxFilter(boundingBoxOptions != null ? boundingBoxOptions.toBoundingBoxFilter() : null)
                     .invertFilterCriteria(invert)
-                    .withCounterOption(counterOptions)
+                    .withCounterOption(countOptions)
                     .removeGroupMembers(removeGroupMembers);
 
             try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions,

@@ -52,25 +52,25 @@ import java.util.List;
 import java.util.Map;
 
 @CommandLine.Command(name = "from-cityjson",
-        description = "Converts CityJSON files into CityGML.")
+        description = "Converts CityJSON files into CityGML format.")
 public class FromCityJSONCommand extends CityGMLTool {
     @CommandLine.Option(names = "--no-map-unknown-types", negatable = true, defaultValue = "true",
-            description = "Map unknown object types onto generic city objects (default: ${DEFAULT-VALUE}).")
+            description = "Map city objects from unsupported extensions onto generic city objects " +
+                    "(default: ${DEFAULT-VALUE}).")
     private boolean mapUnknownTypes;
 
     @CommandLine.Option(names = {"-r", "--replace-templates"},
-            description = "Replace geometry templates with real coordinates.")
+            description = "Replace template geometries with real coordinates.")
     private boolean replaceTemplates;
 
-    @CommandLine.Option(names = {"-a", "--assign-appearances-to-implicit-geometries"},
+    @CommandLine.Option(names = {"-i", "--implicit-appearances"},
             description = "Assign appearances to implicit geometries instead of using global appearances. " +
                     "This option can only be used with CityGML 3.0.")
     private boolean assignAppearancesToImplicitGeometries;
 
     @CommandLine.Option(names = {"-m", "--lod-mode"}, defaultValue = "maximum",
-            description = "Default mode for selecting a CityJSON LoD formatted as X.Y if a city object " +
-                    "has multiple CityJSON LoDs for the same CityGML LoD: ${COMPLETION-CANDIDATES} " +
-                    "(default: ${DEFAULT-VALUE}).")
+            description = "Default mode for selecting the CityGML LoD from multiple CityJSON LoDs formatted as X.Y: " +
+                    "${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
     private LodMapper.Mode mode;
 
     @CommandLine.Option(names = {"-l", "--lod-mapping"}, split = ",", paramLabel = "<lod=x.y>",
@@ -83,7 +83,7 @@ public class FromCityJSONCommand extends CityGMLTool {
     private CityGMLOutputVersion version;
 
     @CommandLine.Option(names = {"--srs-name"},
-            description = "Name of the CRS to use in the output file.")
+            description = "Name of the CRS to use in the output files.")
     private String srsName;
 
     @CommandLine.Mixin

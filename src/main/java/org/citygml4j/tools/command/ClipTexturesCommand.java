@@ -46,32 +46,32 @@ import java.util.List;
         description = "Clips texture images to the extent of the target surface.")
 public class ClipTexturesCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-j", "--force-jpeg"},
-            description = "Force JPEG as format for the texture images.")
+            description = "Force JPEG as the output format for texture images.")
     private boolean forceJpeg;
 
     @CommandLine.Option(names = {"-q", "--jpeg-compression-quality"}, paramLabel = "<0..1>", defaultValue = "1.0",
-            description = "Compression quality to use for JPEG images (default: ${DEFAULT-VALUE}).")
+            description = "JPEG compression quality (default: ${DEFAULT-VALUE}).")
     private float jpegCompressionQuality;
 
     @CommandLine.Option(names = {"-c", "--clamp-texture-coordinates"},
-            description = "Clamp texture coordinates to lie within [0, 1].")
+            description = "Clamp texture coordinates to the range [0, 1].")
     private boolean clampTextureCoordinates;
 
     @CommandLine.Option(names = "--texture-vertex-precision", paramLabel = "<digits>", defaultValue = "7",
             description = "Number of decimal places to keep for texture vertices (default: ${DEFAULT-VALUE}).")
     private int textureVertexPrecision;
 
-    @CommandLine.Option(names = {"-f", "--texture-folder"}, paramLabel = "<name>", defaultValue = "clipped_textures",
-            description = "Name of the relative folder where to save the texture files (default: ${DEFAULT-VALUE}).")
+    @CommandLine.Option(names = {"-f", "--texture-dir"}, paramLabel = "<dir>", defaultValue = "clipped_textures",
+            description = "Relative directory to store clipped texture files (default: ${DEFAULT-VALUE}).")
     private String textureFolder;
 
     @CommandLine.Option(names = "--texture-prefix", paramLabel = "<prefix>", defaultValue = "tex",
-            description = "Prefix to use for texture file names (default: ${DEFAULT-VALUE}).")
+            description = "Prefix to use for texture filenames (default: ${DEFAULT-VALUE}).")
     private String texturePrefix;
 
     @CommandLine.Option(names = "--texture-buckets", paramLabel = "<number>",
-            description = "Number of subfolders (\"buckets\") to create under the texture folder" +
-                    " (default: ${DEFAULT-VALUE}).")
+            description = "Number of subdirectories to create within the texture directory " +
+                    "(default: ${DEFAULT-VALUE}).")
     private int textureBuckets = 10;
 
     @CommandLine.Mixin

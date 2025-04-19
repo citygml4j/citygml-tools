@@ -26,7 +26,7 @@ import picocli.CommandLine;
 
 public class CityGMLOutputVersion implements Option {
     @CommandLine.Option(names = {"-v", "--citygml-version"}, paramLabel = "<version>",
-            description = "CityGML version to use for output file(s): 3.0, 2.0, 1.0.")
+            description = "CityGML version for output: 3.0, 2.0, 1.0.")
     private String versionString;
 
     private CityGMLVersion version;

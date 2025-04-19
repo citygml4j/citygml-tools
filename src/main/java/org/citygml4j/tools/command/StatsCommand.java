@@ -59,9 +59,8 @@ import java.util.*;
         description = "Generates statistics about the content of CityGML files.")
 public class StatsCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-c", "--compute-extent"},
-            description = "Compute the extent for the entire CityGML file. By default, the extent is taken from " +
-                    "the CityModel and calculated only as fallback. No coordinate transformation is applied in " +
-                    "the calculation.")
+            description = "Compute the extent of the entire CityGML file. By default, the extent is taken from " +
+                    "the CityModel and only computed if missing.")
     private boolean computeEnvelope;
 
     @CommandLine.ArgGroup
@@ -72,26 +71,24 @@ public class StatsCommand extends CityGMLTool {
     private boolean onlyTopLevelFeatures;
 
     @CommandLine.Option(names = {"-H", "--object-hierarchy"},
-            description = "Generate an aggregated overview of the nested hierarchies of the city objects.")
+            description = "Generate an overview of the nested city object hierarchies.")
     private boolean generateObjectHierarchy;
 
     @CommandLine.Option(names = "--no-json-report", negatable = true, defaultValue = "true",
-            description = "Save the statistics as separate JSON report for each input file " +
-                    "(default: ${DEFAULT-VALUE}).")
+            description = "Save per-file statistics as individual JSON reports (default: ${DEFAULT-VALUE}).")
     private boolean jsonReport;
 
     @CommandLine.Option(names = {"-r", "--summary-report"}, paramLabel = "<file>",
-            description = "Write the overall statistics over all input file(s) as JSON report to the " +
-                    "specified output file.")
+            description = "Write aggregated statistics across all input files as a JSON report.")
     private Path summaryFile;
 
     @CommandLine.Option(names = {"-f", "--fail-on-missing-schema"},
-            description = "Fail if elements in the input file(s) are not associated with an XML schema.")
+            description = "Fail if input elements lack an associated XML schema.")
     private boolean failOnMissingSchema;
 
     @CommandLine.Option(names = {"-s", "--schema"}, split = ",", paramLabel = "<URI>",
-            description = "One or more files or URLs of additional XML schemas to use for generating the statistics. " +
-                    "Note that the official CityGML schemas cannot be replaced.")
+            description = "One or more XML schema files or URLs to include. Official CityGML schemas cannot " +
+                    "be overridden.")
     private Set<String> schemas;
 
     @CommandLine.Mixin

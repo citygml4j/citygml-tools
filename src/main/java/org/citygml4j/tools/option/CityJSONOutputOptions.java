@@ -31,24 +31,24 @@ import java.util.Locale;
 
 public class CityJSONOutputOptions implements Option {
     @CommandLine.Option(names = {"-v", "--cityjson-version"}, paramLabel = "<version>", defaultValue = "2.0",
-            description = "CityJSON version to use for output file(s): 2.0, 1.1, 1.0 (default: ${DEFAULT-VALUE}).")
+            description = "CityJSON version for output: 2.0, 1.1, 1.0 (default: ${DEFAULT-VALUE}).")
     private String versionString;
 
     @CommandLine.Option(names = {"-l", "--json-lines"},
-            description = "Write output as CityJSON Sequence in JSON Lines format. " +
+            description = "Write output as CityJSON Text Sequence in JSON lines format. " +
                     "This option requires CityJSON 1.1 or later.")
     private boolean jsonLines;
 
     @CommandLine.Option(names = {"-o", "--output"}, paramLabel = "<dir>",
-            description = "Store output file(s) in this directory.")
+            description = "Store output files in this directory.")
     private Path outputDirectory;
 
     @CommandLine.Option(names = "--output-encoding", defaultValue = "UTF-8",
-            description = "Encoding to use for output file(s): UTF-8, UTF-16, UTF-32 (default: ${DEFAULT-VALUE}).")
+            description = "Encoding to use for output files: UTF-8, UTF-16, UTF-32 (default: ${DEFAULT-VALUE}).")
     private String encoding;
 
     @CommandLine.Option(names = "--pretty-print",
-            description = "Format and indent output file(s).")
+            description = "Format and indent output files.")
     private boolean prettyPrint;
 
     @CommandLine.Option(names = "--html-safe",

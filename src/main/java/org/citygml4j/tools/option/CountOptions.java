@@ -23,13 +23,13 @@ package org.citygml4j.tools.option;
 
 import picocli.CommandLine;
 
-public class CounterOptions implements Option {
-    @CommandLine.Option(names = {"-c", "--count"},
+public class CountOptions implements Option {
+    @CommandLine.Option(names = {"-l", "--limit"},
             description = "Maximum number of top-level city objects to process.")
     private Long count;
 
     @CommandLine.Option(names = "--start-index", paramLabel = "<index>",
-            description = "Index within the result set to process top-level city objects from (0-based).")
+            description = "Index within the result set from which top-level city objects are processed (0-based).")
     private Long startIndex;
 
     public long getCount() {

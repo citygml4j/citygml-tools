@@ -47,12 +47,12 @@ import java.util.Set;
         description = "Validates CityGML files against the CityGML XML schemas.")
 public class ValidateCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-e", "--suppress-errors"},
-            description = "Do not print validation error messages for a concise report.")
+            description = "Do not print validation error messages for a more concise report.")
     private boolean suppressMessages;
 
     @CommandLine.Option(names = {"-s", "--schema"}, split = ",", paramLabel = "<URI>",
-            description = "One or more files or URLs of additional XML schemas to use for the validation. " +
-                    "Note that the official CityGML schemas cannot be replaced.")
+            description = "One or more XML schema files or URLs to include. Official CityGML schemas cannot " +
+                    "be overridden.")
     private Set<String> schemas;
 
     @CommandLine.Mixin

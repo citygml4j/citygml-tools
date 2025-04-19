@@ -28,15 +28,15 @@ import java.nio.file.Path;
 
 public class CityGMLOutputOptions implements Option {
     @CommandLine.Option(names = {"-o", "--output"}, paramLabel = "<dir>",
-            description = "Store output file(s) in this directory.")
+            description = "Store output files in this directory.")
     private Path outputDirectory;
 
     @CommandLine.Option(names = "--output-encoding", defaultValue = "UTF-8",
-            description = "Encoding to use for output file(s) (default: ${DEFAULT-VALUE}).")
+            description = "Encoding to use for output files (default: ${DEFAULT-VALUE}).")
     private String encoding;
 
     @CommandLine.Option(names = "--no-pretty-print", negatable = true, defaultValue = "true",
-            description = "Format and indent output file(s) (default: ${DEFAULT-VALUE}).")
+            description = "Format and indent output files (default: ${DEFAULT-VALUE}).")
     private boolean prettyPrint;
 
     public Path getOutputDirectory() {

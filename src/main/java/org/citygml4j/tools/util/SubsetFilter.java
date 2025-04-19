@@ -25,7 +25,7 @@ import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.citygml4j.core.visitor.ObjectWalker;
-import org.citygml4j.tools.option.CounterOptions;
+import org.citygml4j.tools.option.CountOptions;
 import org.citygml4j.tools.option.IdOptions;
 import org.citygml4j.tools.option.TypeNameOptions;
 import org.citygml4j.xml.CityGMLContext;
@@ -52,7 +52,7 @@ public class SubsetFilter {
     private Set<String> ids;
     private BoundingBoxFilter boundingBoxFilter;
     private boolean invert;
-    private CounterOptions counterOptions;
+    private CountOptions countOptions;
     private boolean removeGroupMembers;
 
     private long count;
@@ -99,8 +99,8 @@ public class SubsetFilter {
         return this;
     }
 
-    public SubsetFilter withCounterOption(CounterOptions counterOptions) {
-        this.counterOptions = counterOptions;
+    public SubsetFilter withCounterOption(CountOptions countOptions) {
+        this.countOptions = countOptions;
         return this;
     }
 
@@ -135,15 +135,15 @@ public class SubsetFilter {
             keep = !keep;
         }
 
-        if (keep && counterOptions != null) {
-            if (index < counterOptions.getStartIndex()) {
+        if (keep && countOptions != null) {
+            if (index < countOptions.getStartIndex()) {
                 index++;
                 keep = false;
             } else {
                 count++;
             }
 
-            keep = keep && count <= counterOptions.getCount();
+            keep = keep && count <= countOptions.getCount();
         }
 
         if (keep) {

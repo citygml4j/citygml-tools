@@ -27,13 +27,13 @@ import org.xmlobjects.gml.model.geometry.Envelope;
 import picocli.CommandLine;
 
 public class BoundingBoxOptions implements Option {
-    @CommandLine.Option(names = {"-b", "--bbox"}, paramLabel = "<minx,miny,maxx,maxy>",
-            required = true, description = "Bounding box to use as spatial filter. The reference system of the " +
-            "coordinates must match the reference system of the input file(s).")
+    @CommandLine.Option(names = {"-b", "--bbox"}, paramLabel = "<minx,miny,maxx,maxy>", required = true,
+            description = "Bounding box to use as spatial filter. The reference system of the " +
+                    "coordinates must match the reference system of the input files.")
     private String bbox;
 
     @CommandLine.Option(names = "--bbox-mode", paramLabel = "<mode>", defaultValue = "intersects",
-            description = "Bounding box filter mode: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
+            description = "Bounding box mode: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
     private BoundingBoxFilter.Mode mode;
 
     private Envelope boundingBox;

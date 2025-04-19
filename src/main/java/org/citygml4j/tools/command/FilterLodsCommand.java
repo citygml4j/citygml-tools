@@ -50,12 +50,12 @@ import java.util.List;
         description = "Filters LoD representations of city objects.")
 public class FilterLodsCommand extends CityGMLTool {
     @CommandLine.Option(names = {"-l", "--lod"}, required = true, split = ",", paramLabel = "<0..4>",
-            description = "LoD representations to filter.")
+            description = "LoD levels to filter.")
     private int[] lods;
 
     @CommandLine.Option(names = {"-m", "--mode"}, defaultValue = "keep",
-            description = "Filter mode: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}). The matching " +
-                    "minimum or maximum LoD is determined per top-level city object.")
+            description = "LoD filter mode: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}). The " +
+                    "minimum and maximum LoD is determined per top-level city object.")
     private LodFilter.Mode mode;
 
     @CommandLine.Option(names = {"-k", "--keep-empty-objects"},
@@ -63,8 +63,7 @@ public class FilterLodsCommand extends CityGMLTool {
     private boolean keepEmptyObjects;
 
     @CommandLine.Option(names = "--no-update-extents", negatable = true, defaultValue = "true",
-            description = "Update the extents of city objects for which LoD representations have been removed. " +
-                    "No coordinate transformation is applied in the calculation (default: ${DEFAULT-VALUE}).")
+            description = "Update the extents of city objects after removing LoDs (default: ${DEFAULT-VALUE}).")
     private boolean updateExtents;
 
     @CommandLine.Mixin

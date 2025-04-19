@@ -25,11 +25,11 @@ import picocli.CommandLine;
 
 public class InputOptions implements Option {
     @CommandLine.Parameters(paramLabel = "<file>",
-            description = "File or directory to process (glob patterns allowed).")
+            description = "Input file or directory to process (glob patterns supported).")
     private String file;
 
     @CommandLine.Option(names = "--input-encoding",
-            description = "Encoding of input file(s).")
+            description = "Encoding of input files.")
     private String encoding;
 
     public String getFile() {

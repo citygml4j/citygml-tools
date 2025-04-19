@@ -51,6 +51,7 @@ import java.util.stream.Stream;
         name = CityGMLTools.APP_NAME,
         scope = CommandLine.ScopeType.INHERIT,
         description = "Collection of tools for processing CityGML files.",
+        abbreviateSynopsis = true,
         mixinStandardHelpOptions = true,
         versionProvider = CityGMLTools.class,
         showAtFileInUsageHelp = true,
@@ -85,8 +86,8 @@ public class CityGMLTools implements Command, CommandLine.IVersionProvider {
             description = "Create a file containing the process ID.")
     private Path pidFile;
 
-    @CommandLine.Option(names = "--extensions", scope = CommandLine.ScopeType.INHERIT, paramLabel = "<folder>",
-            description = "Load extensions from this folder.")
+    @CommandLine.Option(names = "--extensions", scope = CommandLine.ScopeType.INHERIT, paramLabel = "<dir>",
+            description = "Load extensions from this directory.")
     private Path extensionsDir;
 
     public static final String APP_NAME = "citygml-tools";

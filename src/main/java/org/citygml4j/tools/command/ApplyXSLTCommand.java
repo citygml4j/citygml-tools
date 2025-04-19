@@ -50,9 +50,9 @@ import java.util.List;
 @CommandLine.Command(name = "apply-xslt",
         description = "Transforms city objects based on XSLT stylesheets.")
 public class ApplyXSLTCommand extends CityGMLTool {
-    @CommandLine.Option(names = {"-x", "--xslt"}, split = ",", paramLabel = "<file>", required = true,
-            description = "One or more XSLT 1.0 stylesheets to use to transform the individual top-level city " +
-                    "objects in the input file(s). The stylesheets are applied in the given order.")
+    @CommandLine.Option(names = {"-x", "--xsl-transform"}, split = ",", paramLabel = "<stylesheet>", required = true,
+            description = "One ore more XSLT stylesheets to transform top-level city objects, applied in " +
+                    "the specified order.")
     private Path[] stylesheets;
 
     @CommandLine.Mixin
