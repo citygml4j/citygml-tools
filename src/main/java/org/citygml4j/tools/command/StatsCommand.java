@@ -29,6 +29,7 @@ import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.core.AbstractGenericAttribute;
 import org.citygml4j.core.model.core.ImplicitGeometry;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.io.FileHelper;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.log.LogLevel;
 import org.citygml4j.tools.option.IdOptions;
@@ -203,8 +204,8 @@ public class StatsCommand extends CityGMLTool {
             }
 
             if (jsonReport) {
-                Path outputFile = inputFile.getFile().resolveSibling(appendFileNameSuffix(inputFile.getFile()
-                        .resolveSibling(replaceFileExtension(inputFile.getFile(), "json")), suffix));
+                Path outputFile = inputFile.getFile().resolveSibling(FileHelper.appendFileNameSuffix(
+                        FileHelper.replaceFileExtension(inputFile.getFile(), "json"), suffix));
 
                 log.info("Writing statistics as JSON report to file " + outputFile + ".");
                 writeStatistics(outputFile, statistics, objectMapper);

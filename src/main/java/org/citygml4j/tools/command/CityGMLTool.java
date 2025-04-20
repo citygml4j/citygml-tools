@@ -34,6 +34,7 @@ import org.citygml4j.core.ade.ADERegistry;
 import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.io.FileHelper;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.io.InputFiles;
 import org.citygml4j.tools.io.OutputFile;
@@ -63,6 +64,7 @@ import java.util.*;
 
 public abstract class CityGMLTool implements Command {
     final Logger log = Logger.getInstance();
+    private final Set<String> outputDirs = new HashSet<>();
     private CityGMLContext cityGMLContext;
     private CityJSONContext cityJSONContext;
 
@@ -99,7 +101,11 @@ public abstract class CityGMLTool implements Command {
     }
 
     CityGMLReader createCityGMLReader(CityGMLInputFactory in, InputFile file, InputOptions options) throws ExecutionException, CityGMLReadException {
-        return createCityGMLReader(in, file, options, null);
+        return createCityGMLReader(in, file, options.getEncoding(), null);
+    }
+
+    CityGMLReader createCityGMLReader(CityGMLInputFactory in, InputFile file, String encoding) throws ExecutionException, CityGMLReadException {
+        return createCityGMLReader(in, file, encoding, null);
     }
 
     CityGMLReader createSkippingCityGMLReader(CityGMLInputFactory in, InputFile file, InputOptions options, String... localNames) throws ExecutionException, CityGMLReadException {
@@ -110,13 +116,13 @@ public abstract class CityGMLTool implements Command {
                     || !CityGMLModules.isCityGMLNamespace(name.getNamespaceURI());
         }
 
-        return createCityGMLReader(in, file, options, filter);
+        return createCityGMLReader(in, file, options.getEncoding(), filter);
     }
 
-    private CityGMLReader createCityGMLReader(CityGMLInputFactory in, InputFile file, InputOptions options, CityGMLInputFilter filter) throws ExecutionException, CityGMLReadException {
+    private CityGMLReader createCityGMLReader(CityGMLInputFactory in, InputFile file, String encoding, CityGMLInputFilter filter) throws ExecutionException, CityGMLReadException {
         CityGMLReader reader;
         try {
-            reader = in.createCityGMLReader(file.getFile(), options.getEncoding());
+            reader = in.createCityGMLReader(file.getFile(), encoding);
             if (filter != null) {
                 reader = in.createFilteredCityGMLReader(reader, filter);
             }
@@ -133,12 +139,16 @@ public abstract class CityGMLTool implements Command {
     }
 
     CityGMLChunkWriter createCityGMLChunkWriter(CityGMLOutputFactory out, OutputFile file, CityGMLOutputOptions options) throws ExecutionException {
+        return createCityGMLChunkWriter(out, file, options.getEncoding(), options.isPrettyPrint());
+    }
+
+    CityGMLChunkWriter createCityGMLChunkWriter(CityGMLOutputFactory out, OutputFile file, String encoding, boolean prettyPrint) throws ExecutionException {
         try {
-            return out.createCityGMLChunkWriter(file.getFile(), options.getEncoding())
+            return out.createCityGMLChunkWriter(file.getFile(), encoding)
                     .withDefaultPrefixes()
                     .withDefaultSchemaLocations()
                     .withDefaultNamespace(CoreModule.of(out.getVersion()).getNamespaceURI())
-                    .withIndent(options.isPrettyPrint() ? "  " : null);
+                    .withIndent(prettyPrint ? "  " : null);
         } catch (CityGMLWriteException e) {
             throw new ExecutionException("Failed to create CityGML writer.", e);
         }
@@ -232,7 +242,7 @@ public abstract class CityGMLTool implements Command {
 
     List<InputFile> getInputFiles(InputOptions options, String suffix) throws ExecutionException {
         return getInputFiles(InputFiles.of(options.getFile())
-                .withFilter(path -> !stripFileExtension(path).endsWith(suffix)));
+                .withFilter(path -> !FileHelper.stripFileExtension(path).endsWith(suffix)));
     }
 
     List<InputFile> getInputFiles(InputFiles builder) throws ExecutionException {
@@ -262,11 +272,15 @@ public abstract class CityGMLTool implements Command {
             outputDir = outputDir.resolve(file.getBasePath().relativize(file.getFile().getParent()));
         }
 
-        try {
-            return Files.createDirectories(outputDir);
-        } catch (Exception e) {
-            throw new ExecutionException("Failed to create output directory " + outputDir + ".", e);
+        if (outputDirs.add(outputDir.toString())) {
+            try {
+                Files.createDirectories(outputDir);
+            } catch (Exception e) {
+                throw new ExecutionException("Failed to create output directory " + outputDir + ".", e);
+            }
         }
+
+        return outputDir;
     }
 
     OutputFile getOutputFile(InputFile file, String suffix, CityGMLOutputOptions outputOptions, OverwriteInputOptions overwriteInputOptions) throws ExecutionException {
@@ -280,7 +294,8 @@ public abstract class CityGMLTool implements Command {
                 throw new ExecutionException("Failed to create temporary output file.", e);
             }
         } else {
-            return OutputFile.of(file.getFile().resolveSibling(appendFileNameSuffix(file.getFile(), suffix)));
+            return OutputFile.of(file.getFile()
+                    .resolveSibling(FileHelper.appendFileNameSuffix(file.getFile(), suffix)));
         }
     }
 
@@ -305,31 +320,5 @@ public abstract class CityGMLTool implements Command {
                 }
             }
         }
-    }
-
-    String appendFileNameSuffix(Path file, String suffix) {
-        String[] parts = splitFileName(file);
-        return parts[0] + suffix + "." + parts[1];
-    }
-
-    String replaceFileExtension(Path file, String extension) {
-        String fileName = splitFileName(file)[0];
-        if (!extension.startsWith(".")) {
-            extension = "." + extension;
-        }
-
-        return fileName + extension;
-    }
-
-    String stripFileExtension(Path file) {
-        return splitFileName(file)[0];
-    }
-
-    String[] splitFileName(Path file) {
-        String fileName = file.getFileName().toString();
-        int index = fileName.lastIndexOf('.');
-        return index > 0 ?
-                new String[]{fileName.substring(0, index), fileName.substring(index + 1)} :
-                new String[]{fileName, ""};
     }
 }

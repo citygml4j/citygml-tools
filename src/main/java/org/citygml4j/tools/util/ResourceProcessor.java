@@ -31,20 +31,19 @@ import org.citygml4j.core.visitor.ObjectWalker;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.concurrent.CountLatch;
 import org.citygml4j.tools.concurrent.ExecutorHelper;
+import org.citygml4j.tools.io.FileHelper;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.log.Logger;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
 public class ResourceProcessor implements AutoCloseable {
@@ -110,7 +109,9 @@ public class ResourceProcessor implements AutoCloseable {
     }
 
     private class Processor extends ObjectWalker {
-        private final Set<String> copied = new HashSet<>();
+        private final Set<String> copiedFiles = new HashSet<>();
+        private final Set<String> createdDirs = ConcurrentHashMap.newKeySet();
+        private final Object lock = new Object();
 
         @Override
         public void visit(ParameterizedTexture texture) {
@@ -126,13 +127,9 @@ public class ResourceProcessor implements AutoCloseable {
                 if (imageURI != null) {
                     process(imageURI + "w");
 
-                    int index = imageURI.lastIndexOf(".");
-                    if (index != -1) {
-                        String name = imageURI.substring(0, index + 1);
-                        String extension = imageURI.substring(index + 1);
-                        if (extension.length() == 3) {
-                            process(name + extension.charAt(0) + extension.charAt(2) + "w");
-                        }
+                    String[] fileName = FileHelper.splitFileName(imageURI);
+                    if (fileName[1].length() == 3) {
+                        process(fileName[0] + "." + fileName[1].charAt(0) + fileName[1].charAt(2) + "w");
                     }
                 }
             }
@@ -163,7 +160,8 @@ public class ResourceProcessor implements AutoCloseable {
 
         @Override
         public void reset() {
-            copied.clear();
+            copiedFiles.clear();
+            createdDirs.clear();
         }
 
         private String process(String location) {
@@ -176,7 +174,7 @@ public class ResourceProcessor implements AutoCloseable {
                 if (source.startsWith(basePath)) {
                     Path target = outputDir.resolve(inputDir.relativize(source)).normalize();
                     if (shouldRun
-                            && copied.add(source.toString())
+                            && copiedFiles.add(source.toString())
                             && Files.exists(source)) {
                         countLatch.increment();
                         service.submit(() -> {
@@ -211,13 +209,15 @@ public class ResourceProcessor implements AutoCloseable {
         }
 
         private void copy(Path source, Path target) throws IOException {
-            Files.createDirectories(target.getParent());
-            try (FileInputStream in = new FileInputStream(source.toFile());
-                 FileOutputStream out = new FileOutputStream(target.toFile());
-                 FileChannel sourceChannel = in.getChannel();
-                 FileChannel targetChannel = out.getChannel()) {
-                sourceChannel.transferTo(0, sourceChannel.size(), targetChannel);
+            if (!createdDirs.contains(target.getParent().toString())) {
+                synchronized (lock) {
+                    if (createdDirs.add(target.getParent().toString())) {
+                        Files.createDirectories(target.getParent());
+                    }
+                }
             }
+
+            FileHelper.copy(source, target);
         }
     }
 }

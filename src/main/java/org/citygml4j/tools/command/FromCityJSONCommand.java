@@ -29,6 +29,7 @@ import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.model.core.CityModel;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.io.FileHelper;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.io.InputFiles;
 import org.citygml4j.tools.io.OutputFile;
@@ -118,7 +119,7 @@ public class FromCityJSONCommand extends CityGMLTool {
         for (int i = 0; i < inputFiles.size(); i++) {
             InputFile inputFile = inputFiles.get(i);
             OutputFile outputFile = OutputFile.of(getOutputDirectory(inputFile, outputOptions)
-                    .resolve(replaceFileExtension(inputFile.getFile(), "gml")));
+                    .resolve(FileHelper.replaceFileExtension(inputFile.getFile(), "gml")));
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 

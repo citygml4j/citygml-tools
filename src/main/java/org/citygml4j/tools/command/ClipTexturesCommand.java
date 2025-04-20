@@ -64,13 +64,9 @@ public class ClipTexturesCommand extends CityGMLTool {
             description = "Number of decimal places to keep for texture vertices (default: ${DEFAULT-VALUE}).")
     private int textureVertexPrecision;
 
-    @CommandLine.Option(names = {"-f", "--texture-dir"}, paramLabel = "<dir>", defaultValue = "clipped_textures",
+    @CommandLine.Option(names = {"-t", "--textures"}, paramLabel = "<dir>", defaultValue = "clipped_textures",
             description = "Relative directory to store clipped texture files (default: ${DEFAULT-VALUE}).")
-    private String textureFolder;
-
-    @CommandLine.Option(names = "--texture-prefix", paramLabel = "<prefix>", defaultValue = "tex",
-            description = "Prefix to use for texture filenames (default: ${DEFAULT-VALUE}).")
-    private String texturePrefix;
+    private String textureDir;
 
     @CommandLine.Option(names = "--texture-buckets", paramLabel = "<number>",
             description = "Number of subdirectories to create within the texture directory " +
@@ -123,8 +119,8 @@ public class ClipTexturesCommand extends CityGMLTool {
                         .withJpegCompressionQuality(jpegCompressionQuality)
                         .clampTextureCoordinates(clampTextureCoordinates)
                         .withTextureVertexPrecision(textureVertexPrecision)
-                        .withTextureFolder(textureFolder)
-                        .withTexturePrefix(texturePrefix)
+                        .withTextureFolder(textureDir)
+                        .withTexturePrefix("tex_")
                         .withTextureBuckets(textureBuckets);
 
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
@@ -157,16 +153,6 @@ public class ClipTexturesCommand extends CityGMLTool {
             throw new CommandLine.ParameterException(commandLine,
                     "Error: The JPEG compression quality must be between 0 and 1 " +
                             "but was '" + jpegCompressionQuality + "'");
-        }
-
-        if (textureFolder.isEmpty()) {
-            throw new CommandLine.ParameterException(commandLine,
-                    "Error: The texture folder must not be empty");
-        }
-
-        if (texturePrefix.isEmpty()) {
-            throw new CommandLine.ParameterException(commandLine,
-                    "Error: The texture prefix must not be empty");
         }
 
         if (textureBuckets < 0) {

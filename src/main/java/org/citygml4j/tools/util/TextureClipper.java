@@ -32,6 +32,7 @@ import org.citygml4j.core.model.appearance.*;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.visitor.ObjectWalker;
 import org.citygml4j.tools.ExecutionException;
+import org.citygml4j.tools.io.FileHelper;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.log.Logger;
@@ -54,7 +55,6 @@ import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 public class TextureClipper {
@@ -221,7 +221,7 @@ public class TextureClipper {
 
             String targetURI = copyImage(imageURI);
             texture.setImageURI(targetURI);
-            copyWorldFile(imageURI, inputDir.resolve(targetURI));
+            copyWorldFile(imageURI, outputDir.resolve(targetURI));
         }
 
         private Path getImageURI(AbstractTexture texture) {
@@ -321,8 +321,8 @@ public class TextureClipper {
                 for (int i = 0; i < coordinates.size(); i += 2) {
                     double s = textureImage.getWidth() * coordinates.get(i);
                     double t = textureImage.getHeight() * (1 - coordinates.get(i + 1));
-                    s = (s - clippedImage.getX()) / clippedImage.getWidth();
-                    t = (clippedImage.getY() - t) / clippedImage.getHeight();
+                    s = (s - clippedImage.x()) / clippedImage.width();
+                    t = (clippedImage.y() - t) / clippedImage.height();
                     coordinates.set(i, round(s));
                     coordinates.set(i + 1, round(t));
                 }
@@ -351,7 +351,7 @@ public class TextureClipper {
                     TiffImagingParameters parameters = new TiffImagingParameters();
                     parameters.setCompression(TiffConstants.TIFF_COMPRESSION_UNCOMPRESSED);
                     try (OutputStream stream = Files.newOutputStream(target)) {
-                        new TiffImageParser().writeImage(clippedImage.getImage(), stream, parameters);
+                        new TiffImageParser().writeImage(clippedImage.image(), stream, parameters);
                     }
                 } else {
                     String format = !forceJpeg && imageInfo.isTransparent() ? "png" : "jpg";
@@ -366,7 +366,7 @@ public class TextureClipper {
 
                     try (ImageOutputStream stream = ImageIO.createImageOutputStream(target.toFile())) {
                         writer.setOutput(stream);
-                        writer.write(null, new IIOImage(clippedImage.getImage(), null, null), parameters);
+                        writer.write(null, new IIOImage(clippedImage.image(), null, null), parameters);
                     }
                 }
 
@@ -383,7 +383,7 @@ public class TextureClipper {
                     Path target = getTargetPath(source, null);
                     imageURI = outputDir.relativize(target).toString().replaceAll("\\\\", "/");
                     copiedImages.put(source.toString(), imageURI);
-                    Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+                    FileHelper.copy(source, target);
                 } catch (Exception e) {
                     log.error("Failed to copy texture image " + source + ".", e);
                 }
@@ -397,10 +397,10 @@ public class TextureClipper {
             List<String> worldFiles = new ArrayList<>();
             worldFiles.add(fileName + "w");
 
-            String extension = getExtension(fileName);
-            if (extension.length() > 2) {
-                worldFiles.add(fileName.replaceAll(extension + "$", "") +
-                        extension.charAt(0) + extension.charAt(extension.length() - 1) + "w");
+            String extension = FileHelper.getFileExtension(fileName);
+            if (extension.length() == 3) {
+                worldFiles.add(FileHelper.replaceFileExtension(fileName,
+                        Character.toString(extension.charAt(0)) + extension.charAt(2) + "w"));
             }
 
             for (String worldFile : worldFiles) {
@@ -408,7 +408,7 @@ public class TextureClipper {
                 if (Files.exists(candidate)) {
                     try {
                         fileName = target.getFileName().toString() + "w";
-                        Files.copy(candidate, target.resolveSibling(fileName), StandardCopyOption.REPLACE_EXISTING);
+                        FileHelper.copy(candidate, target.resolveSibling(fileName));
                     } catch (IOException e) {
                         log.error("Failed to copy world file " + candidate + ".", e);
                     }
@@ -423,13 +423,12 @@ public class TextureClipper {
                 target = target.resolve(String.valueOf(bucket));
             }
 
-            if (!folders.contains(target.toString())) {
+            if (folders.add(target.toString())) {
                 Files.createDirectories(target);
-                folders.add(target.toString());
             }
 
             if (extension == null) {
-                extension = getExtension(imageURI.getFileName().toString());
+                extension = FileHelper.getFileExtension(imageURI);
             }
 
             return target.resolve(texturePrefix + (++counter) + "." + extension);
@@ -450,46 +449,8 @@ public class TextureClipper {
                     .setScale(textureVertexPrecision, RoundingMode.HALF_UP)
                     .doubleValue();
         }
-
-        private String getExtension(String fileName) {
-            int index = fileName.lastIndexOf('.');
-            return index > 0 ? fileName.substring(index + 1) : "";
-        }
     }
 
-    private static class ClippedImage {
-        private final BufferedImage image;
-        private final double x;
-        private final double y;
-        private final double width;
-        private final double height;
-
-        ClippedImage(BufferedImage image, double x, double y, double width, double height) {
-            this.image = image;
-            this.x = x;
-            this.y = y;
-            this.width = width;
-            this.height = height;
-        }
-
-        public BufferedImage getImage() {
-            return image;
-        }
-
-        public double getX() {
-            return x;
-        }
-
-        public double getY() {
-            return y;
-        }
-
-        public double getWidth() {
-            return width;
-        }
-
-        public double getHeight() {
-            return height;
-        }
+    private record ClippedImage(BufferedImage image, double x, double y, double width, double height) {
     }
 }
