@@ -423,7 +423,7 @@ public class TextureClipper {
                 target = target.resolve(String.valueOf(bucket));
             }
 
-            if (folders.add(target.toString())) {
+            if (folders.add(target.toString()) && !Files.exists(target)) {
                 Files.createDirectories(target);
             }
 

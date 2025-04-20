@@ -272,7 +272,11 @@ public abstract class CityGMLTool implements Command {
             outputDir = outputDir.resolve(file.getBasePath().relativize(file.getFile().getParent()));
         }
 
-        if (outputDirs.add(outputDir.toString())) {
+        return getOrCreateOutputDirectory(outputDir);
+    }
+
+    Path getOrCreateOutputDirectory(Path outputDir) throws ExecutionException {
+        if (outputDirs.add(outputDir.toString()) && !Files.exists(outputDir)) {
             try {
                 Files.createDirectories(outputDir);
             } catch (Exception e) {

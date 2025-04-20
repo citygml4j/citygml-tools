@@ -24,6 +24,7 @@ package org.citygml4j.tools.io;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 
@@ -79,6 +80,15 @@ public class FileHelper {
              FileChannel sourceChannel = in.getChannel();
              FileChannel targetChannel = out.getChannel()) {
             sourceChannel.transferTo(0, sourceChannel.size(), targetChannel);
+        }
+    }
+
+    public static boolean isURL(String location) {
+        try {
+            new URL(location);
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 }

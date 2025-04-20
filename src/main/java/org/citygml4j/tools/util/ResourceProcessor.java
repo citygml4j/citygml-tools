@@ -37,7 +37,6 @@ import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.log.Logger;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -90,13 +89,9 @@ public class ResourceProcessor implements AutoCloseable {
 
     public void process(AbstractFeature feature) throws ExecutionException {
         if (shouldProcess) {
-            try {
-                feature.accept(processor);
-                if (exception != null) {
-                    throw exception;
-                }
-            } catch (Throwable e) {
-                throw new ExecutionException("Failed to process external resources.", e);
+            feature.accept(processor);
+            if (exception != null) {
+                throw new ExecutionException("Failed to process external resources.", exception);
             }
         }
     }
@@ -165,7 +160,7 @@ public class ResourceProcessor implements AutoCloseable {
         }
 
         private String process(String location) {
-            if (location != null && !location.isEmpty() && !isURL(location)) {
+            if (location != null && !location.isEmpty() && !FileHelper.isURL(location)) {
                 if ("/".equals(inputDir.getFileSystem().getSeparator())) {
                     location = location.replace("\\", "/");
                 }
@@ -199,19 +194,10 @@ public class ResourceProcessor implements AutoCloseable {
             }
         }
 
-        private boolean isURL(String location) {
-            try {
-                new URL(location);
-                return true;
-            } catch (Exception e) {
-                return false;
-            }
-        }
-
         private void copy(Path source, Path target) throws IOException {
             if (!createdDirs.contains(target.getParent().toString())) {
                 synchronized (lock) {
-                    if (createdDirs.add(target.getParent().toString())) {
+                    if (createdDirs.add(target.getParent().toString()) && !Files.exists(target.getParent())) {
                         Files.createDirectories(target.getParent());
                     }
                 }
