@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FileHelper {
 
@@ -90,5 +92,19 @@ public class FileHelper {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public static List<String> getWorldFiles(String fileName) {
+        List<String> worldFiles = new ArrayList<>();
+        if (fileName != null && !fileName.isEmpty()) {
+            worldFiles.add(fileName + "w");
+
+            String[] parts = FileHelper.splitFileName(fileName);
+            if (parts[1].length() == 3) {
+                worldFiles.add(parts[0] + "." + parts[1].charAt(0) + parts[1].charAt(2) + "w");
+            }
+        }
+
+        return worldFiles;
     }
 }

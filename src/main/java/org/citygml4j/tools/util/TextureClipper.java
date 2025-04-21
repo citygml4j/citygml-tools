@@ -393,21 +393,11 @@ public class TextureClipper {
         }
 
         private void copyWorldFile(Path source, Path target) {
-            String fileName = source.getFileName().toString();
-            List<String> worldFiles = new ArrayList<>();
-            worldFiles.add(fileName + "w");
-
-            String extension = FileHelper.getFileExtension(fileName);
-            if (extension.length() == 3) {
-                worldFiles.add(FileHelper.replaceFileExtension(fileName,
-                        Character.toString(extension.charAt(0)) + extension.charAt(2) + "w"));
-            }
-
-            for (String worldFile : worldFiles) {
+            for (String worldFile : FileHelper.getWorldFiles(source.getFileName().toString())) {
                 Path candidate = source.resolveSibling(worldFile);
                 if (Files.exists(candidate)) {
                     try {
-                        fileName = target.getFileName().toString() + "w";
+                        String fileName = target.getFileName().toString() + "w";
                         FileHelper.copy(candidate, target.resolveSibling(fileName));
                     } catch (IOException e) {
                         log.error("Failed to copy world file " + candidate + ".", e);

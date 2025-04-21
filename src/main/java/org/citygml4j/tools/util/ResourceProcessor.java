@@ -29,21 +29,17 @@ import org.citygml4j.core.model.dynamizer.StandardFileTimeseries;
 import org.citygml4j.core.model.pointcloud.PointCloud;
 import org.citygml4j.core.visitor.ObjectWalker;
 import org.citygml4j.tools.ExecutionException;
-import org.citygml4j.tools.concurrent.CountLatch;
-import org.citygml4j.tools.concurrent.ExecutorHelper;
+import org.citygml4j.tools.io.FileCopier;
 import org.citygml4j.tools.io.FileHelper;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.log.Logger;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 
 public class ResourceProcessor implements AutoCloseable {
     private final Logger log = Logger.getInstance();
@@ -53,16 +49,11 @@ public class ResourceProcessor implements AutoCloseable {
     private final boolean shouldProcess;
     private final Set<Type> skipTypes = new HashSet<>();
     private final Processor processor = new Processor();
-    private final CountLatch countLatch = new CountLatch();
-    private final ExecutorService service = ExecutorHelper.newFixedAndBlockingThreadPool(
-            Math.max(2, Runtime.getRuntime().availableProcessors()), 100000);
 
-    private volatile boolean shouldRun = true;
     private Throwable exception;
 
     public enum Type {
-        PARAMETERIZED_TEXTURE,
-        GEOREFERENCED_TEXTURE,
+        TEXTURE,
         LIBRARY_OBJECT,
         POINT_CLOUD_FILE,
         TIMESERIES_FILE
@@ -97,35 +88,31 @@ public class ResourceProcessor implements AutoCloseable {
     }
 
     @Override
-    public void close() {
-        countLatch.await();
-        service.shutdown();
-        processor.reset();
+    public void close() throws ExecutionException {
+        try {
+            processor.close();
+        } catch (Exception e) {
+            throw new ExecutionException("Failed to process external resources.", exception);
+        }
     }
 
     private class Processor extends ObjectWalker {
-        private final Set<String> copiedFiles = new HashSet<>();
-        private final Set<String> createdDirs = ConcurrentHashMap.newKeySet();
-        private final Object lock = new Object();
+        private final FileCopier fileCopier = new FileCopier();
+        private final Set<String> copied = new HashSet<>();
 
         @Override
         public void visit(ParameterizedTexture texture) {
-            if (!skipTypes.contains(Type.PARAMETERIZED_TEXTURE)) {
+            if (!skipTypes.contains(Type.TEXTURE)) {
                 texture.setImageURI(process(texture.getImageURI()));
             }
         }
 
         @Override
         public void visit(GeoreferencedTexture texture) {
-            if (!skipTypes.contains(Type.GEOREFERENCED_TEXTURE)) {
-                String imageURI = process(texture.getImageURI());
-                if (imageURI != null) {
-                    process(imageURI + "w");
-
-                    String[] fileName = FileHelper.splitFileName(imageURI);
-                    if (fileName[1].length() == 3) {
-                        process(fileName[0] + "." + fileName[1].charAt(0) + fileName[1].charAt(2) + "w");
-                    }
+            if (!skipTypes.contains(Type.TEXTURE)) {
+                texture.setImageURI(process(texture.getImageURI()));
+                for (String worldFile : FileHelper.getWorldFiles(texture.getImageURI())) {
+                    process(worldFile);
                 }
             }
         }
@@ -153,10 +140,12 @@ public class ResourceProcessor implements AutoCloseable {
             }
         }
 
-        @Override
-        public void reset() {
-            copiedFiles.clear();
-            createdDirs.clear();
+        public void close() throws Exception {
+            try {
+                fileCopier.close();
+            } finally {
+                copied.clear();
+            }
         }
 
         private String process(String location) {
@@ -168,21 +157,13 @@ public class ResourceProcessor implements AutoCloseable {
                 Path source = inputDir.resolve(location).toAbsolutePath().normalize();
                 if (source.startsWith(basePath)) {
                     Path target = outputDir.resolve(inputDir.relativize(source)).normalize();
-                    if (shouldRun
-                            && copiedFiles.add(source.toString())
-                            && Files.exists(source)) {
-                        countLatch.increment();
-                        service.submit(() -> {
-                            try {
-                                log.debug("Copying external resource " + source + " to " + target + ".");
-                                copy(source, target);
-                            } catch (Throwable e) {
-                                shouldRun = false;
-                                exception = e;
-                            } finally {
-                                countLatch.decrement();
-                            }
-                        });
+                    if (copied.add(source.toString()) && Files.exists(source)) {
+                        try {
+                            log.debug("Copying external resource " + source + " to " + target + ".");
+                            fileCopier.copy(source, target);
+                        } catch (Exception e) {
+                            exception = e;
+                        }
                     }
 
                     return outputDir.relativize(target).toString().replaceAll("\\\\", "/");
@@ -192,18 +173,6 @@ public class ResourceProcessor implements AutoCloseable {
             } else {
                 return location;
             }
-        }
-
-        private void copy(Path source, Path target) throws IOException {
-            if (!createdDirs.contains(target.getParent().toString())) {
-                synchronized (lock) {
-                    if (createdDirs.add(target.getParent().toString()) && !Files.exists(target.getParent())) {
-                        Files.createDirectories(target.getParent());
-                    }
-                }
-            }
-
-            FileHelper.copy(source, target);
         }
     }
 }

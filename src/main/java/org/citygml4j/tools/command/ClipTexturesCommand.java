@@ -68,7 +68,7 @@ public class ClipTexturesCommand extends CityGMLTool {
             description = "Relative directory to store clipped texture files (default: ${DEFAULT-VALUE}).")
     private String textureDir;
 
-    @CommandLine.Option(names = "--texture-buckets", paramLabel = "<number>",
+    @CommandLine.Option(names = {"-b", "--texture-buckets"}, paramLabel = "<number>",
             description = "Number of subdirectories to create within the texture directory " +
                     "(default: ${DEFAULT-VALUE}).")
     private int textureBuckets = 10;
@@ -102,8 +102,7 @@ public class ClipTexturesCommand extends CityGMLTool {
 
             try (CityGMLReader reader = createCityGMLReader(in, inputFile, inputOptions);
                  ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)
-                         .skip(ResourceProcessor.Type.PARAMETERIZED_TEXTURE)
-                         .skip(ResourceProcessor.Type.GEOREFERENCED_TEXTURE)) {
+                         .skip(ResourceProcessor.Type.TEXTURE)) {
                 if (!version.isSetVersion()) {
                     setCityGMLVersion(reader, out);
                 }
