@@ -110,8 +110,9 @@ public class ResourceProcessor implements AutoCloseable {
         @Override
         public void visit(GeoreferencedTexture texture) {
             if (!skipTypes.contains(Type.TEXTURE)) {
-                texture.setImageURI(process(texture.getImageURI()));
-                for (String worldFile : FileHelper.getWorldFiles(texture.getImageURI())) {
+                String imageURI = texture.getImageURI();
+                texture.setImageURI(process(imageURI));
+                for (String worldFile : FileHelper.getWorldFiles(imageURI)) {
                     process(worldFile);
                 }
             }
