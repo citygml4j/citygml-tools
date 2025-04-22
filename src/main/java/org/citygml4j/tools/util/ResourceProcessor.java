@@ -46,11 +46,11 @@ public class ResourceProcessor implements AutoCloseable {
     private final Path inputDir;
     private final Path basePath;
     private final Path outputDir;
-    private final boolean shouldProcess;
     private final Set<Type> skipTypes = new HashSet<>();
     private final Processor processor = new Processor();
 
-    private Throwable exception;
+    private volatile boolean shouldProcess;
+    private Exception exception;
 
     public enum Type {
         TEXTURE,
@@ -151,11 +151,7 @@ public class ResourceProcessor implements AutoCloseable {
 
         private String process(String location) {
             if (location != null && !location.isEmpty() && !FileHelper.isURL(location)) {
-                if ("/".equals(inputDir.getFileSystem().getSeparator())) {
-                    location = location.replace("\\", "/");
-                }
-
-                Path source = inputDir.resolve(location).toAbsolutePath().normalize();
+                Path source = inputDir.resolve(location.replace("\\", "/")).toAbsolutePath().normalize();
                 if (source.startsWith(basePath)) {
                     Path target = outputDir.resolve(inputDir.relativize(source)).normalize();
                     if (copied.add(source.toString()) && Files.exists(source)) {
@@ -163,17 +159,18 @@ public class ResourceProcessor implements AutoCloseable {
                             log.debug("Copying external resource " + source + " to " + target + ".");
                             fileCopier.copy(source, target);
                         } catch (Exception e) {
+                            shouldProcess = false;
                             exception = e;
                         }
                     }
 
-                    return outputDir.relativize(target).toString().replaceAll("\\\\", "/");
+                    return outputDir.relativize(target).toString().replace("\\", "/");
                 } else {
                     return source.toUri().toString();
                 }
-            } else {
-                return location;
             }
+
+            return location;
         }
     }
 }

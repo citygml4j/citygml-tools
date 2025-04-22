@@ -200,8 +200,7 @@ public class GeometryCopyBuilder {
 
         private Appearance getOrCreateAppearance(Appearance source) {
             for (AbstractAppearanceProperty property : topLevelObject.getAppearances()) {
-                if (property.getObject() instanceof Appearance) {
-                    Appearance appearance = (Appearance) property.getObject();
+                if (property.getObject() instanceof Appearance appearance) {
                     if (appearance != source
                             && appearance.hasLocalProperties()
                             && source.hasLocalProperties()

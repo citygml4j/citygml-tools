@@ -166,21 +166,7 @@ public class SubsetFilter {
 
     private void postprocessGroups() {
         if (groupRemover != null && groupRemover.hasCityObjectGroups()) {
-            QName name = null;
-            if (typeNames != null) {
-                for (QName typeName : typeNames) {
-                    if ("CityObjectGroup".equals(typeName.getLocalPart())
-                            && CityGMLModules.isCityGMLNamespace(typeName.getNamespaceURI())) {
-                        name = typeName;
-                        break;
-                    }
-                }
-            }
-
-            if (name == null) {
-                name = new QName(CityObjectGroupModule.v3_0.getNamespaceURI(), "CityObjectGroup");
-            }
-
+            QName name = getGroupName();
             for (CityObjectGroup group : groupRemover.getCityObjectGroups()) {
                 if (group.isSetGroupMembers()) {
                     if (!filter(group, name, "grp")) {
@@ -201,6 +187,19 @@ public class SubsetFilter {
                 }
             }
         }
+    }
+
+    private QName getGroupName() {
+        if (typeNames != null) {
+            for (QName typeName : typeNames) {
+                if ("CityObjectGroup".equals(typeName.getLocalPart())
+                        && CityGMLModules.isCityGMLNamespace(typeName.getNamespaceURI())) {
+                    return typeName;
+                }
+            }
+        }
+
+        return new QName(CityObjectGroupModule.v3_0.getNamespaceURI(), "CityObjectGroup");
     }
 
     private class SkippedFeatureProcessor extends ObjectWalker {

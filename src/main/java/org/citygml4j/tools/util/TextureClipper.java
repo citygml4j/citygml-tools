@@ -68,7 +68,7 @@ public class TextureClipper {
     private float jpegCompressionQuality;
     private boolean clampTextureCoordinates;
     private int textureVertexPrecision;
-    private String textureFolder;
+    private String textureDir;
     private String texturePrefix;
     private int textureBuckets;
 
@@ -104,8 +104,8 @@ public class TextureClipper {
         return this;
     }
 
-    public TextureClipper withTextureFolder(String textureFolder) {
-        this.textureFolder = textureFolder;
+    public TextureClipper withTextureDir(String textureDir) {
+        this.textureDir = textureDir;
         return this;
     }
 
@@ -121,10 +121,10 @@ public class TextureClipper {
 
     public void clipTextures(AbstractFeature feature) throws ExecutionException {
         try {
-            targetFolder = outputDir.resolve(textureFolder);
+            targetFolder = outputDir.resolve(textureDir);
         } catch (InvalidPathException e) {
             throw new ExecutionException("Failed to create target texture folder " +
-                    outputDir + File.separator + textureFolder + ".", e);
+                    outputDir + File.separator + textureDir + ".", e);
         }
 
         feature.accept(clippingProcessor);
@@ -225,13 +225,11 @@ public class TextureClipper {
         }
 
         private Path getImageURI(AbstractTexture texture) {
-            try {
-                return inputDir.resolve(texture.getImageURI().replaceAll("\\\\", "/"));
-            } catch (Exception e) {
-                log.warn("Skipping " + CityObjects.getObjectSignature(texture) + " due to an invalid " +
-                        "image URI " + texture.getImageURI() + ".");
-                return null;
-            }
+            return texture.getImageURI() != null
+                    && !texture.getImageURI().isEmpty()
+                    && !FileHelper.isURL(texture.getImageURI()) ?
+                    inputDir.resolve(texture.getImageURI().replace("\\", "/")) :
+                    null;
         }
 
         private BufferedImage readImage(File imageURI) throws Exception {
@@ -370,7 +368,7 @@ public class TextureClipper {
                     }
                 }
 
-                return outputDir.relativize(target).toString().replaceAll("\\\\", "/");
+                return outputDir.relativize(target).toString().replace("\\", "/");
             } catch (Exception e) {
                 throw new RuntimeException("Failed to save clipped texture image from " + source + ".", e);
             }
@@ -381,7 +379,7 @@ public class TextureClipper {
             if (imageURI == null) {
                 try {
                     Path target = getTargetPath(source, null);
-                    imageURI = outputDir.relativize(target).toString().replaceAll("\\\\", "/");
+                    imageURI = outputDir.relativize(target).toString().replace("\\", "/");
                     copiedImages.put(source.toString(), imageURI);
                     FileHelper.copy(source, target);
                 } catch (Exception e) {
@@ -395,7 +393,7 @@ public class TextureClipper {
         private void copyWorldFile(Path source, Path target) {
             for (String worldFile : FileHelper.getWorldFiles(source.getFileName().toString())) {
                 Path candidate = source.resolveSibling(worldFile);
-                if (Files.exists(candidate)) {
+                if (copiedImages.put(candidate.toString(), "") == null && Files.exists(candidate)) {
                     try {
                         String fileName = target.getFileName().toString() + "w";
                         FileHelper.copy(candidate, target.resolveSibling(fileName));

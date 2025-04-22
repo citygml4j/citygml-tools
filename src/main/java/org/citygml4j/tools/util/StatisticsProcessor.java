@@ -117,7 +117,7 @@ public class StatisticsProcessor {
                 featureInfos.push(new FeatureInfo(prefix + ":" + element.getLocalPart(), depth));
                 List<String> hierarchy = new ArrayList<>();
                 featureInfos.descendingIterator()
-                        .forEachRemaining(featureInfo -> hierarchy.add(featureInfo.getName()));
+                        .forEachRemaining(featureInfo -> hierarchy.add(featureInfo.name()));
                 statistics.addFeatureHierarchy(hierarchy);
             }
         }
@@ -213,12 +213,12 @@ public class StatisticsProcessor {
     public void updateDepth(int depth) {
         if (generateObjectHierarchy
                 && !featureInfos.isEmpty()
-                && featureInfos.peek().getDepth() == depth + 1) {
+                && featureInfos.peek().depth() == depth + 1) {
             featureInfos.pop();
         }
 
         if (!srsInfos.isEmpty()
-                && srsInfos.peek().getDepth() == depth + 1) {
+                && srsInfos.peek().depth() == depth + 1) {
             srsInfos.pop();
         }
     }
@@ -248,7 +248,7 @@ public class StatisticsProcessor {
 
     private String getCurrentSrsName() {
         if (!srsInfos.isEmpty()) {
-            return srsInfos.peek().getSrsName();
+            return srsInfos.peek().srsName();
         } else {
             statistics.addReferenceSystem(DEFAULT_SRS_NAME);
             return DEFAULT_SRS_NAME;
@@ -277,6 +277,12 @@ public class StatisticsProcessor {
                 process(name, appearance, true);
             }
         }
+    }
+
+    private record FeatureInfo(String name, int depth) {
+    }
+
+    private record SrsInfo(String srsName, int depth) {
     }
 
     private class StatisticsWalker extends ObjectWalker {
@@ -353,42 +359,6 @@ public class StatisticsProcessor {
                     this.surfaceData.add(surfaceData);
                 }
             }
-        }
-    }
-
-    private static class FeatureInfo {
-        private final String name;
-        private final int depth;
-
-        FeatureInfo(String name, int depth) {
-            this.name = name;
-            this.depth = depth;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public int getDepth() {
-            return depth;
-        }
-    }
-
-    private static class SrsInfo {
-        private final String srsName;
-        private final int depth;
-
-        SrsInfo(String srsName, int depth) {
-            this.srsName = srsName;
-            this.depth = depth;
-        }
-
-        public String getSrsName() {
-            return srsName;
-        }
-
-        public int getDepth() {
-            return depth;
         }
     }
 }

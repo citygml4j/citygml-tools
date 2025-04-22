@@ -118,7 +118,7 @@ public class ClipTexturesCommand extends CityGMLTool {
                         .withJpegCompressionQuality(jpegCompressionQuality)
                         .clampTextureCoordinates(clampTextureCoordinates)
                         .withTextureVertexPrecision(textureVertexPrecision)
-                        .withTextureFolder(textureDir)
+                        .withTextureDir(textureDir)
                         .withTexturePrefix("tex_")
                         .withTextureBuckets(textureBuckets);
 

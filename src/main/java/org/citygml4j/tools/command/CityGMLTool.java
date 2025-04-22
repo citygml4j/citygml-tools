@@ -109,6 +109,10 @@ public abstract class CityGMLTool implements Command {
     }
 
     CityGMLReader createSkippingCityGMLReader(CityGMLInputFactory in, InputFile file, InputOptions options, String... localNames) throws ExecutionException, CityGMLReadException {
+        return createSkippingCityGMLReader(in, file, options.getEncoding(), localNames);
+    }
+
+    CityGMLReader createSkippingCityGMLReader(CityGMLInputFactory in, InputFile file, String encoding, String... localNames) throws ExecutionException, CityGMLReadException {
         CityGMLInputFilter filter = null;
         if (localNames != null) {
             Set<String> names = new HashSet<>(Arrays.asList(localNames));
@@ -116,7 +120,7 @@ public abstract class CityGMLTool implements Command {
                     || !CityGMLModules.isCityGMLNamespace(name.getNamespaceURI());
         }
 
-        return createCityGMLReader(in, file, options.getEncoding(), filter);
+        return createCityGMLReader(in, file, encoding, filter);
     }
 
     private CityGMLReader createCityGMLReader(CityGMLInputFactory in, InputFile file, String encoding, CityGMLInputFilter filter) throws ExecutionException, CityGMLReadException {
@@ -187,12 +191,7 @@ public abstract class CityGMLTool implements Command {
 
     void setCityGMLVersion(CityGMLReader reader, CityGMLOutputFactory out) throws CityGMLReadException {
         reader.hasNext();
-        CityGMLVersion version = reader.getNamespaces().get().stream()
-                .filter(CityGMLModules::isCityGMLNamespace)
-                .map(CityGMLModules::getCityGMLVersion)
-                .filter(Objects::nonNull)
-                .findFirst().orElse(null);
-
+        CityGMLVersion version = getCityGMLVersion(reader);
         if (version != null) {
             log.debug("Using CityGML " + version + " for the output file.");
             out.withCityGMLVersion(version);
@@ -200,6 +199,15 @@ public abstract class CityGMLTool implements Command {
             log.warn("Failed to detect CityGML version from input file. " +
                     "Using CityGML " + out.getVersion() + " for the output file.");
         }
+    }
+
+    CityGMLVersion getCityGMLVersion(CityGMLReader reader) throws CityGMLReadException {
+        reader.hasNext();
+        return reader.getNamespaces().get().stream()
+                .filter(CityGMLModules::isCityGMLNamespace)
+                .map(CityGMLModules::getCityGMLVersion)
+                .filter(Objects::nonNull)
+                .findFirst().orElse(null);
     }
 
     FeatureInfo getFeatureInfo(CityGMLReader reader) throws CityGMLReadException {
