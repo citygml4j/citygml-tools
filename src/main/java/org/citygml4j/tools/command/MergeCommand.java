@@ -171,13 +171,13 @@ public class MergeCommand extends CityGMLTool {
                         }
                     }
 
-                    boolean foundExtension = false;
+                    boolean foundExtent = false;
                     if (computeExtent) {
                         FeatureInfo featureInfo = getFeatureInfo(reader);
                         if (featureInfo != null
                                 && featureInfo.getBoundedBy() != null
                                 && featureInfo.getBoundedBy().isSetEnvelope()) {
-                            foundExtension = true;
+                            foundExtent = true;
                             extent.include(featureInfo.getBoundedBy().getEnvelope());
                             if (featureInfo.getBoundedBy().getEnvelope().getSrsName() != null) {
                                 srsNames.add(featureInfo.getBoundedBy().getEnvelope().getSrsName());
@@ -185,7 +185,7 @@ public class MergeCommand extends CityGMLTool {
                         }
                     }
 
-                    if (idMode == MergeProcessor.IdMode.KEEP_TOPLEVEL || (computeExtent && !foundExtension)) {
+                    if (idMode == MergeProcessor.IdMode.KEEP_TOPLEVEL || (computeExtent && !foundExtent)) {
                         Set<String> ids = topLevelIds.computeIfAbsent(inputFile.toString(), v -> new HashSet<>());
                         while (reader.hasNext()) {
                             AbstractFeature feature = reader.next();
