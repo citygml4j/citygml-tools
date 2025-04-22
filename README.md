@@ -39,7 +39,9 @@ To show the help message and all available commands of citygml-tools, type the f
 This will print the following usage information:
 
 ```
-Usage: citygml-tools [OPTIONS] [COMMAND]
+Usage: citygml-tools [-hV] [--extensions=<dir>] [-L=<level>]
+                     [--log-file=<file>] [--pid-file=<file>] [@<filename>...]
+                     [COMMAND]
 Collection of tools for processing CityGML files.
       [@<filename>...]      One or more argument files containing options.
   -L, --log-level=<level>   Log level: error, warn, info, debug (default: info).
@@ -57,6 +59,7 @@ Commands:
   remove-apps    Remove appearances from city objects.
   to-local-apps  Convert global appearances into local ones.
   clip-textures  Clip texture images to the extent of the target surface.
+  merge          Merge multiple CityGML files into a single file.
   subset         Create a subset of city objects based on filter criteria.
   filter-lods    Filter LoD representations of city objects.
   reproject      Reproject city objects to a new coordinate reference system.
