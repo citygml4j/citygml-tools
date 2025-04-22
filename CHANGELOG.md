@@ -2,23 +2,40 @@
 
 ## [Unreleased]
 
+### Changed
+- **Breaking:** Renamed and harmonized CLI options across commands for greater consistency. Existing scripts or
+  workflows using old option names may need to be updated.
+
+### Added
+- Introduced a new `merge` command to combine multiple CityGML files into a single output file. [#36](https://github.com/citygml4j/citygml-tools/issues/36)
+- Added a new `--output` option to all relevant commands, allowing users to specify a target directory for processed
+  files. This option is optional and complements the existing behavior of storing output alongside or overwriting
+  the input files. When `--output` is used, the input directory structure is preserved in the output directory, and
+  nested resource files (e.g., textures, library objects, point clouds, and timeseries files) are also copied to
+  maintain local references. Note that copying a large number of files may increase processing time. [#51](https://github.com/citygml4j/citygml-tools/discussions/51)
+- Added a `--crs-name` option to the `from-cityjson` command to optionally set the value of the `gml:srsName`
+  attribute in the CityGML output. [#57](https://github.com/citygml4j/citygml-tools/issues/57)
+
 ## [2.3.2] - 2024-08-15
+
 ### Fixed
 - Fixed start script for UNIX/Linux and Docker.
 
 ## [2.3.1] - 2024-07-15
+
 ### Changed
 - CityGML `Section` and `Intersection` features are no longer considered by the `to-cityjson` command
   due to missing support in CityJSON.
 
 ### Fixed
 - `LandUse` features were not converted to CityJSON using the `to-cityjson` command.
-- Fixed mapping of closure surfaces to CityJSON. ([#54](https://github.com/citygml4j/citygml-tools/issues/54))
+- Fixed mapping of closure surfaces to CityJSON. [#54](https://github.com/citygml4j/citygml-tools/issues/54)
 - Fixed reading of CityJSON storeys and building units with the `from-cityjson` command.
 - Fixed support for the `linux/arm64` architecture in the citygml-tools Docker image.
-  ([#52](https://github.com/citygml4j/citygml-tools/issues/52))
+  [#52](https://github.com/citygml4j/citygml-tools/issues/52)
 
 ## [2.3.0] - 2024-01-29
+
 ### Added
 - The `apply-xslt` command now supports XSLT/XPath 2.0 and 3.0.
 - The citygml-tools Docker images are now available as GitHub packages in addition to Docker Hub.
@@ -32,9 +49,10 @@
 - Fixed UTF-16 and UTF-32 encoding for CityJSON.
 
 ## [2.2.0] - 2023-11-03
+
 ### Added
 - Added support for [CityJSON 2.0](https://www.cityjson.org/specs/2.0.0/) to the `to-cityjson` and `from-cityjson`
-  commands. ([#50](https://github.com/citygml4j/citygml-tools/issues/50))
+  commands. [#50](https://github.com/citygml4j/citygml-tools/issues/50)
 - Added the `--map-lod0-roof-edge` option to the `upgrade` command. Use this option to convert bldg:lod0RoofEdge
   properties of buildings in your CityGML 2.0/1.0 input files to individual RoofSurface objects having an LoD0 surface
   in CityGML 3.0.
@@ -56,13 +74,14 @@
 ### Fixed
 - In a few scenarios, non-random identifiers were created for city objects that had no identifier in the input file.
   This has been fixed for all commands so that automatically generated identifiers are now random UUIDs.
-  ([#47](https://github.com/citygml4j/citygml-tools/issues/47))
+  [#47](https://github.com/citygml4j/citygml-tools/issues/47)
 - Fixed `upgrade` command to correctly create `CityObjectRelation` links between top-level city objects sharing a
   common geometry.
 - Both the `to-local-apps` and the `from-cityjson` commands now correctly set XLink references to appearances of
   implicit geometries when writing to CityGML 3.0.
 
 ## [2.1.0] - 2023-04-04
+
 ### Added
 - Added a `--schema` parameter to the `stats` command to load external XML schema files that are not referenced by
   the input files themselves.
@@ -79,13 +98,14 @@
 
 ### Fixed
 - Fixed `to-cityjson` command to write correct coordinate values when transforming coordinates to integers.
-  ([#31](https://github.com/citygml4j/citygml-tools/issues/31))
+  [#31](https://github.com/citygml4j/citygml-tools/issues/31)
 - The namespaces of the CityGML 2.0/1.0 base profiles were reported to be unsupported.
 - Fixed loading of ADE extensions using the `--extensions` option.
 - Avoid localization issues when internally converting strings to lower or upper case.
 - Symbolic links in paths to input files are followed and `~` is automatically expanded to the user home directory.
 
 ## [2.0.0] - 2022-09-09
+
 ### Added
 - Full support for parsing and writing CityGML 3.0 datasets encoded in GML/XML. Note that the GML/XML encoding of
   CityGML 3.0 is still a draft and has not yet been published as an OGC standard.
@@ -111,6 +131,7 @@
 
 
 ## [Before 2.0.0]
+
 The changelog of previous citygml-tools releases before version 2.0 is available
 [here](https://github.com/citygml4j/citygml-tools/blob/citygml-tools-v1/CHANGES.md).
 
