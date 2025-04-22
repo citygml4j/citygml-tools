@@ -60,7 +60,7 @@ public class ReprojectCommand extends CityGMLTool {
 
     @CommandLine.Option(names = {"-s", "--source-crs"}, paramLabel = "<crs>",
             description = "Source CRS as EPSG code, or in OGC URL, OGC URN, or OGC Well-Known Text (WKT) format. " +
-                    "Overrides any reference system in the input files if specified.")
+                    "Overrides any reference systems in the input files.")
     private String sourceCRS;
 
     @CommandLine.Option(names = "--swap-axis-order",

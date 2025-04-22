@@ -86,14 +86,14 @@ public class StatsCommand extends CityGMLTool {
             description = "Write aggregated statistics across all input files as a JSON report.")
     private Path summaryFile;
 
-    @CommandLine.Option(names = {"-f", "--fail-on-missing-schema"},
-            description = "Fail if input elements lack an associated XML schema.")
-    private boolean failOnMissingSchema;
-
     @CommandLine.Option(names = {"-s", "--schema"}, split = ",", paramLabel = "<URI>",
             description = "One or more XML schema files or URLs to include. Official CityGML schemas cannot " +
                     "be overridden.")
     private Set<String> schemas;
+
+    @CommandLine.Option(names = {"-f", "--fail-on-missing-schema"},
+            description = "Fail if input elements lack an associated XML schema.")
+    private boolean failOnMissingSchema;
 
     private final String suffix = "__statistics";
 
