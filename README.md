@@ -14,7 +14,7 @@ See the `LICENSE` file for more details.
 
 ## Latest release
 
-The latest stable release of citygml-tools is 2.3.2.
+The latest stable release of citygml-tools is 2.4.0.
 
 Download the latest citygml-tools release as ZIP package
 [here](https://github.com/citygml4j/citygml-tools/releases/latest). Previous releases are available from the
@@ -127,8 +127,8 @@ Note that `/data` is the default working directory inside the container. Relativ
 in the above example are automatically resolved against `/data` by citygml-tools. If you mount your local directory at
 a different path inside the container, you must specify the full path to your input files, of course. 
 
-Use the `-u` parameter to pass the username or UID of your current host's user to set the correct file permissions on
-generated files in the mounted directory.
+Use the optional `-u` parameter to pass the username or UID of your current host's user to set the correct file
+permissions on generated files in the mounted directory.
 
 ## Building
 
