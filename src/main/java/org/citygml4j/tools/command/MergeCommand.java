@@ -68,7 +68,7 @@ public class MergeCommand extends CityGMLTool {
     private boolean computeExtent;
 
     @CommandLine.Option(names = {"-i", "--id-mode"}, defaultValue = "keep_all",
-            description = "Mode for replacing gml:ids: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
+            description = "Mode for handling gml:ids: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
     private MergeProcessor.IdMode idMode;
 
     @CommandLine.Mixin
