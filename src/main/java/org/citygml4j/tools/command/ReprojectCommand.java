@@ -51,7 +51,7 @@ public class ReprojectCommand extends CityGMLTool {
     private String targetCRS;
 
     @CommandLine.Option(names = {"-c", "--crs-name"}, paramLabel = "<name>",
-            description = "Name of the target CRS for the gml:srsName attribute in the output.")
+            description = "Name of the target CRS to use in the output files.")
     private String targetName;
 
     @CommandLine.Option(names = {"-f", "--force-lon-lat"},

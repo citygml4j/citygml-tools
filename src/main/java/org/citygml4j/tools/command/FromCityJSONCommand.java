@@ -83,7 +83,7 @@ public class FromCityJSONCommand extends CityGMLTool {
                     "lacks the defined CityJSON LoD.")
     private Map<Integer, Double> lodMappings;
 
-    @CommandLine.Option(names = {"--srs-name"},
+    @CommandLine.Option(names = {"--crs-name"},
             description = "Name of the CRS to use in the output files.")
     private String srsName;
 
