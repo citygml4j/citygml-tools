@@ -51,7 +51,6 @@ import java.util.stream.Stream;
         name = CityGMLTools.APP_NAME,
         scope = CommandLine.ScopeType.INHERIT,
         description = "Collection of tools for processing CityGML files.",
-        abbreviateSynopsis = true,
         mixinStandardHelpOptions = true,
         versionProvider = CityGMLTools.class,
         showAtFileInUsageHelp = true,
