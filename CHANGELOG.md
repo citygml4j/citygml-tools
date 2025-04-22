@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.4.0] - 2025-04-22
+
 ### Changed
 - **Breaking:** Renamed and harmonized CLI options across commands for greater consistency. Existing scripts or
   workflows using old option names may need to be updated.
@@ -135,7 +137,8 @@
 The changelog of previous citygml-tools releases before version 2.0 is available
 [here](https://github.com/citygml4j/citygml-tools/blob/citygml-tools-v1/CHANGES.md).
 
-[Unreleased]: https://github.com/citygml4j/citygml-tools/compare/v2.3.2..HEAD
+[Unreleased]: https://github.com/citygml4j/citygml-tools/compare/v2.4.0..HEAD
+[2.4.0]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.4.0
 [2.3.2]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.3.2
 [2.3.1]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.3.1
 [2.3.0]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.3.0
