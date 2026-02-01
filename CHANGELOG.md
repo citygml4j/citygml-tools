@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.4.1] - 2026-02-01
+
 ### Fixed
 - The `merge` command now assigns the `srsName` of the root envelope of an input file to all feature envelopes from the
   same file that are missing a `srsName`, if `--compute-extent` is not specified on the command line. [#62](https://github.com/citygml4j/citygml-tools/issues/62)
@@ -141,7 +143,8 @@
 The changelog of previous citygml-tools releases before version 2.0 is available
 [here](https://github.com/citygml4j/citygml-tools/blob/citygml-tools-v1/CHANGES.md).
 
-[Unreleased]: https://github.com/citygml4j/citygml-tools/compare/v2.4.0..HEAD
+[Unreleased]: https://github.com/citygml4j/citygml-tools/compare/v2.4.1..HEAD
+[2.4.1]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.4.1
 [2.4.0]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.4.0
 [2.3.2]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.3.2
 [2.3.1]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.3.1
