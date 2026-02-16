@@ -297,8 +297,11 @@ public abstract class CityGMLTool implements Command {
 
     OutputFile getOutputFile(InputFile file, String suffix, CityGMLOutputOptions outputOptions, OverwriteInputOptions overwriteInputOptions) throws ExecutionException {
         if (outputOptions.getOutputDirectory() != null) {
+            String outputFileName = suffix != null && !suffix.isEmpty() ?
+                    FileHelper.appendFileNameSuffix(file.getFile(), suffix).toString() :
+                    file.getFile().getFileName().toString();
             return OutputFile.of(getOutputDirectory(file, outputOptions.getOutputDirectory())
-                    .resolve(file.getFile().getFileName()));
+                    .resolve(outputFileName));
         } else if (overwriteInputOptions.isOverwrite()) {
             try {
                 return OutputFile.temp("citygml-tools-", "");
