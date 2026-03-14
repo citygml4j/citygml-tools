@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Changed
+- The CityJSON output of the `to-cityjson` command now uses a fixed set of properties for address information. Property
+  names start with a lowercase letter for CityJSON 2.0 and 1.1.
+
+### Fixed
+- Fixed the mapping of address objects to xAL elements in the `from-cityjson` command.
+
 ## [2.4.1] - 2026-02-01
 
 ### Fixed
