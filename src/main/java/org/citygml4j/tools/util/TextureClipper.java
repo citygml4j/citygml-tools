@@ -36,10 +36,11 @@ import org.citygml4j.tools.io.FileHelper;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.log.Logger;
+import org.xmlobjects.copy.Copier;
+import org.xmlobjects.copy.CopierBuilder;
 import org.xmlobjects.gml.model.geometry.DirectPosition;
 import org.xmlobjects.gml.model.geometry.Envelope;
 import org.xmlobjects.gml.util.id.DefaultIdCreator;
-import org.xmlobjects.util.copy.CopyBuilder;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -131,7 +132,7 @@ public class TextureClipper {
     }
 
     private class ClippingProcessor extends ObjectWalker {
-        private final CopyBuilder copyBuilder = new CopyBuilder().failOnError(true);
+        private final Copier copier = CopierBuilder.newCopier();
         private final Map<String, String> copiedImages = new HashMap<>();
         private final Set<String> folders = new HashSet<>();
 
@@ -181,7 +182,7 @@ public class TextureClipper {
                                 adaptTextureCoordinates(texCoordList, image, clippedImage);
                                 String targetURI = saveImage(clippedImage, imageInfo, imageURI);
 
-                                ParameterizedTexture copy = copyBuilder.shallowCopy(texture);
+                                ParameterizedTexture copy = copier.shallowCopy(texture);
                                 copy.setId(DefaultIdCreator.getInstance().createId());
                                 copy.setImageURI(targetURI);
                                 copy.setTextureParameterizations(Collections.singletonList(property));

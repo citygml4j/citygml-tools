@@ -68,12 +68,13 @@ import org.citygml4j.core.model.vegetation.SolitaryVegetationObject;
 import org.citygml4j.core.model.waterbody.WaterBody;
 import org.citygml4j.core.visitor.ObjectWalker;
 import org.citygml4j.tools.log.Logger;
+import org.xmlobjects.copy.Copier;
+import org.xmlobjects.copy.CopierBuilder;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.GeometryProperty;
 import org.xmlobjects.gml.model.geometry.aggregates.*;
 import org.xmlobjects.gml.model.geometry.complexes.CompositeSurface;
 import org.xmlobjects.gml.model.geometry.primitives.*;
-import org.xmlobjects.util.copy.CopyBuilder;
 
 import java.util.List;
 
@@ -172,7 +173,7 @@ public class DeprecatedPropertiesProcessor {
 
     private class DeprecatedPropertiesWalker extends ObjectWalker {
         private final Logger log = Logger.getInstance();
-        private final CopyBuilder copyBuilder = new CopyBuilder().failOnError(true);
+        private final Copier copier = CopierBuilder.newCopier();
 
         @Override
         public void visit(AbstractBridge bridge) {
@@ -857,7 +858,7 @@ public class DeprecatedPropertiesProcessor {
         }
 
         public <S extends T, D extends T, T> D copy(S src, D dest, Class<T> template) {
-            return copyBuilder.shallowCopy(src, dest, template);
+            return copier.shallowCopy(src, dest, template);
         }
     }
 }

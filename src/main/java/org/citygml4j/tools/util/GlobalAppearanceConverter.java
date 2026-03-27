@@ -28,12 +28,13 @@ import org.citygml4j.core.model.deprecated.appearance.DeprecatedPropertiesOfPara
 import org.citygml4j.core.model.deprecated.appearance.TextureAssociationReference;
 import org.citygml4j.core.util.reference.DefaultReferenceResolver;
 import org.citygml4j.core.visitor.ObjectWalker;
+import org.xmlobjects.copy.Copier;
+import org.xmlobjects.copy.CopierBuilder;
 import org.xmlobjects.gml.model.base.AbstractGML;
 import org.xmlobjects.gml.model.base.AbstractInlineOrByReferenceProperty;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.GeometryProperty;
 import org.xmlobjects.model.Child;
-import org.xmlobjects.util.copy.CopyBuilder;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -42,7 +43,7 @@ public class GlobalAppearanceConverter {
     private final CityGMLVersion version;
     private final Map<String, List<AbstractSurfaceData>> targets = new HashMap<>();
     private final Set<String> processedTemplates = new HashSet<>();
-    private final CopyBuilder copyBuilder = new CopyBuilder().failOnError(true);
+    private final Copier copier = CopierBuilder.newCopier();
     private final CityModel cityModel = new CityModel();
     private final Map<String, Integer> counter = new TreeMap<>();
     private final String ID = "id";
@@ -116,7 +117,7 @@ public class GlobalAppearanceConverter {
                 public void visit(AbstractInlineOrByReferenceProperty<?> property) {
                     if (property.isSetReferencedObject()) {
                         Child child = property.getObject();
-                        property.setInlineObjectIfValid(copyBuilder.shallowCopy(child));
+                        property.setInlineObjectIfValid(copier.shallowCopy(child));
                         property.setHref(null);
                     }
 
@@ -131,7 +132,7 @@ public class GlobalAppearanceConverter {
                         while (iterator.hasNext()) {
                             TextureAssociationReference reference = iterator.next();
                             if (reference.isSetReferencedObject()) {
-                                TextureAssociation copy = copyBuilder.shallowCopy(reference.getReferencedObject());
+                                TextureAssociation copy = copier.shallowCopy(reference.getReferencedObject());
                                 texture.getTextureParameterizations().add(new TextureAssociationProperty(copy));
                                 iterator.remove();
                             } else if (version != CityGMLVersion.v3_0 && reference.getURI() != null) {
@@ -310,7 +311,7 @@ public class GlobalAppearanceConverter {
                 }
             }
 
-            Appearance appearance = copyBuilder.shallowCopy(globalAppearance);
+            Appearance appearance = copier.shallowCopy(globalAppearance);
             appearance.setId(target instanceof ImplicitGeometry ? CityObjects.createId() : null);
             appearance.setSurfaceData(null);
             appearance.setLocalProperties(null);
@@ -335,7 +336,7 @@ public class GlobalAppearanceConverter {
                 }
             }
 
-            AbstractSurfaceData surfaceData = copyBuilder.shallowCopy(globalSurfaceData);
+            AbstractSurfaceData surfaceData = copier.shallowCopy(globalSurfaceData);
             surfaceData.setId(null);
             surfaceData.setLocalProperties(null);
             surfaceData.getLocalProperties().set(ID, globalSurfaceData.getLocalProperties().get(ID));

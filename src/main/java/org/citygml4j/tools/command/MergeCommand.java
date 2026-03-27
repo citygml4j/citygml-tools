@@ -219,9 +219,9 @@ public class MergeCommand extends CityGMLTool {
                     String message = versions.isEmpty() ?
                             "Failed to detect CityGML version from input files." :
                             "The input files use multiple CityGML versions: " + versions.stream()
-                                    .map(CityGMLVersion::toString)
-                                    .sorted()
-                                    .collect(Collectors.joining(", ")) + ".";
+                                                                                .map(CityGMLVersion::toString)
+                                                                                .sorted()
+                                                                                .collect(Collectors.joining(", ")) + ".";
 
                     log.warn(message + " Using CityGML " + outputVersion + " for the output file.");
                 }

@@ -24,14 +24,14 @@ repositories {
         url = 'https://repo.osgeo.org/repository/release'
     }
     maven {
-        url = 'https://oss.sonatype.org/content/repositories/snapshots'
+        url = 'https://central.sonatype.com/repository/maven-snapshots/'
     }
     mavenCentral()
 }
 
 dependencies {
-    implementation 'org.citygml4j:citygml4j-xml:3.2.8'
-    implementation 'org.citygml4j:citygml4j-cityjson:3.2.8'
+    implementation 'org.citygml4j:citygml4j-xml:3.4.0-SNAPSHOT'
+    implementation 'org.citygml4j:citygml4j-cityjson:3.4.0-SNAPSHOT'
     implementation 'info.picocli:picocli:4.7.7'
     implementation 'org.geotools:gt-epsg-extension:34.2'
     implementation 'org.geotools:gt-epsg-hsql:34.2'

@@ -181,7 +181,7 @@ public abstract class CityGMLTool implements Command {
             AbstractCityJSONWriter<?> writer = options.isJsonLines() ?
                     out.createCityJSONFeatureWriter(file.getFile(), options.getEncoding()) :
                     out.createCityJSONWriter(file.getFile(), options.getEncoding())
-                            .withIndent(options.isPrettyPrint() ? "  " : null);
+                    .withIndent(options.isPrettyPrint() ? "  " : null);
 
             return writer.setHtmlSafe(options.isHtmlSafe());
         } catch (CityJSONWriteException e) {

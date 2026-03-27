@@ -25,6 +25,8 @@ import org.citygml4j.core.model.appearance.*;
 import org.citygml4j.core.model.core.AbstractAppearanceProperty;
 import org.citygml4j.core.model.core.AbstractCityObject;
 import org.citygml4j.core.visitor.ObjectWalker;
+import org.xmlobjects.copy.Copier;
+import org.xmlobjects.copy.CopierBuilder;
 import org.xmlobjects.gml.model.GMLObject;
 import org.xmlobjects.gml.model.base.AbstractAssociation;
 import org.xmlobjects.gml.model.base.AbstractGML;
@@ -33,7 +35,6 @@ import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.aggregates.MultiSurface;
 import org.xmlobjects.gml.model.geometry.primitives.AbstractSurface;
 import org.xmlobjects.gml.util.id.DefaultIdCreator;
-import org.xmlobjects.util.copy.CopyBuilder;
 
 import java.util.HashMap;
 import java.util.List;
@@ -41,7 +42,7 @@ import java.util.Map;
 
 public class GeometryCopyBuilder {
     private final AppearanceProcessor appearanceProcessor = new AppearanceProcessor();
-    private final CopyBuilder copyBuilder = new CopyBuilder().failOnError(true);
+    private final Copier copier = CopierBuilder.newCopier();
     private final String ID = "id";
 
     private AppearanceHelper globalAppearanceHelper;
@@ -79,7 +80,7 @@ public class GeometryCopyBuilder {
     }
 
     private AbstractGeometry copy(AbstractGeometry geometry, AbstractCityObject topLevelObject) {
-        AbstractGeometry copy = copyBuilder.deepCopy(geometry);
+        AbstractGeometry copy = copier.deepCopy(geometry);
 
         IdHelper idHelper = new IdHelper();
         idHelper.updateIds(copy, copyAppearance);
@@ -143,7 +144,7 @@ public class GeometryCopyBuilder {
             if (properties != null) {
                 for (TextureAssociationProperty property : properties) {
                     ParameterizedTexture texture = getOrCreateSurfaceData(property, ParameterizedTexture.class);
-                    TextureAssociationProperty copy = copyBuilder.deepCopy(property);
+                    TextureAssociationProperty copy = copier.deepCopy(property);
                     idHelper.visit(copy);
                     texture.getTextureParameterizations().add(copy);
                 }
@@ -182,7 +183,7 @@ public class GeometryCopyBuilder {
                 }
             }
 
-            T surfaceData = copyBuilder.shallowCopy(source);
+            T surfaceData = copier.shallowCopy(source);
             surfaceData.setId(null);
             surfaceData.getLocalProperties().set(ID, source.getLocalProperties().getOrSet(ID, Integer.class, () -> id++));
             appearance.getSurfaceData().add(new AbstractSurfaceDataProperty(surfaceData));
@@ -210,7 +211,7 @@ public class GeometryCopyBuilder {
                 }
             }
 
-            Appearance appearance = copyBuilder.shallowCopy(source);
+            Appearance appearance = copier.shallowCopy(source);
             appearance.setId(null);
             appearance.setSurfaceData(null);
             appearance.getLocalProperties().set(ID, source.getLocalProperties().getOrSet(ID, Integer.class, () -> id++));

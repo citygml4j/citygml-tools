@@ -110,8 +110,8 @@ public class RemoveAppsCommand extends CityGMLTool {
                 try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(getFeatureInfo(reader))) {
                     String themes = this.themes != null ? " with themes " + this.themes.stream()
-                            .map(theme -> "'" + theme + "'")
-                            .collect(Collectors.joining(", ")) : "";
+                                                                            .map(theme -> "'" + theme + "'")
+                                                                            .collect(Collectors.joining(", ")) : "";
                     log.debug("Reading city objects and removing appearances" + themes + ".");
 
                     while (reader.hasNext()) {

@@ -126,7 +126,7 @@ public class ValidateCommand extends CityGMLTool {
     private class ValidationSchemaHandler extends SchemaHandler {
 
         ValidationSchemaHandler(SchemaHandler other) {
-            copy(other);
+            copyFrom(other);
         }
 
         @Override
