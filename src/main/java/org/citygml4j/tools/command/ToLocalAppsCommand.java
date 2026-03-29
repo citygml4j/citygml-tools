@@ -21,7 +21,6 @@
 
 package org.citygml4j.tools.command;
 
-import org.citygml4j.core.model.CityGMLVersion;
 import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.tools.ExecutionException;
@@ -44,7 +43,6 @@ import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
 import picocli.CommandLine;
 
-import java.util.EnumSet;
 import java.util.List;
 
 @CommandLine.Command(name = "to-local-apps",
@@ -92,11 +90,10 @@ public class ToLocalAppsCommand extends CityGMLTool {
                 }
 
                 log.debug("Reading global appearances and implicit geometries from input file.");
-                EnumSet<GlobalObjects.Type> types = out.getVersion() == CityGMLVersion.v3_0 ?
-                        EnumSet.of(GlobalObjects.Type.APPEARANCE, GlobalObjects.Type.IMPLICIT_GEOMETRY) :
-                        EnumSet.of(GlobalObjects.Type.APPEARANCE);
-
-                GlobalObjects globalObjects = GlobalObjectsReader.of(types).read(inputFile, getCityGMLContext());
+                GlobalObjects globalObjects = GlobalObjectsReader.of(
+                                GlobalObjects.Type.APPEARANCE,
+                                GlobalObjects.Type.IMPLICIT_GEOMETRY)
+                        .read(inputFile, getCityGMLContext());
                 List<Appearance> appearances = globalObjects.getAppearances();
                 if (appearances.isEmpty()) {
                     log.info("The file does not contain global appearances. No action required.");
