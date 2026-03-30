@@ -36,7 +36,7 @@ import org.xmlobjects.gml.util.id.DefaultIdCreator;
 
 import java.util.List;
 
-public class GeometryCopyBuilder {
+public class GeometryCopier {
     private static final String ID = "id";
     private final Copier copier = CopierBuilder.newInstance()
             .withCloner(GeometryProperty.class, new GeometryPropertyCloner())
@@ -49,24 +49,24 @@ public class GeometryCopyBuilder {
     private AppearanceHelper localAppearanceHelper;
     private boolean copyAppearance;
 
-    private GeometryCopyBuilder() {
+    private GeometryCopier() {
     }
 
-    public static GeometryCopyBuilder newInstance() {
-        return new GeometryCopyBuilder();
+    public static GeometryCopier newInstance() {
+        return new GeometryCopier();
     }
 
-    public GeometryCopyBuilder withGlobalAppearanceHelper(AppearanceHelper globalAppearanceHelper) {
+    public GeometryCopier withGlobalAppearanceHelper(AppearanceHelper globalAppearanceHelper) {
         this.globalAppearanceHelper = globalAppearanceHelper;
         return this;
     }
 
-    public GeometryCopyBuilder withLocalAppearanceHelper(AppearanceHelper localAppearanceHelper) {
+    public GeometryCopier withLocalAppearanceHelper(AppearanceHelper localAppearanceHelper) {
         this.localAppearanceHelper = localAppearanceHelper;
         return this;
     }
 
-    public GeometryCopyBuilder copyAppearance(boolean copyAppearance) {
+    public GeometryCopier copyAppearance(boolean copyAppearance) {
         this.copyAppearance = copyAppearance;
         return this;
     }

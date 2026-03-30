@@ -33,7 +33,7 @@ import org.xmlobjects.model.Child;
 import java.util.*;
 
 public class CrossLodReferenceResolver {
-    private final GeometryCopyBuilder copyBuilder = GeometryCopyBuilder.newInstance().copyAppearance(true);
+    private final GeometryCopier geometryCopier = GeometryCopier.newInstance().copyAppearance(true);
     private final Map<Mode, Integer> counter = new HashMap<>();
     private Mode mode = Mode.RESOLVE;
 
@@ -50,7 +50,7 @@ public class CrossLodReferenceResolver {
     }
 
     public CrossLodReferenceResolver withGlobalAppearanceHelper(AppearanceHelper globalAppearanceHelper) {
-        copyBuilder.withGlobalAppearanceHelper(globalAppearanceHelper);
+        geometryCopier.withGlobalAppearanceHelper(globalAppearanceHelper);
         return this;
     }
 
@@ -71,13 +71,13 @@ public class CrossLodReferenceResolver {
         }
 
         if (mode == Mode.RESOLVE) {
-            copyBuilder.withLocalAppearanceHelper(AppearanceHelper.of(feature));
+            geometryCopier.withLocalAppearanceHelper(AppearanceHelper.of(feature));
 
             for (Map<AbstractGeometry, List<GeometryProperty<?>>> lod : references.values()) {
-                try (CopySession session = copyBuilder.createSession()) {
+                try (CopySession session = geometryCopier.createSession()) {
                     for (Map.Entry<AbstractGeometry, List<GeometryProperty<?>>> entry : lod.entrySet()) {
                         boolean inline = !session.hasClone(entry.getKey());
-                        AbstractGeometry clone = copyBuilder.copy(entry.getKey(), feature, session);
+                        AbstractGeometry clone = geometryCopier.copy(entry.getKey(), feature, session);
 
                         GeometryProperty<?> targetProperty = entry.getValue().get(0);
                         if (inline) {

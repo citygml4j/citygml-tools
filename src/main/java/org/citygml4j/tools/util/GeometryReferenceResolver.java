@@ -34,7 +34,7 @@ import org.xmlobjects.gml.util.reference.ReferenceResolver;
 import java.util.*;
 
 public class GeometryReferenceResolver {
-    private final GeometryCopyBuilder copyBuilder = GeometryCopyBuilder.newInstance();
+    private final GeometryCopier geometryCopier = GeometryCopier.newInstance();
     private final Map<String, GeometryReference> references = new HashMap<>();
     private final ReferenceResolver referenceResolver = DefaultReferenceResolver.newInstance()
             .withResolveMode(ResolveMode.GEOMETRIES_ONLY);
@@ -92,7 +92,7 @@ public class GeometryReferenceResolver {
 
     public void resolveGeometryReferences(AbstractFeature feature, int featureId) {
         if (!references.isEmpty()) {
-            try (CopySession session = copyBuilder.createSession()) {
+            try (CopySession session = geometryCopier.createSession()) {
                 new ResolverProcessor(featureId, session).resolve(feature);
             }
         }
@@ -153,7 +153,7 @@ public class GeometryReferenceResolver {
                     AbstractCityObject cityObject = property.getParent(AbstractCityObject.class);
                     if (cityObject != null) {
                         boolean inline = !session.hasClone(reference.geometry);
-                        AbstractGeometry clone = copyBuilder.copy(reference.geometry, session);
+                        AbstractGeometry clone = geometryCopier.copy(reference.geometry, session);
 
                         String target = reference.getTarget(featureId, childIds.get(cityObject));
                         if (target != null) {
