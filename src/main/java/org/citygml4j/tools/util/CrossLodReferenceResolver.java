@@ -107,8 +107,8 @@ public class CrossLodReferenceResolver {
                 for (List<GeometryProperty<?>> properties : lod.values()) {
                     for (GeometryProperty<?> property : properties) {
                         Child parent = property.getParent();
-                        if (parent instanceof GMLObject) {
-                            ((GMLObject) parent).unsetProperty(property);
+                        if (parent instanceof GMLObject object) {
+                            object.unsetProperty(property);
                             counter.merge(Mode.REMOVE_LOD4_REFERENCES, 1, Integer::sum);
                         }
                     }
@@ -136,13 +136,13 @@ public class CrossLodReferenceResolver {
         @Override
         public void visit(GeometryProperty<?> property) {
             if (property.isSetReferencedObject() && property.getHref() != null) {
-                Integer fromLod = getLod(property);
-                Integer toLod = getLod(property.getObject().getParent(GeometryProperty.class));
+                Integer lod = getLod(property);
+                Integer targetLod = getLod(property.getObject().getParent(GeometryProperty.class));
 
-                if (fromLod != null && toLod != null && !fromLod.equals(toLod)) {
+                if (lod != null && targetLod != null && !lod.equals(targetLod)) {
                     if (mode == Mode.RESOLVE
-                            || (mode == Mode.REMOVE_LOD4_REFERENCES && toLod == 4)) {
-                        references.computeIfAbsent(fromLod, k -> new LinkedHashMap<>())
+                            || (mode == Mode.REMOVE_LOD4_REFERENCES && targetLod == 4)) {
+                        references.computeIfAbsent(lod, k -> new LinkedHashMap<>())
                                 .computeIfAbsent(property.getObject(), k -> new ArrayList<>())
                                 .add(property);
                     }

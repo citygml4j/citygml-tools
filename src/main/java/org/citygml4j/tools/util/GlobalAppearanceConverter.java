@@ -271,20 +271,20 @@ public class GlobalAppearanceConverter {
         private void convertAppearance(AbstractGML target, AbstractSurfaceData source, AbstractGeometry geometry) {
             Appearance appearance = source.getParent(Appearance.class);
             AbstractSurfaceData surfaceData = getOrCreateSurfaceData(target, appearance, source);
-            if (surfaceData instanceof ParameterizedTexture) {
+            if (surfaceData instanceof ParameterizedTexture targetTexture) {
                 ParameterizedTexture texture = (ParameterizedTexture) source;
                 for (TextureAssociationProperty property : texture.getTextureParameterizations()) {
                     GeometryReference reference = getGeometryReference(property);
                     if (reference != null
                             && reference.getHref() != null
                             && CityObjects.getIdFromReference(reference.getHref()).equals(geometry.getId())) {
-                        ((ParameterizedTexture) surfaceData).getTextureParameterizations().add(property);
+                        targetTexture.getTextureParameterizations().add(property);
                     }
                 }
-            } else if (surfaceData instanceof X3DMaterial) {
-                ((X3DMaterial) surfaceData).getTargets().add(new GeometryReference("#" + geometry.getId()));
-            } else if (surfaceData instanceof GeoreferencedTexture) {
-                ((GeoreferencedTexture) surfaceData).getTargets().add(new GeometryReference("#" + geometry.getId()));
+            } else if (surfaceData instanceof X3DMaterial material) {
+                material.getTargets().add(new GeometryReference("#" + geometry.getId()));
+            } else if (surfaceData instanceof GeoreferencedTexture texture) {
+                texture.getTargets().add(new GeometryReference("#" + geometry.getId()));
             }
         }
 
@@ -295,10 +295,10 @@ public class GlobalAppearanceConverter {
             }
 
             List<AbstractAppearanceProperty> appearances;
-            if (target instanceof AbstractCityObject) {
-                appearances = ((AbstractCityObject) target).getAppearances();
-            } else if (target instanceof ImplicitGeometry) {
-                appearances = ((ImplicitGeometry) target).getAppearances();
+            if (target instanceof AbstractCityObject cityObject) {
+                appearances = cityObject.getAppearances();
+            } else if (target instanceof ImplicitGeometry implicitGeometry) {
+                appearances = implicitGeometry.getAppearances();
             } else {
                 appearances = cityModel.getAppearanceMembers();
             }
@@ -326,12 +326,12 @@ public class GlobalAppearanceConverter {
             surfaceData.setId(null);
             surfaceData.setLocalProperties(null);
 
-            if (surfaceData instanceof ParameterizedTexture) {
-                ((ParameterizedTexture) surfaceData).setTextureParameterizations(null);
-            } else if (surfaceData instanceof X3DMaterial) {
-                ((X3DMaterial) surfaceData).setTargets(null);
-            } else if (surfaceData instanceof GeoreferencedTexture) {
-                ((GeoreferencedTexture) surfaceData).setTargets(null);
+            if (surfaceData instanceof ParameterizedTexture texture) {
+                texture.setTextureParameterizations(null);
+            } else if (surfaceData instanceof X3DMaterial material) {
+                material.setTargets(null);
+            } else if (surfaceData instanceof GeoreferencedTexture texture) {
+                texture.setTargets(null);
             }
 
             Appearance appearance = getOrCreateAppearance(target, globalAppearance);
