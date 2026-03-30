@@ -27,6 +27,7 @@ import org.citygml4j.core.visitor.ObjectWalker;
 import org.xmlobjects.gml.model.GMLObject;
 import org.xmlobjects.gml.model.base.AbstractInlineOrByReferenceProperty;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
+import org.xmlobjects.gml.model.geometry.GeometryProperty;
 import org.xmlobjects.gml.model.geometry.aggregates.MultiSurface;
 import org.xmlobjects.gml.model.geometry.primitives.AbstractSurface;
 
@@ -102,6 +103,13 @@ public class AppearanceRemover {
     }
 
     private class TargetProcessor extends ObjectWalker {
+        @Override
+        public void visit(GeometryProperty<?> property) {
+            if (property.isSetInlineObject()) {
+                super.visit(property);
+            }
+        }
+
         @Override
         public void visit(AbstractSurface surface) {
             process(surface);

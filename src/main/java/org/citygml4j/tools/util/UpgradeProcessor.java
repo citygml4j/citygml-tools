@@ -112,7 +112,6 @@ public class UpgradeProcessor {
                     } else if (feature instanceof CityObjectGroup) {
                         cityObjectGroups.add((CityObjectGroup) feature);
                     } else if (resolveGeometryReferences) {
-                        referenceResolver.resolveReferences(feature);
                         crossTopLevelResolver.processGeometryReferences(feature, featureId);
                     }
                 }

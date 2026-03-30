@@ -22,18 +22,22 @@
 package org.citygml4j.tools.util;
 
 import org.citygml4j.core.model.core.*;
+import org.citygml4j.core.util.reference.DefaultReferenceResolver;
+import org.citygml4j.core.util.reference.ResolveMode;
 import org.citygml4j.core.visitor.ObjectWalker;
+import org.xmlobjects.copy.CopySession;
 import org.xmlobjects.gml.model.basictypes.Code;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.GeometryProperty;
-import org.xmlobjects.gml.util.id.DefaultIdCreator;
+import org.xmlobjects.gml.util.reference.ReferenceResolver;
 
 import java.util.*;
 
 public class GeometryReferenceResolver {
     private final GeometryCopyBuilder copyBuilder = GeometryCopyBuilder.newInstance();
     private final Map<String, GeometryReference> references = new HashMap<>();
-    private final GeometryProcessor geometryProcessor = new GeometryProcessor();
+    private final ReferenceResolver referenceResolver = DefaultReferenceResolver.newInstance()
+            .withResolveMode(ResolveMode.GEOMETRIES_ONLY);
 
     private boolean createCityObjectRelations;
     private int resolvedReferencesCounter;
@@ -56,12 +60,22 @@ public class GeometryReferenceResolver {
     }
 
     public void processGeometryReferences(AbstractFeature feature, int featureId) {
-        GeometryPropertyProcessor processor = new GeometryPropertyProcessor();
-        processor.process(feature, featureId);
+        referenceResolver.resolveReferences(feature);
+        new ReferenceCollector().collect(feature, featureId);
     }
 
     public void processReferencedGeometries(AbstractFeature feature) {
-        feature.accept(geometryProcessor);
+        referenceResolver.resolveReferences(feature);
+        new GeometryCollector().collect(feature).forEach((geometry, owner) -> {
+            geometry.accept(new ObjectWalker() {
+                @Override
+                public void visit(AbstractGeometry geometry) {
+                    geometry.setParent(null);
+                }
+            });
+
+            references.get(geometry.getId()).setGeometry(geometry, owner);
+        });
     }
 
     public int getResolvedReferencesCounter() {
@@ -78,21 +92,30 @@ public class GeometryReferenceResolver {
 
     public void resolveGeometryReferences(AbstractFeature feature, int featureId) {
         if (!references.isEmpty()) {
-            ResolverProcessor processor = new ResolverProcessor();
-            processor.resolve(feature, featureId);
+            try (CopySession session = copyBuilder.createSession()) {
+                new ResolverProcessor(featureId, session).resolve(feature);
+            }
         }
     }
 
     private class ResolverProcessor extends ObjectWalker {
         private final Map<AbstractCityObject, Integer> childIds = new IdentityHashMap<>();
         private final Map<AbstractCityObject, Set<String>> relatedTos = new IdentityHashMap<>();
-        private int featureId;
+        private final int featureId;
+        private final CopySession session;
 
-        void resolve(AbstractFeature feature, int featureId) {
+        ResolverProcessor(int featureId, CopySession session) {
             this.featureId = featureId;
-            feature.accept(this);
-            childIds.clear();
-            relatedTos.clear();
+            this.session = session;
+        }
+
+        void resolve(AbstractFeature feature) {
+            try {
+                feature.accept(this);
+            } finally {
+                childIds.clear();
+                relatedTos.clear();
+            }
         }
 
         @Override
@@ -111,10 +134,7 @@ public class GeometryReferenceResolver {
                         cityObject.setId(reference.getOwner());
                         for (String relatedTo : reference.getRelatedTos()) {
                             if (relatedTos.computeIfAbsent(cityObject, v -> new HashSet<>()).add(relatedTo)) {
-                                cityObjectRelationsCounter++;
-                                CityObjectRelation relation = new CityObjectRelation("#" + relatedTo);
-                                relation.setRelationType(new Code("shared"));
-                                cityObject.getRelatedTo().add(new CityObjectRelationProperty(relation));
+                                addRelatedTo(cityObject, relatedTo);
                             }
                         }
                     }
@@ -132,52 +152,62 @@ public class GeometryReferenceResolver {
                     resolvedReferencesCounter++;
                     AbstractCityObject cityObject = property.getParent(AbstractCityObject.class);
                     if (cityObject != null) {
+                        boolean inline = !session.hasClone(reference.geometry);
+                        AbstractGeometry clone = copyBuilder.copy(reference.geometry, session);
+
                         String target = reference.getTarget(featureId, childIds.get(cityObject));
                         if (target != null) {
-                            AbstractGeometry geometry = reference.createGeometryFor(featureId);
-                            property.setInlineObjectIfValid(geometry);
-                            property.setHref(null);
+                            if (inline) {
+                                property.setInlineObjectIfValid(clone);
+                                property.setHref(null);
+                            } else {
+                                property.setReferencedObjectIfValid(clone);
+                                property.setHref("#" + clone.getId());
+                            }
 
                             if (createCityObjectRelations
                                     && relatedTos.computeIfAbsent(cityObject, v -> new HashSet<>())
                                     .add(reference.getOwner())) {
-                                cityObjectRelationsCounter++;
                                 cityObject.setId(target);
-                                CityObjectRelation relation = new CityObjectRelation("#" + reference.getOwner());
-                                relation.setRelationType(new Code("shared"));
-                                cityObject.getRelatedTo().add(new CityObjectRelationProperty(relation));
+                                addRelatedTo(cityObject, reference.getOwner());
                             }
                         } else {
-                            property.setHref("#" + reference.getOrCreateGeometryId(featureId));
+                            property.setReferencedObjectIfValid(clone);
+                            property.setHref("#" + clone.getId());
                         }
                     }
                 }
-            } else if (!property.isSetReferencedObject()) {
+            } else if (property.isSetInlineObject()) {
                 super.visit(property);
             }
         }
+
+        private void addRelatedTo(AbstractCityObject cityObject, String relatedTo) {
+            cityObjectRelationsCounter++;
+            CityObjectRelation relation = new CityObjectRelation("#" + relatedTo);
+            relation.setRelationType(new Code("shared"));
+            cityObject.getRelatedTo().add(new CityObjectRelationProperty(relation));
+        }
     }
 
-    private class GeometryPropertyProcessor extends ObjectWalker {
-        private final Map<String, Deque<AbstractCityObject>> referees = new HashMap<>();
+    private class ReferenceCollector extends ObjectWalker {
+        private final Map<String, List<AbstractCityObject>> referees = new HashMap<>();
         private final Map<AbstractCityObject, Integer> childIds = new IdentityHashMap<>();
 
-        void process(AbstractFeature feature, int featureId) {
-            feature.accept(this);
-
-            for (Map.Entry<String, Deque<AbstractCityObject>> entry : referees.entrySet()) {
-                Deque<AbstractCityObject> candidates = entry.getValue();
-                candidates.stream().filter(AbstractSpaceBoundary.class::isInstance)
-                        .map(AbstractSpaceBoundary.class::cast)
-                        .map(boundary -> boundary.getParent(AbstractSpace.class))
-                        .forEach(space -> candidates.removeIf(space::equals));
-
-                GeometryReference reference = references.computeIfAbsent(entry.getKey(), v -> new GeometryReference());
-                reference.addTarget(candidates.getFirst(), featureId, childIds.get(candidates.getFirst()));
+        void collect(AbstractFeature feature, int featureId) {
+            try {
+                feature.accept(this);
+                for (Map.Entry<String, List<AbstractCityObject>> entry : referees.entrySet()) {
+                    GeometryReference reference = references.computeIfAbsent(entry.getKey(),
+                            v -> new GeometryReference());
+                    for (AbstractCityObject cityObject : entry.getValue()) {
+                        reference.addTarget(cityObject, featureId, childIds.get(cityObject));
+                    }
+                }
+            } finally {
+                referees.clear();
+                childIds.clear();
             }
-
-            referees.clear();
-            childIds.clear();
         }
 
         @Override
@@ -194,7 +224,7 @@ public class GeometryReferenceResolver {
                 AbstractCityObject cityObject = property.getParent(AbstractCityObject.class);
                 if (cityObject != null) {
                     String reference = CityObjects.getIdFromReference(property.getHref());
-                    referees.computeIfAbsent(reference, v -> new ArrayDeque<>()).add(cityObject);
+                    referees.computeIfAbsent(reference, k -> new ArrayList<>()).add(cityObject);
                 }
             } else {
                 super.visit(property);
@@ -202,46 +232,40 @@ public class GeometryReferenceResolver {
         }
     }
 
-    private class GeometryProcessor extends ObjectWalker {
+    private class GeometryCollector extends ObjectWalker {
+        private final Map<AbstractGeometry, String> geometries = new IdentityHashMap<>();
+
+        Map<AbstractGeometry, String> collect(AbstractFeature feature) {
+            feature.accept(this);
+            return geometries;
+        }
 
         @Override
-        public void visit(AbstractGeometry geometry) {
-            if (geometry.getId() != null) {
-                GeometryReference reference = references.get(geometry.getId());
-                if (reference != null) {
-                    reference.setGeometry(geometry);
-                    reference.setOwner(geometry.getParent(AbstractCityObject.class));
+        public void visit(GeometryProperty<?> property) {
+            if (property.isSetInlineObject()) {
+                AbstractGeometry geometry = property.getObject();
+                if (geometry.getId() != null && references.containsKey(geometry.getId())) {
+                    AbstractCityObject parent = geometry.getParent(AbstractCityObject.class);
+                    geometries.put(geometry, CityObjects.getOrCreateId(parent));
                 }
+
+                super.visit(property);
             }
         }
     }
 
-    private class GeometryReference {
+    private static class GeometryReference {
+        private final Map<String, String> targets = new HashMap<>();
         private AbstractGeometry geometry;
         private String owner;
-        private final Map<Integer, String> geometryIds = new HashMap<>();
-        private final Map<String, String> targets = new HashMap<>();
 
-        AbstractGeometry createGeometryFor(int featureId) {
-            AbstractGeometry copy = copyBuilder.copy(geometry);
-            copy.setId(getOrCreateGeometryId(featureId));
-            return copy;
-        }
-
-        void setGeometry(AbstractGeometry geometry) {
+        void setGeometry(AbstractGeometry geometry, String owner) {
             this.geometry = geometry;
-        }
-
-        String getOrCreateGeometryId(int featureId) {
-            return geometryIds.computeIfAbsent(featureId, v -> DefaultIdCreator.getInstance().createId());
+            this.owner = owner;
         }
 
         String getOwner() {
             return owner;
-        }
-
-        void setOwner(AbstractCityObject owner) {
-            this.owner = CityObjects.getOrCreateId(owner);
         }
 
         Collection<String> getRelatedTos() {

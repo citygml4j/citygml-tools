@@ -25,25 +25,25 @@ import org.citygml4j.core.model.appearance.*;
 import org.citygml4j.core.model.core.AbstractAppearanceProperty;
 import org.citygml4j.core.model.core.AbstractCityObject;
 import org.citygml4j.core.visitor.ObjectWalker;
-import org.xmlobjects.copy.Copier;
-import org.xmlobjects.copy.CopierBuilder;
+import org.xmlobjects.copy.*;
 import org.xmlobjects.gml.model.GMLObject;
 import org.xmlobjects.gml.model.base.AbstractAssociation;
-import org.xmlobjects.gml.model.base.AbstractGML;
-import org.xmlobjects.gml.model.base.AbstractReference;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
+import org.xmlobjects.gml.model.geometry.GeometryProperty;
 import org.xmlobjects.gml.model.geometry.aggregates.MultiSurface;
 import org.xmlobjects.gml.model.geometry.primitives.AbstractSurface;
 import org.xmlobjects.gml.util.id.DefaultIdCreator;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class GeometryCopyBuilder {
-    private final AppearanceProcessor appearanceProcessor = new AppearanceProcessor();
-    private final Copier copier = CopierBuilder.newCopier();
-    private final String ID = "id";
+    private static final String ID = "id";
+    private final Copier copier = CopierBuilder.newInstance()
+            .withCloner(GeometryProperty.class, new GeometryPropertyCloner())
+            .withCloner(AbstractGeometry.class, new AbstractGeometryCloner())
+            .withCloner(GeometryReference.class, new GeometryReferenceCloner())
+            .withCloner(RingReference.class, new RingReferenceCloner())
+            .build();
 
     private AppearanceHelper globalAppearanceHelper;
     private AppearanceHelper localAppearanceHelper;
@@ -71,48 +71,43 @@ public class GeometryCopyBuilder {
         return this;
     }
 
-    public AbstractGeometry copy(AbstractGeometry geometry, GMLObject target) {
-        return copy(geometry, getTopLevelObject(target));
+    public CopySession createSession() {
+        return copier.createSession();
     }
 
-    public AbstractGeometry copy(AbstractGeometry geometry) {
-        return copy(geometry, null);
+    public AbstractGeometry copy(AbstractGeometry geometry, GMLObject target, CopySession session) {
+        return copy(geometry, getTopLevelObject(target), session);
     }
 
-    private AbstractGeometry copy(AbstractGeometry geometry, AbstractCityObject topLevelObject) {
-        AbstractGeometry copy = copier.deepCopy(geometry);
+    public AbstractGeometry copy(AbstractGeometry geometry, CopySession session) {
+        return copy(geometry, null, session);
+    }
 
-        IdHelper idHelper = new IdHelper();
-        idHelper.updateIds(copy, copyAppearance);
-
+    private AbstractGeometry copy(AbstractGeometry geometry, AbstractCityObject topLevelObject, CopySession session) {
+        AbstractGeometry clone = copier.deepCopy(geometry, session);
         if (copyAppearance && topLevelObject != null) {
-            appearanceProcessor.process(copy, topLevelObject, idHelper);
+            clone.accept(new AppearanceCopier(topLevelObject, session));
         }
 
-        return copy;
+        return clone;
     }
 
     private AbstractCityObject getTopLevelObject(GMLObject object) {
-        GMLObject topLevelObject = object;
         GMLObject parent = object;
         while ((parent = parent.getParent(AbstractCityObject.class)) != null) {
-            topLevelObject = parent;
+            object = parent;
         }
 
-        return topLevelObject instanceof AbstractCityObject ?
-                (AbstractCityObject) topLevelObject :
-                null;
+        return object instanceof AbstractCityObject ? (AbstractCityObject) object : null;
     }
 
-    private class AppearanceProcessor extends ObjectWalker {
-        private AbstractCityObject topLevelObject;
-        private IdHelper idHelper;
-        private int id;
+    private class AppearanceCopier extends ObjectWalker {
+        private final AbstractCityObject topLevelObject;
+        private final CopySession session;
 
-        public void process(AbstractGeometry geometry, AbstractCityObject topLevelObject, IdHelper idHelper) {
+        AppearanceCopier(AbstractCityObject topLevelObject, CopySession session) {
             this.topLevelObject = topLevelObject;
-            this.idHelper = idHelper;
-            geometry.accept(this);
+            this.session = session;
         }
 
         @Override
@@ -143,50 +138,46 @@ public class GeometryCopyBuilder {
             List<TextureAssociationProperty> properties = helper.getParameterizedTextures(geometryId);
             if (properties != null) {
                 for (TextureAssociationProperty property : properties) {
-                    ParameterizedTexture texture = getOrCreateSurfaceData(property, ParameterizedTexture.class);
-                    TextureAssociationProperty copy = copier.deepCopy(property);
-                    idHelper.visit(copy);
-                    texture.getTextureParameterizations().add(copy);
+                    if (!session.hasClone(property)) {
+                        ParameterizedTexture texture = getOrCreateSurfaceData(property, ParameterizedTexture.class);
+                        TextureAssociationProperty clone = copier.deepCopy(property, session);
+                        texture.getTextureParameterizations().add(clone);
+                    }
                 }
             }
 
             List<GeometryReference> references = helper.getGeoreferencedTextures(geometryId);
             if (references != null) {
                 for (GeometryReference reference : references) {
-                    GeoreferencedTexture texture = getOrCreateSurfaceData(reference, GeoreferencedTexture.class);
-                    texture.getTargets().add(new GeometryReference("#" + idHelper.getId(reference.getHref())));
+                    if (!session.hasClone(reference)) {
+                        GeoreferencedTexture texture = getOrCreateSurfaceData(reference, GeoreferencedTexture.class);
+                        GeometryReference clone = copier.deepCopy(reference, session);
+                        texture.getTargets().add(clone);
+                    }
                 }
             }
 
             references = helper.getMaterials(geometryId);
             if (references != null) {
                 for (GeometryReference reference : references) {
-                    X3DMaterial material = getOrCreateSurfaceData(reference, X3DMaterial.class);
-                    material.getTargets().add(new GeometryReference("#" + idHelper.getId(reference.getHref())));
+                    if (!session.hasClone(reference)) {
+                        X3DMaterial material = getOrCreateSurfaceData(reference, X3DMaterial.class);
+                        GeometryReference clone = copier.deepCopy(reference, session);
+                        material.getTargets().add(clone);
+                    }
                 }
             }
         }
 
         private <T extends AbstractSurfaceData> T getOrCreateSurfaceData(AbstractAssociation<?> association, Class<T> type) {
             T source = association.getParent(type);
-
-            Appearance appearance = getOrCreateAppearance(source.getParent(Appearance.class));
-            for (AbstractSurfaceDataProperty property : appearance.getSurfaceData()) {
-                if (type.isInstance(property.getObject())) {
-                    T surfaceData = type.cast(property.getObject());
-                    if (surfaceData != source
-                            && surfaceData.hasLocalProperties()
-                            && source.hasLocalProperties()
-                            && source.getLocalProperties().getAndCompare(ID, surfaceData.getLocalProperties().get(ID))) {
-                        return surfaceData;
-                    }
-                }
+            T surfaceData = session.lookupClone(source, type);
+            if (surfaceData != null) {
+                return surfaceData;
             }
 
-            T surfaceData = copier.shallowCopy(source);
+            surfaceData = copier.shallowCopy(source, session);
             surfaceData.setId(null);
-            surfaceData.getLocalProperties().set(ID, source.getLocalProperties().getOrSet(ID, Integer.class, () -> id++));
-            appearance.getSurfaceData().add(new AbstractSurfaceDataProperty(surfaceData));
 
             if (surfaceData instanceof ParameterizedTexture) {
                 ((ParameterizedTexture) surfaceData).setTextureParameterizations(null);
@@ -196,60 +187,69 @@ public class GeometryCopyBuilder {
                 ((GeoreferencedTexture) surfaceData).setTargets(null);
             }
 
+            Appearance appearance = getOrCreateAppearance(source.getParent(Appearance.class));
+            appearance.getSurfaceData().add(new AbstractSurfaceDataProperty(surfaceData));
+
             return surfaceData;
         }
 
         private Appearance getOrCreateAppearance(Appearance source) {
-            for (AbstractAppearanceProperty property : topLevelObject.getAppearances()) {
-                if (property.getObject() instanceof Appearance appearance) {
-                    if (appearance != source
-                            && appearance.hasLocalProperties()
-                            && source.hasLocalProperties()
-                            && source.getLocalProperties().getAndCompare(ID, appearance.getLocalProperties().get(ID))) {
-                        return appearance;
-                    }
-                }
+            Appearance appearance = session.lookupClone(source, Appearance.class);
+            if (appearance != null) {
+                return appearance;
             }
 
-            Appearance appearance = copier.shallowCopy(source);
+            appearance = copier.shallowCopy(source, session);
             appearance.setId(null);
             appearance.setSurfaceData(null);
-            appearance.getLocalProperties().set(ID, source.getLocalProperties().getOrSet(ID, Integer.class, () -> id++));
             topLevelObject.getAppearances().add(new AbstractAppearanceProperty(appearance));
 
             return appearance;
         }
     }
 
-    private class IdHelper extends ObjectWalker {
-        private final Map<String, String> ids = new HashMap<>();
-        private boolean keepOriginalIds;
-
-        public void updateIds(AbstractGeometry geometry, boolean keepOriginalIds) {
-            this.keepOriginalIds = keepOriginalIds;
-            geometry.accept(this);
-        }
-
-        public String getId(String reference) {
-            return ids.get(CityObjects.getIdFromReference(reference));
-        }
-
+    @SuppressWarnings("rawtypes")
+    private static class GeometryPropertyCloner extends TypeCloner<GeometryProperty> {
         @Override
-        public void visit(AbstractGML object) {
-            if (object.getId() != null) {
-                String id = DefaultIdCreator.getInstance().createId();
-                if (keepOriginalIds) {
-                    object.getLocalProperties().set(ID, object.getId());
-                    ids.put(object.getId(), id);
-                }
-
-                object.setId(id);
+        protected void deepCopy(GeometryProperty src, GeometryProperty dest, CopyContext context) {
+            AbstractGeometry clone = context.lookupClone(src.getObject(), AbstractGeometry.class);
+            if (clone != null) {
+                dest.setReferencedObjectIfValid(clone);
+                dest.setHref("#" + clone.getId());
+            } else {
+                clone = context.deepCopy(src.getObject());
+                dest.setInlineObjectIfValid(clone);
+                dest.setHref(null);
             }
         }
+    }
 
+    private static class AbstractGeometryCloner extends TypeCloner<AbstractGeometry> {
         @Override
-        public void visit(AbstractReference<?> reference) {
-            reference.setHref("#" + getId(reference.getHref()));
+        protected void deepCopy(AbstractGeometry src, AbstractGeometry dest, CopyContext context) {
+            context.deepCopyFields(src, dest);
+            dest.getLocalProperties().set(ID, dest.getId());
+            dest.setId(DefaultIdCreator.getInstance().createId());
+        }
+    }
+
+    private static class GeometryReferenceCloner extends TypeCloner<GeometryReference> {
+        @Override
+        protected void deepCopy(GeometryReference src, GeometryReference dest, CopyContext context) {
+            context.deepCopyFields(src, dest);
+            dest.setHref(dest.isSetReferencedObject() ?
+                    "#" + dest.getReferencedObject().getId() :
+                    null);
+        }
+    }
+
+    private static class RingReferenceCloner extends TypeCloner<RingReference> {
+        @Override
+        protected void deepCopy(RingReference src, RingReference dest, CopyContext context) {
+            context.deepCopyFields(src, dest);
+            dest.setHref(dest.isSetReferencedObject() ?
+                    "#" + dest.getReferencedObject().getId() :
+                    null);
         }
     }
 }
