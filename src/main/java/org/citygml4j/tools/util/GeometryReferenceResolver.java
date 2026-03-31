@@ -69,11 +69,16 @@ public class GeometryReferenceResolver {
         new GeometryCollector().collect(feature).forEach((geometry, owner) -> {
             geometry.accept(new ObjectWalker() {
                 @Override
-                public void visit(AbstractGeometry geometry) {
-                    geometry.setParent(null);
+                public void visit(GeometryProperty<?> property) {
+                    if (property.isSetReferencedObject()) {
+                        property.getObject().setParent(null);
+                    } else {
+                        super.visit(property);
+                    }
                 }
             });
 
+            geometry.setParent(null);
             references.get(geometry.getId()).setGeometry(geometry, owner);
         });
     }
