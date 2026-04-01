@@ -10,6 +10,7 @@ import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.io.OutputFile;
+import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
@@ -30,7 +31,7 @@ import java.util.List;
 
 @CommandLine.Command(name = "change-height",
         description = "Change the height values of city objects by a given offset.")
-public class ChangeHeightCommand extends CityGMLTool {
+public class ChangeHeightCommand implements Command {
     @CommandLine.Mixin
     private InputOptions inputOptions;
 
@@ -51,6 +52,8 @@ public class ChangeHeightCommand extends CityGMLTool {
     @CommandLine.Mixin
     private CityGMLOutputVersion version;
 
+    private final Logger log = Logger.getInstance();
+    private final CommandHelper helper = CommandHelper.newInstance();
     private final String suffix = "__changed_height";
 
     @Override
@@ -61,17 +64,17 @@ public class ChangeHeightCommand extends CityGMLTool {
             return CommandLine.ExitCode.OK;
         }
 
-        List<InputFile> inputFiles = getInputFiles(inputOptions, suffix);
+        List<InputFile> inputFiles = helper.getInputFiles(inputOptions, suffix);
         if (inputFiles.isEmpty()) {
             return CommandLine.ExitCode.OK;
         }
 
-        CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
-        CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
+        CityGMLInputFactory in = helper.createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
+        CityGMLOutputFactory out = helper.createCityGMLOutputFactory(version.getVersion());
 
         for (int i = 0; i < inputFiles.size(); i++) {
             InputFile inputFile = inputFiles.get(i);
-            OutputFile outputFile = getOutputFile(inputFile, suffix, outputOptions, overwriteOptions);
+            OutputFile outputFile = helper.getOutputFile(inputFile, suffix, outputOptions, overwriteOptions);
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
@@ -79,13 +82,13 @@ public class ChangeHeightCommand extends CityGMLTool {
 
             log.debug("Reading implicit geometries from input file.");
             heightChanger.withTemplateGeometries(GlobalObjectsReader.onlyImplicitGeometries()
-                    .read(inputFile, getCityGMLContext())
+                    .read(inputFile, helper.getCityGMLContext())
                     .getTemplateGeometries());
 
-            try (CityGMLReader reader = createCityGMLReader(in, inputFile, inputOptions);
+            try (CityGMLReader reader = helper.createCityGMLReader(in, inputFile, inputOptions);
                  ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
                 if (!version.isSetVersion()) {
-                    setCityGMLVersion(reader, out);
+                    helper.setCityGMLVersion(reader, out);
                 }
 
                 if (outputFile.isTemporary()) {
@@ -94,8 +97,8 @@ public class ChangeHeightCommand extends CityGMLTool {
                     log.info("Writing output to file " + outputFile + ".");
                 }
 
-                try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
-                        .withCityModelInfo(getFeatureInfo(reader))) {
+                try (CityGMLChunkWriter writer = helper.createCityGMLChunkWriter(out, outputFile, outputOptions)
+                        .withCityModelInfo(helper.getFeatureInfo(reader))) {
                     log.debug("Reading city objects and changing their height values.");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
@@ -114,7 +117,7 @@ public class ChangeHeightCommand extends CityGMLTool {
             }
 
             if (outputFile.isTemporary()) {
-                replaceInputFile(inputFile, outputFile);
+                helper.replaceInputFile(inputFile, outputFile);
             }
         }
 

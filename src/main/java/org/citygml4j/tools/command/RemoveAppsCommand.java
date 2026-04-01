@@ -9,6 +9,7 @@ import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.io.OutputFile;
+import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
@@ -30,7 +31,7 @@ import java.util.stream.Collectors;
 
 @CommandLine.Command(name = "remove-apps",
         description = "Remove appearances from city objects.")
-public class RemoveAppsCommand extends CityGMLTool {
+public class RemoveAppsCommand implements Command {
     @CommandLine.Mixin
     private InputOptions inputOptions;
 
@@ -56,17 +57,19 @@ public class RemoveAppsCommand extends CityGMLTool {
     @CommandLine.Mixin
     private CityGMLOutputVersion version;
 
+    private final Logger log = Logger.getInstance();
+    private final CommandHelper helper = CommandHelper.newInstance();
     private final String suffix = "__removed_apps";
 
     @Override
     public Integer call() throws ExecutionException {
-        List<InputFile> inputFiles = getInputFiles(inputOptions, suffix);
+        List<InputFile> inputFiles = helper.getInputFiles(inputOptions, suffix);
         if (inputFiles.isEmpty()) {
             return CommandLine.ExitCode.OK;
         }
 
-        CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
-        CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
+        CityGMLInputFactory in = helper.createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
+        CityGMLOutputFactory out = helper.createCityGMLOutputFactory(version.getVersion());
 
         AppearanceFilter remover = AppearanceFilter.newInstance()
                 .withThemes(themes)
@@ -75,14 +78,14 @@ public class RemoveAppsCommand extends CityGMLTool {
 
         for (int i = 0; i < inputFiles.size(); i++) {
             InputFile inputFile = inputFiles.get(i);
-            OutputFile outputFile = getOutputFile(inputFile, suffix, outputOptions, overwriteOptions);
+            OutputFile outputFile = helper.getOutputFile(inputFile, suffix, outputOptions, overwriteOptions);
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
-            try (CityGMLReader reader = createCityGMLReader(in, inputFile, inputOptions);
+            try (CityGMLReader reader = helper.createCityGMLReader(in, inputFile, inputOptions);
                  ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
                 if (!version.isSetVersion()) {
-                    setCityGMLVersion(reader, out);
+                    helper.setCityGMLVersion(reader, out);
                 }
 
                 if (outputFile.isTemporary()) {
@@ -91,8 +94,8 @@ public class RemoveAppsCommand extends CityGMLTool {
                     log.info("Writing output to file " + outputFile + ".");
                 }
 
-                try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
-                        .withCityModelInfo(getFeatureInfo(reader))) {
+                try (CityGMLChunkWriter writer = helper.createCityGMLChunkWriter(out, outputFile, outputOptions)
+                        .withCityModelInfo(helper.getFeatureInfo(reader))) {
                     String themes = this.themes != null ? " with themes " + this.themes.stream()
                                                                             .map(theme -> "'" + theme + "'")
                                                                             .collect(Collectors.joining(", ")) : "";
@@ -122,7 +125,7 @@ public class RemoveAppsCommand extends CityGMLTool {
             }
 
             if (outputFile.isTemporary()) {
-                replaceInputFile(inputFile, outputFile);
+                helper.replaceInputFile(inputFile, outputFile);
             }
         }
 

@@ -46,13 +46,20 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
-public abstract class CityGMLTool implements Command {
-    final Logger log = Logger.getInstance();
+public class CommandHelper {
+    private final Logger log = Logger.getInstance();
     private final Set<String> outputDirs = new HashSet<>();
     private CityGMLContext cityGMLContext;
     private CityJSONContext cityJSONContext;
 
-    CityGMLContext getCityGMLContext() throws ExecutionException {
+    private CommandHelper() {
+    }
+
+    public static CommandHelper newInstance() {
+        return new CommandHelper();
+    }
+
+    public CityGMLContext getCityGMLContext() throws ExecutionException {
         if (cityGMLContext == null) {
             try {
                 cityGMLContext = CityGMLContext.newInstance();
@@ -64,7 +71,7 @@ public abstract class CityGMLTool implements Command {
         return cityGMLContext;
     }
 
-    CityJSONContext getCityJSONContext() throws ExecutionException {
+    public CityJSONContext getCityJSONContext() throws ExecutionException {
         if (cityJSONContext == null) {
             try {
                 cityJSONContext = CityJSONContext.newInstance();
@@ -76,7 +83,7 @@ public abstract class CityGMLTool implements Command {
         return cityJSONContext;
     }
 
-    CityGMLInputFactory createCityGMLInputFactory() throws ExecutionException {
+    public CityGMLInputFactory createCityGMLInputFactory() throws ExecutionException {
         try {
             return getCityGMLContext().createCityGMLInputFactory().withIdCreator(new IdCreator());
         } catch (CityGMLReadException e) {
@@ -84,19 +91,19 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    CityGMLReader createCityGMLReader(CityGMLInputFactory in, InputFile file, InputOptions options) throws ExecutionException, CityGMLReadException {
+    public CityGMLReader createCityGMLReader(CityGMLInputFactory in, InputFile file, InputOptions options) throws ExecutionException, CityGMLReadException {
         return createCityGMLReader(in, file, options.getEncoding(), null);
     }
 
-    CityGMLReader createCityGMLReader(CityGMLInputFactory in, InputFile file, String encoding) throws ExecutionException, CityGMLReadException {
+    public CityGMLReader createCityGMLReader(CityGMLInputFactory in, InputFile file, String encoding) throws ExecutionException, CityGMLReadException {
         return createCityGMLReader(in, file, encoding, null);
     }
 
-    CityGMLReader createSkippingCityGMLReader(CityGMLInputFactory in, InputFile file, InputOptions options, String... localNames) throws ExecutionException, CityGMLReadException {
+    public CityGMLReader createSkippingCityGMLReader(CityGMLInputFactory in, InputFile file, InputOptions options, String... localNames) throws ExecutionException, CityGMLReadException {
         return createSkippingCityGMLReader(in, file, options.getEncoding(), localNames);
     }
 
-    CityGMLReader createSkippingCityGMLReader(CityGMLInputFactory in, InputFile file, String encoding, String... localNames) throws ExecutionException, CityGMLReadException {
+    public CityGMLReader createSkippingCityGMLReader(CityGMLInputFactory in, InputFile file, String encoding, String... localNames) throws ExecutionException, CityGMLReadException {
         CityGMLInputFilter filter = null;
         if (localNames != null) {
             Set<String> names = new HashSet<>(Arrays.asList(localNames));
@@ -122,15 +129,15 @@ public abstract class CityGMLTool implements Command {
         return reader;
     }
 
-    CityGMLOutputFactory createCityGMLOutputFactory(CityGMLVersion version) throws ExecutionException {
+    public CityGMLOutputFactory createCityGMLOutputFactory(CityGMLVersion version) throws ExecutionException {
         return getCityGMLContext().createCityGMLOutputFactory(version);
     }
 
-    CityGMLChunkWriter createCityGMLChunkWriter(CityGMLOutputFactory out, OutputFile file, CityGMLOutputOptions options) throws ExecutionException {
+    public CityGMLChunkWriter createCityGMLChunkWriter(CityGMLOutputFactory out, OutputFile file, CityGMLOutputOptions options) throws ExecutionException {
         return createCityGMLChunkWriter(out, file, options.getEncoding(), options.isPrettyPrint());
     }
 
-    CityGMLChunkWriter createCityGMLChunkWriter(CityGMLOutputFactory out, OutputFile file, String encoding, boolean prettyPrint) throws ExecutionException {
+    public CityGMLChunkWriter createCityGMLChunkWriter(CityGMLOutputFactory out, OutputFile file, String encoding, boolean prettyPrint) throws ExecutionException {
         try {
             return out.createCityGMLChunkWriter(file.getFile(), encoding)
                     .withDefaultPrefixes()
@@ -142,11 +149,11 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    CityJSONInputFactory createCityJSONInputFactory() throws ExecutionException {
+    public CityJSONInputFactory createCityJSONInputFactory() throws ExecutionException {
         return getCityJSONContext().createCityJSONInputFactory();
     }
 
-    CityJSONReader createCityJSONReader(CityJSONInputFactory in, InputFile file, InputOptions options) throws ExecutionException {
+    public CityJSONReader createCityJSONReader(CityJSONInputFactory in, InputFile file, InputOptions options) throws ExecutionException {
         try {
             return options.isSetEncoding() ?
                     in.createCityJSONReader(file.getFile(), options.getEncoding()) :
@@ -156,11 +163,11 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    CityJSONOutputFactory createCityJSONOutputFactory(CityJSONVersion version) throws ExecutionException {
+    public CityJSONOutputFactory createCityJSONOutputFactory(CityJSONVersion version) throws ExecutionException {
         return getCityJSONContext().createCityJSONOutputFactory(version);
     }
 
-    AbstractCityJSONWriter<?> createCityJSONWriter(CityJSONOutputFactory out, OutputFile file, CityJSONOutputOptions options) throws ExecutionException {
+    public AbstractCityJSONWriter<?> createCityJSONWriter(CityJSONOutputFactory out, OutputFile file, CityJSONOutputOptions options) throws ExecutionException {
         try {
             AbstractCityJSONWriter<?> writer = options.isJsonLines() ?
                     out.createCityJSONFeatureWriter(file.getFile(), options.getEncoding()) :
@@ -173,7 +180,7 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    void setCityGMLVersion(CityGMLReader reader, CityGMLOutputFactory out) throws CityGMLReadException {
+    public void setCityGMLVersion(CityGMLReader reader, CityGMLOutputFactory out) throws CityGMLReadException {
         reader.hasNext();
         CityGMLVersion version = getCityGMLVersion(reader);
         if (version != null) {
@@ -185,7 +192,7 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    CityGMLVersion getCityGMLVersion(CityGMLReader reader) throws CityGMLReadException {
+    public CityGMLVersion getCityGMLVersion(CityGMLReader reader) throws CityGMLReadException {
         reader.hasNext();
         return reader.getNamespaces().get().stream()
                 .filter(CityGMLModules::isCityGMLNamespace)
@@ -194,7 +201,7 @@ public abstract class CityGMLTool implements Command {
                 .findFirst().orElse(null);
     }
 
-    FeatureInfo getFeatureInfo(CityGMLReader reader) throws CityGMLReadException {
+    public FeatureInfo getFeatureInfo(CityGMLReader reader) throws CityGMLReadException {
         reader.hasNext();
         return reader.getParentInfo();
     }
@@ -228,16 +235,16 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    List<InputFile> getInputFiles(InputOptions options) throws ExecutionException {
+    public List<InputFile> getInputFiles(InputOptions options) throws ExecutionException {
         return getInputFiles(InputFiles.of(options.getFile()));
     }
 
-    List<InputFile> getInputFiles(InputOptions options, String suffix) throws ExecutionException {
+    public List<InputFile> getInputFiles(InputOptions options, String suffix) throws ExecutionException {
         return getInputFiles(InputFiles.of(options.getFile())
                 .withFilter(path -> !FileHelper.stripFileExtension(path).endsWith(suffix)));
     }
 
-    List<InputFile> getInputFiles(InputFiles builder) throws ExecutionException {
+    public List<InputFile> getInputFiles(InputFiles builder) throws ExecutionException {
         log.debug("Searching for CityGML input files.");
         List<InputFile> inputFiles = builder.find();
         if (inputFiles.isEmpty()) {
@@ -249,11 +256,11 @@ public abstract class CityGMLTool implements Command {
         return inputFiles;
     }
 
-    Path getOutputDirectory(InputFile file, CityGMLOutputOptions outputOptions) throws ExecutionException {
+    public Path getOutputDirectory(InputFile file, CityGMLOutputOptions outputOptions) throws ExecutionException {
         return getOutputDirectory(file, outputOptions.getOutputDirectory());
     }
 
-    Path getOutputDirectory(InputFile file, CityJSONOutputOptions outputOptions) throws ExecutionException {
+    public Path getOutputDirectory(InputFile file, CityJSONOutputOptions outputOptions) throws ExecutionException {
         return getOutputDirectory(file, outputOptions.getOutputDirectory());
     }
 
@@ -267,7 +274,7 @@ public abstract class CityGMLTool implements Command {
         return getOrCreateOutputDirectory(outputDir);
     }
 
-    Path getOrCreateOutputDirectory(Path outputDir) throws ExecutionException {
+    public Path getOrCreateOutputDirectory(Path outputDir) throws ExecutionException {
         if (outputDirs.add(outputDir.toString()) && !Files.exists(outputDir)) {
             try {
                 Files.createDirectories(outputDir);
@@ -279,7 +286,7 @@ public abstract class CityGMLTool implements Command {
         return outputDir;
     }
 
-    OutputFile getOutputFile(InputFile file, String suffix, CityGMLOutputOptions outputOptions, OverwriteInputOptions overwriteInputOptions) throws ExecutionException {
+    public OutputFile getOutputFile(InputFile file, String suffix, CityGMLOutputOptions outputOptions, OverwriteInputOptions overwriteInputOptions) throws ExecutionException {
         if (outputOptions.getOutputDirectory() != null) {
             return OutputFile.of(getOutputDirectory(file, outputOptions.getOutputDirectory())
                     .resolve(file.getFile().getFileName()));
@@ -295,7 +302,7 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    void replaceInputFile(InputFile targetFile, OutputFile sourceFile) throws ExecutionException {
+    public void replaceInputFile(InputFile targetFile, OutputFile sourceFile) throws ExecutionException {
         try {
             log.debug("Replacing input file with temporary output file.");
             Files.move(sourceFile.getFile(), targetFile.getFile(), StandardCopyOption.REPLACE_EXISTING);
@@ -304,7 +311,7 @@ public abstract class CityGMLTool implements Command {
         }
     }
 
-    void loadSchemas(Set<String> schemas, SchemaHandler schemaHandler) throws ExecutionException {
+    public void loadSchemas(Set<String> schemas, SchemaHandler schemaHandler) throws ExecutionException {
         if (schemas != null) {
             for (String schema : schemas) {
                 try {

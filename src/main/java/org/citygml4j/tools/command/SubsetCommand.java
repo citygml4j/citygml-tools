@@ -11,6 +11,7 @@ import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.io.OutputFile;
+import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.*;
 import org.citygml4j.tools.util.GlobalObjects;
 import org.citygml4j.tools.util.GlobalObjectsReader;
@@ -26,7 +27,7 @@ import java.util.List;
 
 @CommandLine.Command(name = "subset",
         description = "Create a subset of city objects based on filter criteria.")
-public class SubsetCommand extends CityGMLTool {
+public class SubsetCommand implements Command {
     @CommandLine.Mixin
     private InputOptions inputOptions;
 
@@ -59,47 +60,49 @@ public class SubsetCommand extends CityGMLTool {
     @CommandLine.Mixin
     private CityGMLOutputVersion version;
 
+    private final Logger log = Logger.getInstance();
+    private final CommandHelper helper = CommandHelper.newInstance();
     private final String suffix = "__subset";
 
     @Override
     public Integer call() throws ExecutionException {
-        List<InputFile> inputFiles = getInputFiles(inputOptions, suffix);
+        List<InputFile> inputFiles = helper.getInputFiles(inputOptions, suffix);
         if (inputFiles.isEmpty()) {
             return CommandLine.ExitCode.OK;
         }
 
-        CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
-        CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
+        CityGMLInputFactory in = helper.createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
+        CityGMLOutputFactory out = helper.createCityGMLOutputFactory(version.getVersion());
 
         for (int i = 0; i < inputFiles.size(); i++) {
             InputFile inputFile = inputFiles.get(i);
-            OutputFile outputFile = getOutputFile(inputFile, suffix, outputOptions, overwriteOptions);
+            OutputFile outputFile = helper.getOutputFile(inputFile, suffix, outputOptions, overwriteOptions);
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             log.debug("Reading global appearances, groups and implicit geometries from input file.");
             GlobalObjects globalObjects = GlobalObjectsReader.defaults()
-                    .read(inputFile, getCityGMLContext());
+                    .read(inputFile, helper.getCityGMLContext());
 
             SubsetFilter subsetFilter = SubsetFilter.newInstance()
                     .withGlobalObjects(globalObjects)
-                    .withTypeNamesFilter(typeNameOptions, getCityGMLContext())
+                    .withTypeNamesFilter(typeNameOptions, helper.getCityGMLContext())
                     .withIdFilter(idOptions)
                     .withBoundingBoxFilter(boundingBoxOptions != null ? boundingBoxOptions.toBoundingBoxFilter() : null)
                     .invertFilterCriteria(invert)
                     .withCounterOption(countOptions)
                     .removeGroupMembers(removeGroupMembers);
 
-            try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions,
+            try (CityGMLReader reader = helper.createSkippingCityGMLReader(in, inputFile, inputOptions,
                     "CityObjectGroup", "Appearance");
                  ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
-                FeatureInfo cityModelInfo = getFeatureInfo(reader);
+                FeatureInfo cityModelInfo = helper.getFeatureInfo(reader);
                 if (cityModelInfo != null && subsetFilter.getBoundingBoxFilter() != null) {
                     subsetFilter.getBoundingBoxFilter().withRootReferenceSystem(cityModelInfo);
                 }
 
                 if (!version.isSetVersion()) {
-                    setCityGMLVersion(reader, out);
+                    helper.setCityGMLVersion(reader, out);
                 }
 
                 if (outputFile.isTemporary()) {
@@ -108,7 +111,7 @@ public class SubsetCommand extends CityGMLTool {
                     log.info("Writing output to file " + outputFile + ".");
                 }
 
-                try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
+                try (CityGMLChunkWriter writer = helper.createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(cityModelInfo)) {
                     log.debug("Reading and filtering city objects based on the specified filter criteria.");
                     while (reader.hasNext()) {
@@ -138,7 +141,7 @@ public class SubsetCommand extends CityGMLTool {
             }
 
             if (outputFile.isTemporary()) {
-                replaceInputFile(inputFile, outputFile);
+                helper.replaceInputFile(inputFile, outputFile);
             }
 
             if (!subsetFilter.getCounter().isEmpty()) {

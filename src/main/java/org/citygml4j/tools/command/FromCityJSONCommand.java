@@ -17,6 +17,7 @@ import org.citygml4j.tools.io.FileHelper;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.io.InputFiles;
 import org.citygml4j.tools.io.OutputFile;
+import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
@@ -38,7 +39,7 @@ import java.util.Map;
 
 @CommandLine.Command(name = "from-cityjson",
         description = "Convert CityJSON files into CityGML format.")
-public class FromCityJSONCommand extends CityGMLTool {
+public class FromCityJSONCommand implements Command {
     @CommandLine.Mixin
     InputOptions inputOptions;
 
@@ -77,9 +78,12 @@ public class FromCityJSONCommand extends CityGMLTool {
     @CommandLine.Mixin
     private CityGMLOutputVersion version;
 
+    private final Logger log = Logger.getInstance();
+    private final CommandHelper helper = CommandHelper.newInstance();
+
     @Override
     public Integer call() throws ExecutionException {
-        List<InputFile> inputFiles = getInputFiles(InputFiles.of(inputOptions.getFile())
+        List<InputFile> inputFiles = helper.getInputFiles(InputFiles.of(inputOptions.getFile())
                 .withDefaultGlob("**.{json,jsonl,cityjson}"));
         if (inputFiles.isEmpty()) {
             return CommandLine.ExitCode.OK;
@@ -91,23 +95,23 @@ public class FromCityJSONCommand extends CityGMLTool {
                 .withMode(mode)
                 .withMapping(lodMappings);
 
-        CityJSONInputFactory in = createCityJSONInputFactory()
+        CityJSONInputFactory in = helper.createCityJSONInputFactory()
                 .chunkByTopLevelCityObjects(true)
                 .mapUnsupportedTypesToGenerics(mapUnknownTypes)
                 .transformTemplateGeometries(replaceTemplates)
                 .assignAppearancesToImplicitGeometries(assignAppearancesToImplicitGeometries)
                 .withLodMapper(lodMapper)
                 .withTargetCityGMLVersion(version.getVersion());
-        CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
+        CityGMLOutputFactory out = helper.createCityGMLOutputFactory(version.getVersion());
 
         for (int i = 0; i < inputFiles.size(); i++) {
             InputFile inputFile = inputFiles.get(i);
-            OutputFile outputFile = OutputFile.of(getOutputDirectory(inputFile, outputOptions)
+            OutputFile outputFile = OutputFile.of(helper.getOutputDirectory(inputFile, outputOptions)
                     .resolve(FileHelper.replaceFileExtension(inputFile.getFile(), "gml")));
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
-            try (CityJSONReader reader = createCityJSONReader(in, inputFile, inputOptions);
+            try (CityJSONReader reader = helper.createCityJSONReader(in, inputFile, inputOptions);
                  ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
                 String srsName = null;
                 CityModel cityModel = new CityModel();
@@ -119,7 +123,7 @@ public class FromCityJSONCommand extends CityGMLTool {
 
                 log.info("Writing output to file " + outputFile + ".");
 
-                try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
+                try (CityGMLChunkWriter writer = helper.createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(cityModel)) {
                     log.debug("Reading city objects and converting them into CityGML " + version.getVersion() + ".");
                     while (reader.hasNext()) {

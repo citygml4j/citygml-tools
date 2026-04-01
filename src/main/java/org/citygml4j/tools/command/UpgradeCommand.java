@@ -12,6 +12,7 @@ import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.io.OutputFile;
+import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOptions;
@@ -30,7 +31,7 @@ import java.util.List;
 
 @CommandLine.Command(name = "upgrade",
         description = "Upgrade CityGML files to version 3.0.")
-public class UpgradeCommand extends CityGMLTool {
+public class UpgradeCommand implements Command {
     @CommandLine.Mixin
     private InputOptions inputOptions;
 
@@ -66,25 +67,27 @@ public class UpgradeCommand extends CityGMLTool {
     @CommandLine.Mixin
     private OverwriteInputOptions overwriteOptions;
 
+    private final Logger log = Logger.getInstance();
+    private final CommandHelper helper = CommandHelper.newInstance();
     private final String suffix = "__v3";
 
     @Override
     public Integer call() throws ExecutionException {
-        List<InputFile> inputFiles = getInputFiles(inputOptions, suffix);
+        List<InputFile> inputFiles = helper.getInputFiles(inputOptions, suffix);
         if (inputFiles.isEmpty()) {
             return CommandLine.ExitCode.OK;
         }
 
-        CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
-        CityGMLOutputFactory out = createCityGMLOutputFactory(CityGMLVersion.v3_0);
+        CityGMLInputFactory in = helper.createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
+        CityGMLOutputFactory out = helper.createCityGMLOutputFactory(CityGMLVersion.v3_0);
 
         for (int i = 0; i < inputFiles.size(); i++) {
             InputFile inputFile = inputFiles.get(i);
-            OutputFile outputFile = getOutputFile(inputFile, suffix, outputOptions, overwriteOptions);
+            OutputFile outputFile = helper.getOutputFile(inputFile, suffix, outputOptions, overwriteOptions);
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
-            try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputOptions);
+            try (CityGMLReader reader = helper.createSkippingCityGMLReader(in, inputFile, inputOptions);
                  ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
                 UpgradeProcessor processor = UpgradeProcessor.newInstance()
                         .useLod4AsLod3(useLod4AsLod3)
@@ -95,7 +98,7 @@ public class UpgradeCommand extends CityGMLTool {
                         .createCityObjectRelations(createCityObjectRelations);
 
                 log.debug("Reading global objects from input file.");
-                processor.readGlobalObjects(inputFile, getCityGMLContext());
+                processor.readGlobalObjects(inputFile, helper.getCityGMLContext());
 
                 if (outputFile.isTemporary()) {
                     log.debug("Writing temporary output file " + outputFile + ".");
@@ -103,8 +106,8 @@ public class UpgradeCommand extends CityGMLTool {
                     log.info("Writing output to file " + outputFile + ".");
                 }
 
-                try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
-                        .withCityModelInfo(getFeatureInfo(reader))) {
+                try (CityGMLChunkWriter writer = helper.createCityGMLChunkWriter(out, outputFile, outputOptions)
+                        .withCityModelInfo(helper.getFeatureInfo(reader))) {
                     log.debug("Reading city objects and upgrading them to CityGML 3.0.");
                     int featureId = 0;
                     while (reader.hasNext()) {
@@ -137,7 +140,7 @@ public class UpgradeCommand extends CityGMLTool {
             }
 
             if (outputFile.isTemporary()) {
-                replaceInputFile(inputFile, outputFile);
+                helper.replaceInputFile(inputFile, outputFile);
             }
         }
 

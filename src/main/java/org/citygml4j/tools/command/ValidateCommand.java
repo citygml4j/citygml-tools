@@ -8,6 +8,7 @@ package org.citygml4j.tools.command;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.log.LogLevel;
+import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.InputOptions;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXParseException;
@@ -29,7 +30,7 @@ import java.util.Set;
 
 @CommandLine.Command(name = "validate",
         description = "Validate CityGML files against the CityGML XML schemas.")
-public class ValidateCommand extends CityGMLTool {
+public class ValidateCommand implements Command {
     @CommandLine.Mixin
     private InputOptions inputOptions;
 
@@ -42,9 +43,12 @@ public class ValidateCommand extends CityGMLTool {
                     "be overridden.")
     private Set<String> schemas;
 
+    private final Logger log = Logger.getInstance();
+    private final CommandHelper helper = CommandHelper.newInstance();
+
     @Override
     public Integer call() throws ExecutionException {
-        List<InputFile> inputFiles = getInputFiles(inputOptions);
+        List<InputFile> inputFiles = helper.getInputFiles(inputOptions);
         if (inputFiles.isEmpty()) {
             return CommandLine.ExitCode.OK;
         }
@@ -52,8 +56,8 @@ public class ValidateCommand extends CityGMLTool {
         log.debug("Loading default CityGML schemas.");
         SchemaHandler rootHandler;
         try {
-            rootHandler = getCityGMLContext().getDefaultSchemaHandler();
-            loadSchemas(schemas, rootHandler);
+            rootHandler = helper.getCityGMLContext().getDefaultSchemaHandler();
+            helper.loadSchemas(schemas, rootHandler);
         } catch (SchemaHandlerException e) {
             throw new ExecutionException("Failed to load default CityGML schemas.", e);
         }
@@ -69,7 +73,7 @@ public class ValidateCommand extends CityGMLTool {
             SchemaHandler schemaHandler = new ValidationSchemaHandler(rootHandler);
 
             // read more external schemas from the schemaLocation attribute of the root element
-            try (XMLReader reader = XMLReaderFactory.newInstance(getCityGMLContext().getXMLObjects())
+            try (XMLReader reader = XMLReaderFactory.newInstance(helper.getCityGMLContext().getXMLObjects())
                     .withSchemaHandler(schemaHandler)
                     .createReader(inputFile.getFile(), inputOptions.getEncoding())) {
                 reader.nextTag();

@@ -10,6 +10,7 @@ import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.log.LogLevel;
+import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
@@ -26,7 +27,7 @@ import java.util.List;
 
 @CommandLine.Command(name = "reproject",
         description = "Reproject city objects to a new coordinate reference system.")
-public class ReprojectCommand extends CityGMLTool {
+public class ReprojectCommand implements Command {
     @CommandLine.Mixin
     private InputOptions inputOptions;
 
@@ -68,17 +69,19 @@ public class ReprojectCommand extends CityGMLTool {
     @CommandLine.Mixin
     private CityGMLOutputVersion version;
 
+    private final Logger log = Logger.getInstance();
+    private final CommandHelper helper = CommandHelper.newInstance();
     private final String suffix = "__reprojected";
 
     @Override
     public Integer call() throws ExecutionException {
-        List<InputFile> inputFiles = getInputFiles(inputOptions, suffix);
+        List<InputFile> inputFiles = helper.getInputFiles(inputOptions, suffix);
         if (inputFiles.isEmpty()) {
             return CommandLine.ExitCode.OK;
         }
 
-        CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
-        CityGMLOutputFactory out = createCityGMLOutputFactory(version.getVersion());
+        CityGMLInputFactory in = helper.createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
+        CityGMLOutputFactory out = helper.createCityGMLOutputFactory(version.getVersion());
 
         Reprojector reprojector = Reprojector.of(targetCRS, forceLongitudeFirst)
                 .withTargetName(targetName)
@@ -92,19 +95,19 @@ public class ReprojectCommand extends CityGMLTool {
 
         for (int i = 0; i < inputFiles.size(); i++) {
             InputFile inputFile = inputFiles.get(i);
-            OutputFile outputFile = getOutputFile(inputFile, suffix, outputOptions, overwriteOptions);
+            OutputFile outputFile = helper.getOutputFile(inputFile, suffix, outputOptions, overwriteOptions);
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
-            try (CityGMLReader reader = createCityGMLReader(in, inputFile, inputOptions);
+            try (CityGMLReader reader = helper.createCityGMLReader(in, inputFile, inputOptions);
                  ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
-                FeatureInfo cityModelInfo = getFeatureInfo(reader);
+                FeatureInfo cityModelInfo = helper.getFeatureInfo(reader);
                 if (cityModelInfo != null) {
                     reprojector.withCityModelInfo(cityModelInfo);
                 }
 
                 if (!version.isSetVersion()) {
-                    setCityGMLVersion(reader, out);
+                    helper.setCityGMLVersion(reader, out);
                 }
 
                 if (outputFile.isTemporary()) {
@@ -113,7 +116,7 @@ public class ReprojectCommand extends CityGMLTool {
                     log.info("Writing output to file " + outputFile + ".");
                 }
 
-                try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputOptions)
+                try (CityGMLChunkWriter writer = helper.createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(cityModelInfo)) {
                     log.debug("Reading city objects and transforming coordinates to " + reprojector.getTargetName() + ".");
                     while (reader.hasNext()) {
@@ -130,7 +133,7 @@ public class ReprojectCommand extends CityGMLTool {
             }
 
             if (outputFile.isTemporary()) {
-                replaceInputFile(inputFile, outputFile);
+                helper.replaceInputFile(inputFile, outputFile);
             }
         }
 

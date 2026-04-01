@@ -13,6 +13,7 @@ import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.io.InputFiles;
 import org.citygml4j.tools.io.OutputFile;
+import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.util.MergeProcessor;
 import org.citygml4j.xml.reader.*;
@@ -30,7 +31,7 @@ import java.util.stream.Collectors;
 
 @CommandLine.Command(name = "merge",
         description = "Merge multiple CityGML files into a single file.")
-public class MergeCommand extends CityGMLTool {
+public class MergeCommand implements Command {
     @CommandLine.Parameters(paramLabel = "<file>", arity = "1",
             description = "Input files or directories to process (glob patterns supported).")
     private List<String> files;
@@ -84,22 +85,25 @@ public class MergeCommand extends CityGMLTool {
             description = "Format and indent output files (default: ${DEFAULT-VALUE}).")
     private boolean prettyPrint;
 
+    private final Logger log = Logger.getInstance();
+    private final CommandHelper helper = CommandHelper.newInstance();
+
     @Override
     public Integer call() throws ExecutionException {
-        List<InputFile> inputFiles = getInputFiles(InputFiles.of(files));
+        List<InputFile> inputFiles = helper.getInputFiles(InputFiles.of(files));
         if (inputFiles.isEmpty()) {
             return CommandLine.ExitCode.OK;
         }
 
         OutputFile outputFile = OutputFile.of(CityGMLTools.WORKING_DIR.resolve(file));
-        getOrCreateOutputDirectory(outputFile.getFile().getParent());
+        helper.getOrCreateOutputDirectory(outputFile.getFile().getParent());
         log.info("Writing output to file " + outputFile + ".");
 
-        CityGMLInputFactory in = createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
+        CityGMLInputFactory in = helper.createCityGMLInputFactory().withChunking(ChunkOptions.defaults());
         Metadata metadata = processMetadata(inputFiles, in);
-        CityGMLOutputFactory out = createCityGMLOutputFactory(metadata.version());
+        CityGMLOutputFactory out = helper.createCityGMLOutputFactory(metadata.version());
 
-        try (CityGMLChunkWriter writer = createCityGMLChunkWriter(out, outputFile, outputEncoding, prettyPrint)
+        try (CityGMLChunkWriter writer = helper.createCityGMLChunkWriter(out, outputFile, outputEncoding, prettyPrint)
                 .withCityModelInfo(metadata.cityModel());
              MergeProcessor processor = MergeProcessor.of(outputFile)
                      .withTextureDir(textureDir)
@@ -112,10 +116,10 @@ public class MergeCommand extends CityGMLTool {
                 InputFile inputFile = inputFiles.get(i);
                 log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Merging file " + inputFile + ".");
 
-                try (CityGMLReader reader = createCityGMLReader(in, inputFile, inputEncoding)) {
+                try (CityGMLReader reader = helper.createCityGMLReader(in, inputFile, inputEncoding)) {
                     Set<String> topLevelIds = metadata.topLevelIds().getOrDefault(inputFile.toString(), Set.of());
                     if (!computeExtent) {
-                        processor.withCityModelInfo(getFeatureInfo(reader));
+                        processor.withCityModelInfo(helper.getFeatureInfo(reader));
                     }
 
                     while (reader.hasNext()) {
@@ -151,9 +155,9 @@ public class MergeCommand extends CityGMLTool {
             Set<String> srsNames = new HashSet<>();
 
             for (InputFile inputFile : inputFiles) {
-                try (CityGMLReader reader = createSkippingCityGMLReader(in, inputFile, inputEncoding, "Appearance")) {
+                try (CityGMLReader reader = helper.createSkippingCityGMLReader(in, inputFile, inputEncoding, "Appearance")) {
                     if (!version.isSetVersion()) {
-                        CityGMLVersion version = getCityGMLVersion(reader);
+                        CityGMLVersion version = helper.getCityGMLVersion(reader);
                         if (version != null) {
                             versions.add(version);
                         }
@@ -161,7 +165,7 @@ public class MergeCommand extends CityGMLTool {
 
                     boolean foundExtent = false;
                     if (computeExtent) {
-                        FeatureInfo featureInfo = getFeatureInfo(reader);
+                        FeatureInfo featureInfo = helper.getFeatureInfo(reader);
                         if (featureInfo != null
                                 && featureInfo.getBoundedBy() != null
                                 && featureInfo.getBoundedBy().isSetEnvelope()) {

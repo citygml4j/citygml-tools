@@ -16,6 +16,7 @@ import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.io.FileHelper;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.log.LogLevel;
+import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.IdOptions;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.util.GlobalObjectsReader;
@@ -42,7 +43,7 @@ import java.util.*;
 
 @CommandLine.Command(name = "stats",
         description = "Generate statistics about the content of CityGML files.")
-public class StatsCommand extends CityGMLTool {
+public class StatsCommand implements Command {
     @CommandLine.Mixin
     private InputOptions inputOptions;
 
@@ -79,11 +80,13 @@ public class StatsCommand extends CityGMLTool {
             description = "Fail if input elements lack an associated XML schema.")
     private boolean failOnMissingSchema;
 
+    private final Logger log = Logger.getInstance();
+    private final CommandHelper helper = CommandHelper.newInstance();
     private final String suffix = "__statistics";
 
     @Override
     public Integer call() throws ExecutionException {
-        List<InputFile> inputFiles = getInputFiles(inputOptions, suffix);
+        List<InputFile> inputFiles = helper.getInputFiles(inputOptions, suffix);
         if (inputFiles.isEmpty()) {
             return CommandLine.ExitCode.OK;
         }
@@ -91,7 +94,7 @@ public class StatsCommand extends CityGMLTool {
         SchemaHandler schemaHandler;
         try {
             schemaHandler = CityGMLSchemaHandler.newInstance();
-            loadSchemas(schemas, schemaHandler);
+            helper.loadSchemas(schemas, schemaHandler);
         } catch (Exception e) {
             throw new ExecutionException("Failed to create schema handler.", e);
         }
@@ -108,7 +111,7 @@ public class StatsCommand extends CityGMLTool {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             Statistics statistics = Statistics.of(inputFile);
-            StatisticsProcessor processor = StatisticsProcessor.of(statistics, getCityGMLContext())
+            StatisticsProcessor processor = StatisticsProcessor.of(statistics, helper.getCityGMLContext())
                     .computeEnvelope(computeEnvelope)
                     .onlyTopLevelFeatures(onlyTopLevelFeatures)
                     .generateObjectHierarchy(generateObjectHierarchy);
@@ -118,13 +121,13 @@ public class StatsCommand extends CityGMLTool {
 
                 log.debug("Reading global appearances from input file.");
                 processor.withGlobalAppearances(GlobalObjectsReader.onlyAppearances()
-                        .read(inputFile, getCityGMLContext())
+                        .read(inputFile, helper.getCityGMLContext())
                         .getAppearances());
             }
 
             log.debug("Reading city objects and generating statistics.");
 
-            try (XMLReader reader = XMLReaderFactory.newInstance(getCityGMLContext().getXMLObjects())
+            try (XMLReader reader = XMLReaderFactory.newInstance(helper.getCityGMLContext().getXMLObjects())
                     .withSchemaHandler(schemaHandler)
                     .createReader(inputFile.getFile(), inputOptions.getEncoding())) {
                 Deque<QName> elements = new ArrayDeque<>();
