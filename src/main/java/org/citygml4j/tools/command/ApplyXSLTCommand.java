@@ -14,7 +14,7 @@ import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOptions;
-import org.citygml4j.tools.util.ResourceProcessor;
+import org.citygml4j.tools.util.ExternalResourceCopier;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
 import org.citygml4j.xml.reader.CityGMLReadException;
@@ -81,7 +81,7 @@ public class ApplyXSLTCommand implements Command {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             try (CityGMLReader reader = helper.createCityGMLReader(in, inputFile, inputOptions);
-                 ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
+                 ExternalResourceCopier resourceCopier = ExternalResourceCopier.of(inputFile, outputFile)) {
                 if (!version.isSetVersion()) {
                     helper.setCityGMLVersion(reader, out);
                 }
@@ -97,7 +97,7 @@ public class ApplyXSLTCommand implements Command {
                     log.debug("Reading and transforming city objects using the specified XSLT stylesheets.");
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
-                        resourceProcessor.process(feature);
+                        resourceCopier.process(feature);
                         writer.writeMember(feature);
                     }
                 }

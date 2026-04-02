@@ -15,10 +15,10 @@ import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOptions;
+import org.citygml4j.tools.util.ExternalResourceCopier;
 import org.citygml4j.tools.util.GlobalAppearanceConverter;
 import org.citygml4j.tools.util.GlobalObjects;
 import org.citygml4j.tools.util.GlobalObjectsReader;
-import org.citygml4j.tools.util.ResourceProcessor;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
 import org.citygml4j.xml.reader.CityGMLReadException;
@@ -71,7 +71,7 @@ public class ToLocalAppsCommand implements Command {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             try (CityGMLReader reader = helper.createSkippingCityGMLReader(in, inputFile, inputOptions, "Appearance");
-                 ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
+                 ExternalResourceCopier resourceCopier = ExternalResourceCopier.of(inputFile, outputFile)) {
                 if (!version.isSetVersion()) {
                     helper.setCityGMLVersion(reader, out);
                 }
@@ -105,7 +105,7 @@ public class ToLocalAppsCommand implements Command {
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
                         converter.convertGlobalAppearance(feature);
-                        resourceProcessor.process(feature);
+                        resourceCopier.process(feature);
                         writer.writeMember(feature);
                     }
 
@@ -114,7 +114,7 @@ public class ToLocalAppsCommand implements Command {
                         log.info(remaining.size() + " global appearance(s) could not be converted due to " +
                                 "implicit geometries.");
                         for (Appearance appearance : remaining) {
-                            resourceProcessor.process(appearance);
+                            resourceCopier.process(appearance);
                             writer.writeMember(appearance);
                         }
                     } else {

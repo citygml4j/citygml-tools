@@ -15,9 +15,9 @@ import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOptions;
+import org.citygml4j.tools.util.ExternalResourceCopier;
 import org.citygml4j.tools.util.GlobalObjectsReader;
 import org.citygml4j.tools.util.HeightChanger;
-import org.citygml4j.tools.util.ResourceProcessor;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
 import org.citygml4j.xml.reader.CityGMLReadException;
@@ -86,7 +86,7 @@ public class ChangeHeightCommand implements Command {
                     .getTemplateGeometries());
 
             try (CityGMLReader reader = helper.createCityGMLReader(in, inputFile, inputOptions);
-                 ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
+                 ExternalResourceCopier resourceCopier = ExternalResourceCopier.of(inputFile, outputFile)) {
                 if (!version.isSetVersion()) {
                     helper.setCityGMLVersion(reader, out);
                 }
@@ -106,7 +106,7 @@ public class ChangeHeightCommand implements Command {
                             heightChanger.changeHeight(feature);
                         }
 
-                        resourceProcessor.process(feature);
+                        resourceCopier.process(feature);
                         writer.writeMember(feature);
                     }
                 }

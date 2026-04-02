@@ -21,8 +21,8 @@ import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
+import org.citygml4j.tools.util.ExternalResourceCopier;
 import org.citygml4j.tools.util.LodMapper;
-import org.citygml4j.tools.util.ResourceProcessor;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
 import org.citygml4j.xml.writer.CityGMLWriteException;
@@ -112,7 +112,7 @@ public class FromCityJSONCommand implements Command {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             try (CityJSONReader reader = helper.createCityJSONReader(in, inputFile, inputOptions);
-                 ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
+                 ExternalResourceCopier resourceCopier = ExternalResourceCopier.of(inputFile, outputFile)) {
                 String srsName = null;
                 CityModel cityModel = new CityModel();
                 if (reader.hasNext()) {
@@ -132,7 +132,7 @@ public class FromCityJSONCommand implements Command {
                             setSrsName(feature, srsName);
                         }
 
-                        resourceProcessor.process(feature);
+                        resourceCopier.process(feature);
                         writer.writeMember(feature);
                     }
                 }

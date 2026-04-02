@@ -16,10 +16,10 @@ import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOptions;
+import org.citygml4j.tools.util.ExternalResourceCopier;
 import org.citygml4j.tools.util.GlobalObjects;
 import org.citygml4j.tools.util.GlobalObjectsReader;
 import org.citygml4j.tools.util.LodFilter;
-import org.citygml4j.tools.util.ResourceProcessor;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
 import org.citygml4j.xml.reader.CityGMLReadException;
@@ -99,7 +99,7 @@ public class FilterLodsCommand implements Command {
 
             try (CityGMLReader reader = helper.createSkippingCityGMLReader(in, inputFile, inputOptions,
                     "CityObjectGroup", "Appearance");
-                 ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
+                 ExternalResourceCopier resourceCopier = ExternalResourceCopier.of(inputFile, outputFile)) {
                 if (!version.isSetVersion()) {
                     helper.setCityGMLVersion(reader, out);
                 }
@@ -116,7 +116,7 @@ public class FilterLodsCommand implements Command {
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
                         if (lodFilter.filter(feature)) {
-                            resourceProcessor.process(feature);
+                            resourceCopier.process(feature);
                             writer.writeMember(feature);
                         }
                     }
@@ -124,12 +124,12 @@ public class FilterLodsCommand implements Command {
                     lodFilter.postprocess();
 
                     for (CityObjectGroup group : globalObjects.getCityObjectGroups()) {
-                        resourceProcessor.process(group);
+                        resourceCopier.process(group);
                         writer.writeMember(group);
                     }
 
                     for (Appearance appearance : globalObjects.getAppearances()) {
-                        resourceProcessor.process(appearance);
+                        resourceCopier.process(appearance);
                         writer.writeMember(appearance);
                     }
                 }

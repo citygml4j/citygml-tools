@@ -29,7 +29,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 
-public class StatisticsProcessor {
+public class StatisticsGenerator {
     private final Statistics statistics;
     private final CityGMLContext context;
     private final StatisticsWalker statisticsWalker = new StatisticsWalker();
@@ -44,31 +44,31 @@ public class StatisticsProcessor {
     private List<Appearance> globalAppearances;
     private Map<String, AbstractGeometry> templates;
 
-    private StatisticsProcessor(Statistics statistics, CityGMLContext context) {
+    private StatisticsGenerator(Statistics statistics, CityGMLContext context) {
         this.statistics = statistics;
         this.context = context;
     }
 
-    public static StatisticsProcessor of(Statistics statistics, CityGMLContext context) {
-        return new StatisticsProcessor(statistics, context);
+    public static StatisticsGenerator of(Statistics statistics, CityGMLContext context) {
+        return new StatisticsGenerator(statistics, context);
     }
 
-    public StatisticsProcessor computeEnvelope(boolean computeEnvelope) {
+    public StatisticsGenerator computeEnvelope(boolean computeEnvelope) {
         this.computeEnvelope = computeEnvelope;
         return this;
     }
 
-    public StatisticsProcessor onlyTopLevelFeatures(boolean onlyTopLevelFeatures) {
+    public StatisticsGenerator onlyTopLevelFeatures(boolean onlyTopLevelFeatures) {
         this.onlyTopLevelFeatures = onlyTopLevelFeatures;
         return this;
     }
 
-    public StatisticsProcessor generateObjectHierarchy(boolean generateObjectHierarchy) {
+    public StatisticsGenerator generateObjectHierarchy(boolean generateObjectHierarchy) {
         this.generateObjectHierarchy = generateObjectHierarchy;
         return this;
     }
 
-    public StatisticsProcessor withGlobalAppearances(List<Appearance> globalAppearances) {
+    public StatisticsGenerator withGlobalAppearances(List<Appearance> globalAppearances) {
         this.globalAppearances = globalAppearances;
         return this;
     }

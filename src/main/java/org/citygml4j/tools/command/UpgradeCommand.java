@@ -16,7 +16,7 @@ import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOptions;
-import org.citygml4j.tools.util.ResourceProcessor;
+import org.citygml4j.tools.util.ExternalResourceCopier;
 import org.citygml4j.tools.util.UpgradeProcessor;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
@@ -88,7 +88,7 @@ public class UpgradeCommand implements Command {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             try (CityGMLReader reader = helper.createSkippingCityGMLReader(in, inputFile, inputOptions);
-                 ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
+                 ExternalResourceCopier resourceCopier = ExternalResourceCopier.of(inputFile, outputFile)) {
                 UpgradeProcessor processor = UpgradeProcessor.newInstance()
                         .useLod4AsLod3(useLod4AsLod3)
                         .mapLod0RoofEdge(mapLod0RoofEdge)
@@ -114,7 +114,7 @@ public class UpgradeCommand implements Command {
                         featureId++;
                         AbstractFeature feature = reader.next();
                         if (processor.upgrade(feature, featureId)) {
-                            resourceProcessor.process(feature);
+                            resourceCopier.process(feature);
                             writer.writeMember(feature);
                         }
                     }
@@ -122,12 +122,12 @@ public class UpgradeCommand implements Command {
                     processor.postprocess();
 
                     for (CityObjectGroup cityObjectGroup : processor.getCityObjectGroups()) {
-                        resourceProcessor.process(cityObjectGroup);
+                        resourceCopier.process(cityObjectGroup);
                         writer.writeMember(cityObjectGroup);
                     }
 
                     for (Appearance appearance : processor.getGlobalAppearances()) {
-                        resourceProcessor.process(appearance);
+                        resourceCopier.process(appearance);
                         writer.writeMember(appearance);
                     }
                 }

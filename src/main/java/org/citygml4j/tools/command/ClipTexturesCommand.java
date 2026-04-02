@@ -14,7 +14,8 @@ import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOptions;
-import org.citygml4j.tools.util.ResourceProcessor;
+import org.citygml4j.tools.util.ExternalResourceCopier;
+import org.citygml4j.tools.util.ResourceType;
 import org.citygml4j.tools.util.TextureClipper;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
@@ -88,8 +89,8 @@ public class ClipTexturesCommand implements Command {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             try (CityGMLReader reader = helper.createCityGMLReader(in, inputFile, inputOptions);
-                 ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)
-                         .skip(ResourceProcessor.Type.TEXTURE)) {
+                 ExternalResourceCopier resourceCopier = ExternalResourceCopier.of(inputFile, outputFile)
+                         .skip(ResourceType.TEXTURE)) {
                 if (!version.isSetVersion()) {
                     helper.setCityGMLVersion(reader, out);
                 }
@@ -115,7 +116,7 @@ public class ClipTexturesCommand implements Command {
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
                         textureClipper.clipTextures(feature);
-                        resourceProcessor.process(feature);
+                        resourceCopier.process(feature);
                         writer.writeMember(feature);
                     }
                 }

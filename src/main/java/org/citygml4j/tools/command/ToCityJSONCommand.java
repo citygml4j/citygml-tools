@@ -22,9 +22,9 @@ import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityJSONOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
+import org.citygml4j.tools.util.ExternalResourceCopier;
 import org.citygml4j.tools.util.GlobalObjects;
 import org.citygml4j.tools.util.GlobalObjectsReader;
-import org.citygml4j.tools.util.ResourceProcessor;
 import org.citygml4j.xml.reader.*;
 import org.xmlobjects.gml.model.geometry.Envelope;
 import picocli.CommandLine;
@@ -120,7 +120,7 @@ public class ToCityJSONCommand implements Command {
 
             try (CityGMLReader reader = helper.createSkippingCityGMLReader(in, inputFile, inputOptions,
                     "CityObjectGroup", "Appearance");
-                 ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
+                 ExternalResourceCopier resourceCopier = ExternalResourceCopier.of(inputFile, outputFile)) {
                 Metadata metadata = new Metadata();
                 if (reader.hasNext()) {
                     populateMetadata(metadata, reader.getParentInfo());
@@ -132,12 +132,12 @@ public class ToCityJSONCommand implements Command {
                         .withMetadata(metadata)) {
                     log.debug("Reading city objects and converting them into CityJSON " + outputOptions.getVersion() + ".");
                     for (Appearance appearance : globalObjects.getAppearances()) {
-                        resourceProcessor.process(appearance);
+                        resourceCopier.process(appearance);
                         writer.withGlobalAppearance(appearance);
                     }
 
                     for (CityObjectGroup group : globalObjects.getCityObjectGroups()) {
-                        resourceProcessor.process(group);
+                        resourceCopier.process(group);
                         writer.withGlobalCityObjectGroup(group);
                     }
 
@@ -147,7 +147,7 @@ public class ToCityJSONCommand implements Command {
 
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
-                        resourceProcessor.process(feature);
+                        resourceCopier.process(feature);
                         writer.writeCityObject(feature);
                     }
                 }

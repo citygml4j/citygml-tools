@@ -15,8 +15,8 @@ import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOptions;
+import org.citygml4j.tools.util.ExternalResourceCopier;
 import org.citygml4j.tools.util.Reprojector;
-import org.citygml4j.tools.util.ResourceProcessor;
 import org.citygml4j.xml.reader.*;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
 import org.citygml4j.xml.writer.CityGMLOutputFactory;
@@ -100,7 +100,7 @@ public class ReprojectCommand implements Command {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             try (CityGMLReader reader = helper.createCityGMLReader(in, inputFile, inputOptions);
-                 ResourceProcessor resourceProcessor = ResourceProcessor.of(inputFile, outputFile)) {
+                 ExternalResourceCopier resourceCopier = ExternalResourceCopier.of(inputFile, outputFile)) {
                 FeatureInfo cityModelInfo = helper.getFeatureInfo(reader);
                 if (cityModelInfo != null) {
                     reprojector.withCityModelInfo(cityModelInfo);
@@ -122,7 +122,7 @@ public class ReprojectCommand implements Command {
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();
                         reprojector.reproject(feature);
-                        resourceProcessor.process(feature);
+                        resourceCopier.process(feature);
                         writer.writeMember(feature);
                     }
                 }

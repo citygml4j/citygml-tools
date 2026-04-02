@@ -25,36 +25,29 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ResourceProcessor implements AutoCloseable {
+public class ExternalResourceCopier implements AutoCloseable {
     private final Logger log = Logger.getInstance();
     private final Path inputDir;
     private final Path basePath;
     private final Path outputDir;
-    private final Set<Type> skipTypes = new HashSet<>();
+    private final Set<ResourceType> skipTypes = new HashSet<>();
     private final Processor processor = new Processor();
 
     private volatile boolean shouldProcess;
     private Exception exception;
 
-    public enum Type {
-        TEXTURE,
-        LIBRARY_OBJECT,
-        POINT_CLOUD_FILE,
-        TIMESERIES_FILE
-    }
-
-    private ResourceProcessor(InputFile inputFile, OutputFile outputFile) {
+    private ExternalResourceCopier(InputFile inputFile, OutputFile outputFile) {
         inputDir = inputFile.getFile().getParent();
         basePath = inputFile.getBasePath();
         outputDir = outputFile.getFile().getParent();
         shouldProcess = !inputDir.equals(outputDir);
     }
 
-    public static ResourceProcessor of(InputFile inputFile, OutputFile outputFile) {
-        return new ResourceProcessor(inputFile, outputFile);
+    public static ExternalResourceCopier of(InputFile inputFile, OutputFile outputFile) {
+        return new ExternalResourceCopier(inputFile, outputFile);
     }
 
-    public ResourceProcessor skip(Type... types) {
+    public ExternalResourceCopier skip(ResourceType... types) {
         if (types != null) {
             skipTypes.addAll(Arrays.asList(types));
         }
@@ -86,14 +79,14 @@ public class ResourceProcessor implements AutoCloseable {
 
         @Override
         public void visit(ParameterizedTexture texture) {
-            if (!skipTypes.contains(Type.TEXTURE)) {
+            if (!skipTypes.contains(ResourceType.TEXTURE)) {
                 texture.setImageURI(process(texture.getImageURI()));
             }
         }
 
         @Override
         public void visit(GeoreferencedTexture texture) {
-            if (!skipTypes.contains(Type.TEXTURE)) {
+            if (!skipTypes.contains(ResourceType.TEXTURE)) {
                 String imageURI = texture.getImageURI();
                 texture.setImageURI(process(imageURI));
                 for (String worldFile : FileHelper.getWorldFiles(imageURI)) {
@@ -104,7 +97,7 @@ public class ResourceProcessor implements AutoCloseable {
 
         @Override
         public void visit(ImplicitGeometry implicitGeometry) {
-            if (!skipTypes.contains(Type.LIBRARY_OBJECT)) {
+            if (!skipTypes.contains(ResourceType.LIBRARY_OBJECT)) {
                 implicitGeometry.setLibraryObject(process(implicitGeometry.getLibraryObject()));
             }
 
@@ -113,14 +106,14 @@ public class ResourceProcessor implements AutoCloseable {
 
         @Override
         public void visit(PointCloud pointCloud) {
-            if (!skipTypes.contains(Type.POINT_CLOUD_FILE)) {
+            if (!skipTypes.contains(ResourceType.POINT_CLOUD_FILE)) {
                 pointCloud.setPointFile(process(pointCloud.getPointFile()));
             }
         }
 
         @Override
         public void visit(StandardFileTimeseries timeseries) {
-            if (!skipTypes.contains(Type.TIMESERIES_FILE)) {
+            if (!skipTypes.contains(ResourceType.TIMESERIES_FILE)) {
                 timeseries.setFileLocation(process(timeseries.getFileLocation()));
             }
         }
