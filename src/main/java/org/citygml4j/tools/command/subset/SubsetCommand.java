@@ -89,7 +89,7 @@ public class SubsetCommand implements Command {
                     .read(inputFile, helper.getCityGMLContext());
 
             SubsetFilter filter = SubsetFilter.newInstance()
-                    .withGlobalObjects(globalObjectHelper)
+                    .withGlobalObjectHelper(globalObjectHelper)
                     .withTypeNamesFilter(typeNameOptions, helper.getCityGMLContext())
                     .withIdFilter(idOptions)
                     .withBoundingBoxFilter(boundingBoxOptions != null ? boundingBoxOptions.toBoundingBoxFilter() : null)

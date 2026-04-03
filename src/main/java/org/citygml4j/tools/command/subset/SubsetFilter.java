@@ -50,7 +50,7 @@ public class SubsetFilter {
         return new SubsetFilter();
     }
 
-    public SubsetFilter withGlobalObjects(GlobalObjectHelper globalObjectHelper) {
+    public SubsetFilter withGlobalObjectHelper(GlobalObjectHelper globalObjectHelper) {
         if (globalObjectHelper != null) {
             appearanceRemover = AppearanceRemover.of(globalObjectHelper.getAppearances());
             groupRemover = CityObjectGroupRemover.of(globalObjectHelper.getCityObjectGroups());
