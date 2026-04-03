@@ -93,6 +93,10 @@ public class SubsetFilter {
         return this;
     }
 
+    public boolean isCountWithinLimit() {
+        return countOptions != null && count < countOptions.getLimit();
+    }
+
     public Map<String, Integer> getCounter() {
         return counter;
     }
@@ -127,7 +131,7 @@ public class SubsetFilter {
                 count++;
             }
 
-            keep = keep && count <= countOptions.getCount();
+            keep = keep && count <= countOptions.getLimit();
         }
 
         if (keep) {

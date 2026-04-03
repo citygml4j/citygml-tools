@@ -84,7 +84,7 @@ public class SubsetCommand implements Command {
             GlobalObjectHelper globalObjectHelper = GlobalObjectReader.defaults()
                     .read(inputFile, helper.getCityGMLContext());
 
-            SubsetFilter subsetFilter = SubsetFilter.newInstance()
+            SubsetFilter filter = SubsetFilter.newInstance()
                     .withGlobalObjects(globalObjectHelper)
                     .withTypeNamesFilter(typeNameOptions, helper.getCityGMLContext())
                     .withIdFilter(idOptions)
@@ -97,8 +97,8 @@ public class SubsetCommand implements Command {
                     "CityObjectGroup", "Appearance");
                  ExternalResourceCopier resourceCopier = ExternalResourceCopier.of(inputFile, outputFile)) {
                 FeatureInfo cityModelInfo = helper.getFeatureInfo(reader);
-                if (cityModelInfo != null && subsetFilter.getBoundingBoxFilter() != null) {
-                    subsetFilter.getBoundingBoxFilter().withRootReferenceSystem(cityModelInfo);
+                if (cityModelInfo != null && filter.getBoundingBoxFilter() != null) {
+                    filter.getBoundingBoxFilter().withRootReferenceSystem(cityModelInfo);
                 }
 
                 if (!version.isSetVersion()) {
@@ -114,15 +114,15 @@ public class SubsetCommand implements Command {
                 try (CityGMLChunkWriter writer = helper.createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(cityModelInfo)) {
                     log.debug("Reading and filtering city objects based on the specified filter criteria.");
-                    while (reader.hasNext()) {
+                    while (filter.isCountWithinLimit() && reader.hasNext()) {
                         AbstractFeature feature = reader.next();
-                        if (subsetFilter.filter(feature, reader.getName(), reader.getPrefix())) {
+                        if (filter.filter(feature, reader.getName(), reader.getPrefix())) {
                             resourceCopier.process(feature);
                             writer.writeMember(feature);
                         }
                     }
 
-                    subsetFilter.postprocess();
+                    filter.postprocess();
 
                     for (CityObjectGroup group : globalObjectHelper.getCityObjectGroups()) {
                         resourceCopier.process(group);
@@ -144,9 +144,9 @@ public class SubsetCommand implements Command {
                 helper.replaceInputFile(inputFile, outputFile);
             }
 
-            if (!subsetFilter.getCounter().isEmpty()) {
+            if (!filter.getCounter().isEmpty()) {
                 log.debug("The following top-level city objects satisfied the filter criteria.");
-                subsetFilter.getCounter().forEach((key, value) -> log.debug(key + ": " + value));
+                filter.getCounter().forEach((key, value) -> log.debug(key + ": " + value));
             } else {
                 log.debug("No top-level city object satisfies the filter criteria.");
             }
