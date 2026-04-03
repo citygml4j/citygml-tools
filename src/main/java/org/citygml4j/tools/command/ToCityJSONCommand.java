@@ -23,8 +23,8 @@ import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.CityJSONOutputOptions;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.util.ExternalResourceCopier;
-import org.citygml4j.tools.util.GlobalObjects;
-import org.citygml4j.tools.util.GlobalObjectsReader;
+import org.citygml4j.tools.util.GlobalObjectHelper;
+import org.citygml4j.tools.util.GlobalObjectReader;
 import org.citygml4j.xml.reader.*;
 import org.xmlobjects.gml.model.geometry.Envelope;
 import picocli.CommandLine;
@@ -114,7 +114,7 @@ public class ToCityJSONCommand implements Command {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             log.debug("Reading global appearances, groups and implicit geometries from input file.");
-            GlobalObjects globalObjects = GlobalObjectsReader.defaults()
+            GlobalObjectHelper globalObjectHelper = GlobalObjectReader.defaults()
                     .withTemplateAppearances(true)
                     .read(inputFile, helper.getCityGMLContext());
 
@@ -130,20 +130,21 @@ public class ToCityJSONCommand implements Command {
 
                 try (AbstractCityJSONWriter<?> writer = helper.createCityJSONWriter(out, outputFile, outputOptions)
                         .withMetadata(metadata)) {
-                    log.debug("Reading city objects and converting them into CityJSON " + outputOptions.getVersion() + ".");
-                    for (Appearance appearance : globalObjects.getAppearances()) {
+                    log.debug("Reading city objects and converting them into CityJSON " +
+                            outputOptions.getVersion() + ".");
+                    for (Appearance appearance : globalObjectHelper.getAppearances()) {
                         resourceCopier.process(appearance);
                         writer.withGlobalAppearance(appearance);
                     }
 
-                    for (CityObjectGroup group : globalObjects.getCityObjectGroups()) {
+                    for (CityObjectGroup group : globalObjectHelper.getCityObjectGroups()) {
                         resourceCopier.process(group);
                         writer.withGlobalCityObjectGroup(group);
                     }
 
-                    globalObjects.getTemplateGeometries().values().forEach(geometry ->
+                    globalObjectHelper.getTemplateGeometries().values().forEach(geometry ->
                             writer.withGlobalTemplateGeometry(geometry, geometry.getLocalProperties()
-                                    .getOrDefault(GlobalObjects.TEMPLATE_LOD, Integer.class, () -> 0)));
+                                    .getOrDefault(GlobalObjectHelper.TEMPLATE_LOD, Integer.class, () -> 0)));
 
                     while (reader.hasNext()) {
                         AbstractFeature feature = reader.next();

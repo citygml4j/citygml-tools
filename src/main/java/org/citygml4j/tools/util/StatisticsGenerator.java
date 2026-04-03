@@ -151,7 +151,7 @@ public class StatisticsGenerator {
                         lazyLoadTemplates();
                     }
 
-                    AbstractGeometry template = templates.get(CityObjects.getIdFromReference(property.getHref()));
+                    AbstractGeometry template = templates.get(FeatureHelper.getIdFromReference(property.getHref()));
                     if (template != null) {
                         property.setReferencedObjectIfValid(template);
                         if (globalAppearances != null) {
@@ -247,7 +247,7 @@ public class StatisticsGenerator {
 
     private void lazyLoadTemplates() throws ExecutionException {
         Logger.getInstance().debug("Reading implicit geometries from input file.");
-        templates = GlobalObjectsReader.onlyImplicitGeometries()
+        templates = GlobalObjectReader.onlyImplicitGeometries()
                 .read(statistics.getFile(), context)
                 .getTemplateGeometries();
     }
@@ -257,7 +257,7 @@ public class StatisticsGenerator {
         for (Appearance globalAppearance : globalAppearances) {
             Appearance appearance = resolver.resolve(globalAppearance);
             if (appearance != null) {
-                QName name = globalAppearance.getLocalProperties().get(GlobalObjects.NAME, QName.class);
+                QName name = globalAppearance.getLocalProperties().get(GlobalObjectHelper.NAME, QName.class);
                 process(name, appearance, true);
             }
         }

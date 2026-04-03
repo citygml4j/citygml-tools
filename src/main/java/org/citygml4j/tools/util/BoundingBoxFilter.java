@@ -59,7 +59,7 @@ public class BoundingBoxFilter {
 
     public boolean filter(AbstractFeature feature) {
         if (!referenceSystemValidator.validate(feature, rootReferenceSystem)) {
-            log.error(CityObjects.getObjectSignature(feature) + ": Cannot apply bounding box filter because the " +
+            log.error(FeatureHelper.getObjectSignature(feature) + ": Cannot apply bounding box filter because the " +
                     "city object uses multiple reference systems.");
             return false;
         }

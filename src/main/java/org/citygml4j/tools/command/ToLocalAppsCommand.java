@@ -15,10 +15,7 @@ import org.citygml4j.tools.option.CityGMLOutputOptions;
 import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOptions;
-import org.citygml4j.tools.util.ExternalResourceCopier;
-import org.citygml4j.tools.util.GlobalAppearanceConverter;
-import org.citygml4j.tools.util.GlobalObjects;
-import org.citygml4j.tools.util.GlobalObjectsReader;
+import org.citygml4j.tools.util.*;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
 import org.citygml4j.xml.reader.CityGMLReadException;
@@ -77,11 +74,11 @@ public class ToLocalAppsCommand implements Command {
                 }
 
                 log.debug("Reading global appearances and implicit geometries from input file.");
-                GlobalObjects globalObjects = GlobalObjectsReader.of(
-                                GlobalObjects.Type.APPEARANCE,
-                                GlobalObjects.Type.IMPLICIT_GEOMETRY)
+                GlobalObjectHelper globalObjectHelper = GlobalObjectReader.of(
+                                GlobalObjectType.APPEARANCE,
+                                GlobalObjectType.IMPLICIT_GEOMETRY)
                         .read(inputFile, helper.getCityGMLContext());
-                List<Appearance> appearances = globalObjects.getAppearances();
+                List<Appearance> appearances = globalObjectHelper.getAppearances();
                 if (appearances.isEmpty()) {
                     log.info("The file does not contain global appearances. No action required.");
                     continue;
@@ -97,7 +94,7 @@ public class ToLocalAppsCommand implements Command {
 
                 GlobalAppearanceConverter converter = GlobalAppearanceConverter.of(appearances, out.getVersion())
                         .withMode(mode)
-                        .withTemplateGeometries(globalObjects.getTemplateGeometries());
+                        .withTemplateGeometries(globalObjectHelper.getTemplateGeometries());
 
                 try (CityGMLChunkWriter writer = helper.createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(helper.getFeatureInfo(reader))) {

@@ -116,7 +116,7 @@ public class GlobalAppearanceConverter {
                                 iterator.remove();
                             } else if (version != CityGMLVersion.v3_0 && reference.getURI() != null) {
                                 targets.computeIfAbsent(
-                                        CityObjects.getIdFromReference(reference.getURI()),
+                                        FeatureHelper.getIdFromReference(reference.getURI()),
                                         v -> new ArrayList<>()).add(texture);
                             }
                         }
@@ -126,7 +126,7 @@ public class GlobalAppearanceConverter {
                         GeometryReference reference = getGeometryReference(property);
                         if (reference != null && reference.getHref() != null) {
                             targets.computeIfAbsent(
-                                    CityObjects.getIdFromReference(reference.getHref()),
+                                    FeatureHelper.getIdFromReference(reference.getHref()),
                                     v -> new ArrayList<>()).add(texture);
                         }
                     }
@@ -139,7 +139,7 @@ public class GlobalAppearanceConverter {
                     for (GeometryReference reference : texture.getTargets()) {
                         if (reference.getHref() != null) {
                             targets.computeIfAbsent(
-                                    CityObjects.getIdFromReference(reference.getHref()),
+                                    FeatureHelper.getIdFromReference(reference.getHref()),
                                     v -> new ArrayList<>()).add(texture);
                         }
                     }
@@ -152,7 +152,7 @@ public class GlobalAppearanceConverter {
                     for (GeometryReference reference : material.getTargets()) {
                         if (reference.getHref() != null) {
                             targets.computeIfAbsent(
-                                    CityObjects.getIdFromReference(reference.getHref()),
+                                    FeatureHelper.getIdFromReference(reference.getHref()),
                                     v -> new ArrayList<>()).add(material);
                         }
                     }
@@ -192,7 +192,7 @@ public class GlobalAppearanceConverter {
             if (templates != null && implicitGeometry.getRelativeGeometry() != null) {
                 AbstractGeometry template = templates.get(implicitGeometry.getRelativeGeometry().isSetInlineObject() ?
                         implicitGeometry.getRelativeGeometry().getObject().getId() :
-                        CityObjects.getIdFromReference(implicitGeometry.getRelativeGeometry().getHref()));
+                        FeatureHelper.getIdFromReference(implicitGeometry.getRelativeGeometry().getHref()));
 
                 if (template != null) {
                     if (processedTemplates.add(template.getId())) {
@@ -261,7 +261,7 @@ public class GlobalAppearanceConverter {
                     GeometryReference reference = getGeometryReference(property);
                     if (reference != null
                             && reference.getHref() != null
-                            && CityObjects.getIdFromReference(reference.getHref()).equals(geometry.getId())) {
+                            && FeatureHelper.getIdFromReference(reference.getHref()).equals(geometry.getId())) {
                         targetTexture.getTextureParameterizations().add(property);
                     }
                 }
@@ -288,7 +288,7 @@ public class GlobalAppearanceConverter {
             }
 
             appearance = copier.shallowCopy(globalAppearance, session);
-            appearance.setId(target instanceof ImplicitGeometry ? CityObjects.createId() : null);
+            appearance.setId(target instanceof ImplicitGeometry ? FeatureHelper.createId() : null);
             appearance.setSurfaceData(null);
             appearance.setLocalProperties(null);
             appearances.add(new AbstractAppearanceProperty(appearance));

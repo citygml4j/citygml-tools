@@ -17,21 +17,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GlobalObjects {
+public class GlobalObjectHelper {
     public static final String NAME = "name";
     public static final String TEMPLATE_LOD = "lod";
-
-    public enum Type {
-        APPEARANCE,
-        CITY_OBJECT_GROUP,
-        IMPLICIT_GEOMETRY
-    }
 
     private final List<Appearance> appearances = new ArrayList<>();
     private final List<CityObjectGroup> cityObjectGroups = new ArrayList<>();
     private final Map<String, AbstractGeometry> templateGeometries = new HashMap<>();
 
-    GlobalObjects() {
+    GlobalObjectHelper() {
     }
 
     public List<Appearance> getAppearances() {

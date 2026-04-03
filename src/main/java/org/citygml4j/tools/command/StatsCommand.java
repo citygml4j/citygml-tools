@@ -19,7 +19,7 @@ import org.citygml4j.tools.log.LogLevel;
 import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.IdOptions;
 import org.citygml4j.tools.option.InputOptions;
-import org.citygml4j.tools.util.GlobalObjectsReader;
+import org.citygml4j.tools.util.GlobalObjectReader;
 import org.citygml4j.tools.util.SchemaHelper;
 import org.citygml4j.tools.util.Statistics;
 import org.citygml4j.tools.util.StatisticsGenerator;
@@ -120,7 +120,7 @@ public class StatsCommand implements Command {
                 statistics.withCityObjectIds(idOptions.getIds());
 
                 log.debug("Reading global appearances from input file.");
-                generator.withGlobalAppearances(GlobalObjectsReader.onlyAppearances()
+                generator.withGlobalAppearances(GlobalObjectReader.onlyAppearances()
                         .read(inputFile, helper.getCityGMLContext())
                         .getAppearances());
             }

@@ -73,7 +73,7 @@ public class HeightChanger {
             if (correction != 0) {
                 feature.accept(heightProcessor);
             } else {
-                log.debug("Skipping " + CityObjects.getObjectSignature(feature) + " because the height does not " +
+                log.debug("Skipping " + FeatureHelper.getObjectSignature(feature) + " because the height does not " +
                         "change for the given offset.");
             }
         }
@@ -173,7 +173,7 @@ public class HeightChanger {
             if (property != null
                     && property.getObject() == null
                     && property.getHref() != null) {
-                AbstractGeometry template = templates.get(CityObjects.getIdFromReference(property.getHref()));
+                AbstractGeometry template = templates.get(FeatureHelper.getIdFromReference(property.getHref()));
                 if (template != null) {
                     property.setReferencedObjectIfValid(template);
                 }

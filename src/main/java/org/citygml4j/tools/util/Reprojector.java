@@ -361,10 +361,10 @@ public class Reprojector {
                 } else {
                     String object = parent instanceof AbstractFeature ?
                             reference.getClass().getSimpleName() :
-                            CityObjects.getObjectSignature(parent);
+                            FeatureHelper.getObjectSignature(parent);
                     String feature = parent instanceof AbstractFeature ?
-                            CityObjects.getObjectSignature(parent) :
-                            CityObjects.getObjectSignature(parent.getParent(AbstractFeature.class));
+                            FeatureHelper.getObjectSignature(parent) :
+                            FeatureHelper.getObjectSignature(parent.getParent(AbstractFeature.class));
 
                     throw new RuntimeException("Failed to find a CRS definition for " +
                             object + " of " + feature + ".");

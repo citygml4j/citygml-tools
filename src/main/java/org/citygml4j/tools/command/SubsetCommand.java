@@ -14,8 +14,8 @@ import org.citygml4j.tools.io.OutputFile;
 import org.citygml4j.tools.log.Logger;
 import org.citygml4j.tools.option.*;
 import org.citygml4j.tools.util.ExternalResourceCopier;
-import org.citygml4j.tools.util.GlobalObjects;
-import org.citygml4j.tools.util.GlobalObjectsReader;
+import org.citygml4j.tools.util.GlobalObjectHelper;
+import org.citygml4j.tools.util.GlobalObjectReader;
 import org.citygml4j.tools.util.SubsetFilter;
 import org.citygml4j.xml.reader.*;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
@@ -81,11 +81,11 @@ public class SubsetCommand implements Command {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             log.debug("Reading global appearances, groups and implicit geometries from input file.");
-            GlobalObjects globalObjects = GlobalObjectsReader.defaults()
+            GlobalObjectHelper globalObjectHelper = GlobalObjectReader.defaults()
                     .read(inputFile, helper.getCityGMLContext());
 
             SubsetFilter subsetFilter = SubsetFilter.newInstance()
-                    .withGlobalObjects(globalObjects)
+                    .withGlobalObjects(globalObjectHelper)
                     .withTypeNamesFilter(typeNameOptions, helper.getCityGMLContext())
                     .withIdFilter(idOptions)
                     .withBoundingBoxFilter(boundingBoxOptions != null ? boundingBoxOptions.toBoundingBoxFilter() : null)
@@ -124,12 +124,12 @@ public class SubsetCommand implements Command {
 
                     subsetFilter.postprocess();
 
-                    for (CityObjectGroup group : globalObjects.getCityObjectGroups()) {
+                    for (CityObjectGroup group : globalObjectHelper.getCityObjectGroups()) {
                         resourceCopier.process(group);
                         writer.writeMember(group);
                     }
 
-                    for (Appearance appearance : globalObjects.getAppearances()) {
+                    for (Appearance appearance : globalObjectHelper.getAppearances()) {
                         resourceCopier.process(appearance);
                         writer.writeMember(appearance);
                     }

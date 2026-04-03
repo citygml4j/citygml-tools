@@ -180,7 +180,7 @@ public class MergeProcessor implements AutoCloseable {
             if (idMode != IdMode.KEEP_ALL
                     && object.getId() != null
                     && !topLevelIds.contains(object.getId())) {
-                object.setId(idMappings.computeIfAbsent(object.getId(), v -> CityObjects.createId()));
+                object.setId(idMappings.computeIfAbsent(object.getId(), v -> FeatureHelper.createId()));
             }
 
             super.visit(object);
@@ -216,9 +216,9 @@ public class MergeProcessor implements AutoCloseable {
 
         private void updateReference(ResolvableAssociation<?> association, String reference) {
             if (reference != null) {
-                String id = CityObjects.getIdFromReference(reference);
+                String id = FeatureHelper.getIdFromReference(reference);
                 if (!topLevelIds.contains(id)) {
-                    association.setHref("#" + idMappings.computeIfAbsent(id, v -> CityObjects.createId()));
+                    association.setHref("#" + idMappings.computeIfAbsent(id, v -> FeatureHelper.createId()));
                 }
             }
         }

@@ -16,7 +16,7 @@ import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOptions;
 import org.citygml4j.tools.util.ExternalResourceCopier;
-import org.citygml4j.tools.util.GlobalObjectsReader;
+import org.citygml4j.tools.util.GlobalObjectReader;
 import org.citygml4j.tools.util.HeightChanger;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
@@ -81,7 +81,7 @@ public class ChangeHeightCommand implements Command {
             HeightChanger heightChanger = HeightChanger.of(offset).withMode(mode);
 
             log.debug("Reading implicit geometries from input file.");
-            heightChanger.withTemplateGeometries(GlobalObjectsReader.onlyImplicitGeometries()
+            heightChanger.withTemplateGeometries(GlobalObjectReader.onlyImplicitGeometries()
                     .read(inputFile, helper.getCityGMLContext())
                     .getTemplateGeometries());
 

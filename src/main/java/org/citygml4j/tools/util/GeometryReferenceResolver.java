@@ -136,7 +136,7 @@ public class GeometryReferenceResolver {
             if (property.getObject() == null
                     && property.getHref() != null
                     && property.getParent(ImplicitGeometry.class) == null) {
-                GeometryReference reference = references.get(CityObjects.getIdFromReference(property.getHref()));
+                GeometryReference reference = references.get(FeatureHelper.getIdFromReference(property.getHref()));
                 if (reference != null && reference.geometry != null) {
                     resolvedReferencesCounter++;
                     AbstractCityObject cityObject = property.getParent(AbstractCityObject.class);
@@ -212,7 +212,7 @@ public class GeometryReferenceResolver {
                     && property.getParent(ImplicitGeometry.class) == null) {
                 AbstractCityObject cityObject = property.getParent(AbstractCityObject.class);
                 if (cityObject != null) {
-                    String reference = CityObjects.getIdFromReference(property.getHref());
+                    String reference = FeatureHelper.getIdFromReference(property.getHref());
                     referees.computeIfAbsent(reference, k -> new ArrayList<>()).add(cityObject);
                 }
             } else {
@@ -235,7 +235,7 @@ public class GeometryReferenceResolver {
                 AbstractGeometry geometry = property.getObject();
                 if (geometry.getId() != null && references.containsKey(geometry.getId())) {
                     AbstractCityObject parent = geometry.getParent(AbstractCityObject.class);
-                    geometries.put(geometry, CityObjects.getOrCreateId(parent));
+                    geometries.put(geometry, FeatureHelper.getOrCreateId(parent));
                 }
 
                 super.visit(property);
@@ -266,7 +266,7 @@ public class GeometryReferenceResolver {
         }
 
         void addTarget(AbstractCityObject cityObject, int featureId, int childId) {
-            targets.put(featureId + "_" + childId, CityObjects.getOrCreateId(cityObject));
+            targets.put(featureId + "_" + childId, FeatureHelper.getOrCreateId(cityObject));
         }
     }
 }

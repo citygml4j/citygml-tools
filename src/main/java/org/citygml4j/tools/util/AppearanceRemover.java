@@ -68,7 +68,7 @@ public class AppearanceRemover {
             for (Appearance appearance : helper.getAppearances()) {
                 appearance.getSurfaceData().removeIf(property -> property.getHref() != null
                         && surfaceDataIds.contains(
-                        CityObjects.getIdFromReference(property.getHref())));
+                        FeatureHelper.getIdFromReference(property.getHref())));
             }
 
             surfaceDataIds.clear();

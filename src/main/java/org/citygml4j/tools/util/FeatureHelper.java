@@ -9,9 +9,9 @@ import org.citygml4j.core.model.core.AbstractFeature;
 import org.xmlobjects.gml.model.base.AbstractGML;
 import org.xmlobjects.gml.util.id.DefaultIdCreator;
 
-public class CityObjects {
+public class FeatureHelper {
 
-    private CityObjects() {
+    private FeatureHelper() {
     }
 
     public static String getObjectSignature(AbstractGML object) {

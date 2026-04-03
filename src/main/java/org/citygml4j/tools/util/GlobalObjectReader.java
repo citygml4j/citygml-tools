@@ -24,77 +24,77 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
-public class GlobalObjectsReader {
-    private final EnumSet<GlobalObjects.Type> types;
+public class GlobalObjectReader {
+    private final EnumSet<GlobalObjectType> types;
     private boolean withTemplateAppearances;
 
-    private GlobalObjectsReader(EnumSet<GlobalObjects.Type> types) {
+    private GlobalObjectReader(EnumSet<GlobalObjectType> types) {
         this.types = types;
     }
 
-    public static GlobalObjectsReader defaults() {
-        return new GlobalObjectsReader(EnumSet.allOf(GlobalObjects.Type.class));
+    public static GlobalObjectReader defaults() {
+        return new GlobalObjectReader(EnumSet.allOf(GlobalObjectType.class));
     }
 
-    public static GlobalObjectsReader of(GlobalObjects.Type... types) {
-        return new GlobalObjectsReader(EnumSet.copyOf(Arrays.asList(types)));
+    public static GlobalObjectReader of(GlobalObjectType... types) {
+        return new GlobalObjectReader(EnumSet.copyOf(Arrays.asList(types)));
     }
 
-    public static GlobalObjectsReader of(EnumSet<GlobalObjects.Type> types) {
-        return new GlobalObjectsReader(types);
+    public static GlobalObjectReader of(EnumSet<GlobalObjectType> types) {
+        return new GlobalObjectReader(types);
     }
 
-    public static GlobalObjectsReader onlyAppearances() {
-        return new GlobalObjectsReader(EnumSet.of(GlobalObjects.Type.APPEARANCE));
+    public static GlobalObjectReader onlyAppearances() {
+        return new GlobalObjectReader(EnumSet.of(GlobalObjectType.APPEARANCE));
     }
 
-    public static GlobalObjectsReader onlyCityObjectGroups() {
-        return new GlobalObjectsReader(EnumSet.of(GlobalObjects.Type.CITY_OBJECT_GROUP));
+    public static GlobalObjectReader onlyCityObjectGroups() {
+        return new GlobalObjectReader(EnumSet.of(GlobalObjectType.CITY_OBJECT_GROUP));
     }
 
-    public static GlobalObjectsReader onlyImplicitGeometries() {
-        return new GlobalObjectsReader(EnumSet.of(GlobalObjects.Type.IMPLICIT_GEOMETRY));
+    public static GlobalObjectReader onlyImplicitGeometries() {
+        return new GlobalObjectReader(EnumSet.of(GlobalObjectType.IMPLICIT_GEOMETRY));
     }
 
-    public GlobalObjectsReader withTemplateAppearances(boolean withTemplateAppearances) {
+    public GlobalObjectReader withTemplateAppearances(boolean withTemplateAppearances) {
         this.withTemplateAppearances = withTemplateAppearances;
         return this;
     }
 
-    public GlobalObjects read(InputFile file, CityGMLContext context) throws ExecutionException {
+    public GlobalObjectHelper read(InputFile file, CityGMLContext context) throws ExecutionException {
         try {
-            GlobalObjects globalObjects = new GlobalObjects();
+            GlobalObjectHelper globalObjectHelper = new GlobalObjectHelper();
             try (CityGMLReader reader = createReader(file, context)) {
                 while (reader.hasNext()) {
                     AbstractFeature feature = reader.next();
                     if (feature instanceof Appearance) {
-                        if (types.contains(GlobalObjects.Type.APPEARANCE)) {
-                            globalObjects.add((Appearance) feature, reader.getName());
+                        if (types.contains(GlobalObjectType.APPEARANCE)) {
+                            globalObjectHelper.add((Appearance) feature, reader.getName());
                         }
                     } else if (feature instanceof CityObjectGroup) {
-                        if (types.contains(GlobalObjects.Type.CITY_OBJECT_GROUP)) {
-                            globalObjects.add((CityObjectGroup) feature, reader.getName());
+                        if (types.contains(GlobalObjectType.CITY_OBJECT_GROUP)) {
+                            globalObjectHelper.add((CityObjectGroup) feature, reader.getName());
                         }
-                    } else if (types.contains(GlobalObjects.Type.IMPLICIT_GEOMETRY)) {
+                    } else if (types.contains(GlobalObjectType.IMPLICIT_GEOMETRY)) {
                         GeometryInfo geometryInfo = feature.getGeometryInfo();
                         for (int lod : geometryInfo.getLods()) {
                             geometryInfo.getImplicitGeometries(lod).stream()
                                     .filter(ImplicitGeometryProperty::isSetInlineObject)
                                     .map(ImplicitGeometryProperty::getObject)
                                     .forEach(implicitGeometry ->
-                                            globalObjects.add(implicitGeometry, lod, withTemplateAppearances));
+                                            globalObjectHelper.add(implicitGeometry, lod, withTemplateAppearances));
                         }
 
                         geometryInfo.getNonLodImplicitGeometries().stream()
                                 .filter(ImplicitGeometryProperty::isSetInlineObject)
                                 .map(ImplicitGeometryProperty::getObject)
                                 .forEach(implicitGeometry ->
-                                        globalObjects.add(implicitGeometry, withTemplateAppearances));
+                                        globalObjectHelper.add(implicitGeometry, withTemplateAppearances));
                     }
                 }
             }
 
-            return globalObjects;
+            return globalObjectHelper;
         } catch (CityGMLReadException e) {
             throw new ExecutionException("Failed to read global objects.", e);
         }
@@ -107,19 +107,19 @@ public class GlobalObjectsReader {
                     .withIdCreator(new IdCreator());
 
             CityGMLReader reader = in.createCityGMLReader(file.getFile());
-            if (!types.contains(GlobalObjects.Type.IMPLICIT_GEOMETRY)) {
+            if (!types.contains(GlobalObjectType.IMPLICIT_GEOMETRY)) {
                 Set<String> localNames = new HashSet<>();
-                if (types.contains(GlobalObjects.Type.APPEARANCE)) {
+                if (types.contains(GlobalObjectType.APPEARANCE)) {
                     localNames.add("Appearance");
                 }
 
-                if (types.contains(GlobalObjects.Type.CITY_OBJECT_GROUP)) {
+                if (types.contains(GlobalObjectType.CITY_OBJECT_GROUP)) {
                     localNames.add("CityObjectGroup");
                 }
 
                 return in.createFilteredCityGMLReader(reader, name -> localNames.contains(name.getLocalPart())
                         && CityGMLModules.isCityGMLNamespace(name.getNamespaceURI()));
-            } else if (types.size() == 1 && types.contains(GlobalObjects.Type.IMPLICIT_GEOMETRY)) {
+            } else if (types.size() == 1 && types.contains(GlobalObjectType.IMPLICIT_GEOMETRY)) {
                 return in.createFilteredCityGMLReader(reader, name -> !"Appearance".equals(name.getLocalPart())
                         || !CityGMLModules.isCityGMLNamespace(name.getNamespaceURI()));
             }

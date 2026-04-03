@@ -241,12 +241,12 @@ public class DeprecatedPropertiesProcessor {
                 DeprecatedPropertiesOfAbstractFillingSurface properties = fillingSurface.getDeprecatedProperties();
 
                 if (properties.getLod3ImplicitRepresentation() != null) {
-                    log.warn(CityObjects.getObjectSignature(fillingSurface) + ": " +
+                    log.warn(FeatureHelper.getObjectSignature(fillingSurface) + ": " +
                             "Skipping unsupported LoD3 implicit geometry representation.");
                 }
 
                 if (useLod4AsLod3 && properties.getLod4ImplicitRepresentation() != null) {
-                    log.warn(CityObjects.getObjectSignature(fillingSurface) + ": " +
+                    log.warn(FeatureHelper.getObjectSignature(fillingSurface) + ": " +
                             "Skipping unsupported LoD4 implicit geometry representation.");
                 }
             }

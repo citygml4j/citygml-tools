@@ -179,7 +179,7 @@ public class TextureClipper {
                         iterator.remove();
                     } else if (parameterization instanceof TexCoordGen) {
                         log.warn("A TexCoordGen is used for target '" + property.getObject().getTarget().getHref() +
-                                "' of " + CityObjects.getObjectSignature(texture) + ". " +
+                                "' of " + FeatureHelper.getObjectSignature(texture) + ". " +
                                 "Cannot clip the texture image.");
                     }
                 }
@@ -252,12 +252,12 @@ public class TextureClipper {
 
                             if (!reported) {
                                 log.debug("Clamped texture coordinates to [0, 1] for target '" + target.getHref() +
-                                        "' of " + CityObjects.getObjectSignature(texture) + ".");
+                                        "' of " + FeatureHelper.getObjectSignature(texture) + ".");
                                 reported = true;
                             }
                         } else {
                             log.warn("Texture coordinates for target '" + target.getHref() + "' of " +
-                                    CityObjects.getObjectSignature(texture) + " are " + "outside [0, 1]. " +
+                                    FeatureHelper.getObjectSignature(texture) + " are " + "outside [0, 1]. " +
                                     "Cannot clip the texture image.");
                             return new Envelope(new DirectPosition(0, 0), new DirectPosition(1, 1));
                         }
@@ -269,7 +269,7 @@ public class TextureClipper {
 
             if (!textureSpace.isValid()) {
                 log.error("Failed to calculate texture space region for target '" + target.getHref() + "' of " +
-                        CityObjects.getObjectSignature(texture) + ".");
+                        FeatureHelper.getObjectSignature(texture) + ".");
                 return null;
             } else {
                 return textureSpace;
@@ -289,7 +289,7 @@ public class TextureClipper {
 
             if (width <= 0 || height <= 0) {
                 log.warn("Clipping texture image results in invalid bounds for target '" + target.getHref() + "' of " +
-                        CityObjects.getObjectSignature(texture) + ".");
+                        FeatureHelper.getObjectSignature(texture) + ".");
                 return null;
             } else {
                 return new ClippedImage(

@@ -46,7 +46,7 @@ public class CityObjectGroupRemover {
 
             for (CityObjectGroup group : groups) {
                 if (group.getGroupParent() != null && group.getGroupParent().getHref() != null) {
-                    String id = CityObjects.getIdFromReference(group.getGroupParent().getHref());
+                    String id = FeatureHelper.getIdFromReference(group.getGroupParent().getHref());
                     groupParents.computeIfAbsent(id, v -> new ArrayList<>(capacity)).add(group.getGroupParent());
                 }
 
@@ -55,7 +55,8 @@ public class CityObjectGroupRemover {
                         if (property.getObject() != null
                                 && property.getObject().getGroupMember() != null
                                 && property.getObject().getGroupMember().getHref() != null) {
-                            String id = CityObjects.getIdFromReference(property.getObject().getGroupMember().getHref());
+                            String id = FeatureHelper.getIdFromReference(
+                                    property.getObject().getGroupMember().getHref());
                             groupMembers.computeIfAbsent(id, v -> new ArrayList<>(capacity)).add(property);
                         }
                     }

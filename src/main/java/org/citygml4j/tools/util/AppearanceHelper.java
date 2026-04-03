@@ -104,7 +104,7 @@ public class AppearanceHelper {
                     if (property.getObject() != null
                             && property.getObject().getTarget() != null
                             && property.getObject().getTarget().getHref() != null) {
-                        String id = CityObjects.getIdFromReference(property.getObject().getTarget().getHref());
+                        String id = FeatureHelper.getIdFromReference(property.getObject().getTarget().getHref());
                         parameterizedTextures.computeIfAbsent(id, v -> new ArrayList<>(capacity)).add(property);
                     }
                 }
@@ -128,7 +128,7 @@ public class AppearanceHelper {
         private void process(List<GeometryReference> references, Map<String, List<GeometryReference>> targets) {
             for (GeometryReference reference : references) {
                 if (reference.getHref() != null) {
-                    String id = CityObjects.getIdFromReference(reference.getHref());
+                    String id = FeatureHelper.getIdFromReference(reference.getHref());
                     targets.computeIfAbsent(id, v -> new ArrayList<>(capacity)).add(reference);
                 }
             }

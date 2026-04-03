@@ -230,7 +230,7 @@ public class LodFilter {
                 @Override
                 public void visit(FeatureProperty<?> property) {
                     if (property.getHref() != null
-                            && removedIds.contains(CityObjects.getIdFromReference(property.getHref()))) {
+                            && removedIds.contains(FeatureHelper.getIdFromReference(property.getHref()))) {
                         Child child = property.getParent();
                         if (child instanceof GMLObject) {
                             ((GMLObject) child).unsetProperty(property, true);
@@ -314,7 +314,7 @@ public class LodFilter {
                 GeometryProperty<?> property = implicitGeometry.getRelativeGeometry();
                 if (property.getObject() == null && property.getHref() != null) {
                     property.setReferencedObjectIfValid(templates.get(
-                            CityObjects.getIdFromReference(property.getHref())));
+                            FeatureHelper.getIdFromReference(property.getHref())));
                 }
             }
         }

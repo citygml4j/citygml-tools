@@ -49,11 +49,11 @@ public class SubsetFilter {
         return new SubsetFilter();
     }
 
-    public SubsetFilter withGlobalObjects(GlobalObjects globalObjects) {
-        if (globalObjects != null) {
-            appearanceRemover = AppearanceRemover.of(globalObjects.getAppearances());
-            groupRemover = CityObjectGroupRemover.of(globalObjects.getCityObjectGroups());
-            templates = globalObjects.getTemplateGeometries();
+    public SubsetFilter withGlobalObjects(GlobalObjectHelper globalObjectHelper) {
+        if (globalObjectHelper != null) {
+            appearanceRemover = AppearanceRemover.of(globalObjectHelper.getAppearances());
+            groupRemover = CityObjectGroupRemover.of(globalObjectHelper.getCityObjectGroups());
+            templates = globalObjectHelper.getTemplateGeometries();
         }
 
         return this;
@@ -227,7 +227,7 @@ public class SubsetFilter {
                 if (preprocess) {
                     if (property.getObject() == null && property.getHref() != null) {
                         property.setReferencedObjectIfValid(templates.get(
-                                CityObjects.getIdFromReference(property.getHref())));
+                                FeatureHelper.getIdFromReference(property.getHref())));
                     }
                 } else {
                     if (property.isSetInlineObject() && property.getObject().getId() != null) {
@@ -239,7 +239,7 @@ public class SubsetFilter {
                             template.getLocalProperties().set(TEMPLATE_ASSIGNED, true);
                         }
                     } else if (property.getHref() != null) {
-                        AbstractGeometry template = templates.get(CityObjects.getIdFromReference(property.getHref()));
+                        AbstractGeometry template = templates.get(FeatureHelper.getIdFromReference(property.getHref()));
                         if (!template.getLocalProperties().contains(TEMPLATE_ASSIGNED)) {
                             property.setInlineObjectIfValid(template);
                             property.setHref(null);

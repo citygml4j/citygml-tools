@@ -17,8 +17,8 @@ import org.citygml4j.tools.option.CityGMLOutputVersion;
 import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOptions;
 import org.citygml4j.tools.util.ExternalResourceCopier;
-import org.citygml4j.tools.util.GlobalObjects;
-import org.citygml4j.tools.util.GlobalObjectsReader;
+import org.citygml4j.tools.util.GlobalObjectHelper;
+import org.citygml4j.tools.util.GlobalObjectReader;
 import org.citygml4j.tools.util.LodFilter;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.reader.CityGMLInputFactory;
@@ -84,14 +84,14 @@ public class FilterLodsCommand implements Command {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             log.debug("Reading global appearances, groups and implicit geometries from input file.");
-            GlobalObjects globalObjects = GlobalObjectsReader.defaults()
+            GlobalObjectHelper globalObjectHelper = GlobalObjectReader.defaults()
                     .read(inputFile, helper.getCityGMLContext());
 
             LodFilter lodFilter = LodFilter.of(lods)
                     .withMode(mode)
-                    .withGlobalAppearances(globalObjects.getAppearances())
-                    .withCityObjectGroups(globalObjects.getCityObjectGroups())
-                    .withTemplateGeometries(globalObjects.getTemplateGeometries())
+                    .withGlobalAppearances(globalObjectHelper.getAppearances())
+                    .withCityObjectGroups(globalObjectHelper.getCityObjectGroups())
+                    .withTemplateGeometries(globalObjectHelper.getTemplateGeometries())
                     .updateExtents(updateExtents)
                     .withFeatureMode(keepEmptyObjects ?
                             LodFilter.FeatureMode.KEEP_EMPTY_FEATURES :
@@ -123,12 +123,12 @@ public class FilterLodsCommand implements Command {
 
                     lodFilter.postprocess();
 
-                    for (CityObjectGroup group : globalObjects.getCityObjectGroups()) {
+                    for (CityObjectGroup group : globalObjectHelper.getCityObjectGroups()) {
                         resourceCopier.process(group);
                         writer.writeMember(group);
                     }
 
-                    for (Appearance appearance : globalObjects.getAppearances()) {
+                    for (Appearance appearance : globalObjectHelper.getAppearances()) {
                         resourceCopier.process(appearance);
                         writer.writeMember(appearance);
                     }
