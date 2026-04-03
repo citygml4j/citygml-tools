@@ -22,7 +22,7 @@ import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.util.GlobalObjectReader;
 import org.citygml4j.tools.util.SchemaHelper;
 import org.citygml4j.tools.util.Statistics;
-import org.citygml4j.tools.util.StatisticsGenerator;
+import org.citygml4j.tools.util.StatisticsCollector;
 import org.citygml4j.xml.reader.ChunkOptions;
 import org.citygml4j.xml.schema.CityGMLSchemaHandler;
 import org.xmlobjects.gml.adapter.feature.BoundingShapeAdapter;
@@ -111,7 +111,7 @@ public class StatsCommand implements Command {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             Statistics statistics = Statistics.of(inputFile);
-            StatisticsGenerator generator = StatisticsGenerator.of(statistics, helper.getCityGMLContext())
+            StatisticsCollector collector = StatisticsCollector.of(statistics, helper.getCityGMLContext())
                     .computeEnvelope(computeEnvelope)
                     .onlyTopLevelFeatures(onlyTopLevelFeatures)
                     .generateObjectHierarchy(generateObjectHierarchy);
@@ -120,7 +120,7 @@ public class StatsCommand implements Command {
                 statistics.withCityObjectIds(idOptions.getIds());
 
                 log.debug("Reading global appearances from input file.");
-                generator.withGlobalAppearances(GlobalObjectReader.onlyAppearances()
+                collector.withGlobalAppearances(GlobalObjectReader.onlyAppearances()
                         .read(inputFile, helper.getCityGMLContext())
                         .getAppearances());
             }
@@ -147,24 +147,24 @@ public class StatsCommand implements Command {
                             isTopLevel = true;
                         } else {
                             if (schemaHelper.isAppearance(element) && depth > lastFeature) {
-                                generator.process(element, reader.getObject(Appearance.class), isTopLevel);
+                                collector.collect(element, reader.getObject(Appearance.class), isTopLevel);
                             } else if (schemaHelper.isFeature(element)
                                     && (idOptions == null || depth > lastFeature || hasMatchingIdentifier(reader))) {
-                                generator.process(element, reader.getPrefix(), isTopLevel, depth, statistics);
+                                collector.collect(element, reader.getPrefix(), isTopLevel, depth, statistics);
                                 features.push(depth);
                             } else if (schemaHelper.isBoundingShape(element)) {
                                 boolean isCityModel = lastElement != null && schemaHelper.isCityModel(lastElement);
                                 if (isCityModel || depth > lastFeature) {
                                     BoundingShape boundedBy = reader.getObjectUsingBuilder(BoundingShapeAdapter.class);
-                                    generator.process(boundedBy, depth - 1, isCityModel, statistics);
+                                    collector.collect(boundedBy, depth - 1, isCityModel, statistics);
                                 }
                             } else if (depth > lastFeature) {
                                 if (schemaHelper.isGeometry(element)) {
-                                    generator.process(element, reader.getObject(AbstractGeometry.class), lastElement);
+                                    collector.collect(element, reader.getObject(AbstractGeometry.class), lastElement);
                                 } else if (schemaHelper.isImplicitGeometry(element)) {
-                                    generator.process(element, reader.getObject(ImplicitGeometry.class), lastElement);
+                                    collector.collect(element, reader.getObject(ImplicitGeometry.class), lastElement);
                                 } else if (schemaHelper.isGenericAttribute(element)) {
-                                    generator.process(reader.getObject(AbstractGenericAttribute.class));
+                                    collector.collect(reader.getObject(AbstractGenericAttribute.class));
                                 }
                             }
 
@@ -175,7 +175,7 @@ public class StatsCommand implements Command {
                             elements.push(element);
                         }
                     } else if (event == EventType.END_ELEMENT) {
-                        generator.updateDepth(depth);
+                        collector.updateDepth(depth);
                         elements.pop();
                         if (lastFeature == depth + 1) {
                             features.pop();

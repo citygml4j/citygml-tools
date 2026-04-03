@@ -29,7 +29,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 
-public class StatisticsGenerator {
+public class StatisticsCollector {
     private final Statistics statistics;
     private final CityGMLContext context;
     private final StatisticsWalker statisticsWalker = new StatisticsWalker();
@@ -44,36 +44,36 @@ public class StatisticsGenerator {
     private List<Appearance> globalAppearances;
     private Map<String, AbstractGeometry> templates;
 
-    private StatisticsGenerator(Statistics statistics, CityGMLContext context) {
+    private StatisticsCollector(Statistics statistics, CityGMLContext context) {
         this.statistics = statistics;
         this.context = context;
     }
 
-    public static StatisticsGenerator of(Statistics statistics, CityGMLContext context) {
-        return new StatisticsGenerator(statistics, context);
+    public static StatisticsCollector of(Statistics statistics, CityGMLContext context) {
+        return new StatisticsCollector(statistics, context);
     }
 
-    public StatisticsGenerator computeEnvelope(boolean computeEnvelope) {
+    public StatisticsCollector computeEnvelope(boolean computeEnvelope) {
         this.computeEnvelope = computeEnvelope;
         return this;
     }
 
-    public StatisticsGenerator onlyTopLevelFeatures(boolean onlyTopLevelFeatures) {
+    public StatisticsCollector onlyTopLevelFeatures(boolean onlyTopLevelFeatures) {
         this.onlyTopLevelFeatures = onlyTopLevelFeatures;
         return this;
     }
 
-    public StatisticsGenerator generateObjectHierarchy(boolean generateObjectHierarchy) {
+    public StatisticsCollector generateObjectHierarchy(boolean generateObjectHierarchy) {
         this.generateObjectHierarchy = generateObjectHierarchy;
         return this;
     }
 
-    public StatisticsGenerator withGlobalAppearances(List<Appearance> globalAppearances) {
+    public StatisticsCollector withGlobalAppearances(List<Appearance> globalAppearances) {
         this.globalAppearances = globalAppearances;
         return this;
     }
 
-    public void process(QName element, String prefix, boolean isTopLevel, int depth, Statistics statistics) {
+    public void collect(QName element, String prefix, boolean isTopLevel, int depth, Statistics statistics) {
         statistics.addVersion(CityGMLModules.getCityGMLVersion(element.getNamespaceURI()));
 
         Module module = CityGMLModules.getModuleFor(element.getNamespaceURI());
@@ -107,7 +107,7 @@ public class StatisticsGenerator {
         }
     }
 
-    public void process(QName element, Appearance appearance, boolean isTopLevel) {
+    public void collect(QName element, Appearance appearance, boolean isTopLevel) {
         if (appearance != null) {
             if (isTopLevel) {
                 statistics.setHasGlobalAppearances(true);
@@ -120,7 +120,7 @@ public class StatisticsGenerator {
         }
     }
 
-    public void process(QName element, AbstractGeometry geometry, QName parent) {
+    public void collect(QName element, AbstractGeometry geometry, QName parent) {
         if (geometry != null) {
             addObjectAndModule(element, getPrefix(element.getNamespaceURI(), "gml"), statistics::addGeometry);
             getLodFromPropertyName(parent);
@@ -137,7 +137,7 @@ public class StatisticsGenerator {
         }
     }
 
-    public void process(QName element, ImplicitGeometry implicitGeometry, QName parent) throws ExecutionException {
+    public void collect(QName element, ImplicitGeometry implicitGeometry, QName parent) throws ExecutionException {
         if (implicitGeometry != null) {
             addObjectAndModule(element, getPrefix(element.getNamespaceURI(), "core"), statistics::addGeometry);
             getLodFromPropertyName(parent);
@@ -173,13 +173,13 @@ public class StatisticsGenerator {
         }
     }
 
-    public void process(AbstractGenericAttribute<?> genericAttribute) {
+    public void collect(AbstractGenericAttribute<?> genericAttribute) {
         if (genericAttribute != null) {
             statistics.addGenericAttribute(genericAttribute.getName(), genericAttribute.getClass().getSimpleName());
         }
     }
 
-    public void process(BoundingShape boundingShape, int depth, boolean isCityModel, Statistics statistics) {
+    public void collect(BoundingShape boundingShape, int depth, boolean isCityModel, Statistics statistics) {
         if (boundingShape != null && boundingShape.isSetEnvelope()) {
             Envelope envelope = boundingShape.getEnvelope();
 
@@ -258,7 +258,7 @@ public class StatisticsGenerator {
             Appearance appearance = resolver.resolve(globalAppearance);
             if (appearance != null) {
                 QName name = globalAppearance.getLocalProperties().get(GlobalObjectHelper.NAME, QName.class);
-                process(name, appearance, true);
+                collect(name, appearance, true);
             }
         }
     }
