@@ -17,7 +17,7 @@ import org.citygml4j.tools.io.FileCopier;
 import org.citygml4j.tools.io.FileHelper;
 import org.citygml4j.tools.io.InputFile;
 import org.citygml4j.tools.io.OutputFile;
-import org.citygml4j.tools.log.Logger;
+import org.citygml4j.tools.logging.Logger;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

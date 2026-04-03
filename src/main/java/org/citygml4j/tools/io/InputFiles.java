@@ -7,7 +7,7 @@ package org.citygml4j.tools.io;
 
 import org.citygml4j.tools.CityGMLTools;
 import org.citygml4j.tools.ExecutionException;
-import org.citygml4j.tools.log.Logger;
+import org.citygml4j.tools.logging.Logger;
 
 import java.io.File;
 import java.io.IOException;

@@ -60,27 +60,27 @@ public class AppearanceHelper {
         }
     }
 
-    List<TextureAssociationProperty> getParameterizedTextures(String geometryId) {
+    public List<TextureAssociationProperty> getParameterizedTextures(String geometryId) {
         return parameterizedTextures.get(geometryId);
     }
 
-    List<TextureAssociationProperty> getAndRemoveParameterizedTextures(String geometryId) {
+    public List<TextureAssociationProperty> getAndRemoveParameterizedTextures(String geometryId) {
         return parameterizedTextures.remove(geometryId);
     }
 
-    List<GeometryReference> getGeoreferencedTextures(String geometryId) {
+    public List<GeometryReference> getGeoreferencedTextures(String geometryId) {
         return georeferencedTextures.get(geometryId);
     }
 
-    List<GeometryReference> getAndRemoveGeoreferencedTextures(String geometryId) {
+    public List<GeometryReference> getAndRemoveGeoreferencedTextures(String geometryId) {
         return georeferencedTextures.remove(geometryId);
     }
 
-    List<GeometryReference> getMaterials(String geometryId) {
+    public List<GeometryReference> getMaterials(String geometryId) {
         return materials.get(geometryId);
     }
 
-    List<GeometryReference> getAndRemoveMaterials(String geometryId) {
+    public List<GeometryReference> getAndRemoveMaterials(String geometryId) {
         return materials.remove(geometryId);
     }
 

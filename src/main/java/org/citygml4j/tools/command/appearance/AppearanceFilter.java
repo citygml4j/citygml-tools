@@ -1,0 +1,114 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Claus Nagel <claus.nagel@gmail.com>
+ */
+
+package org.citygml4j.tools.command.appearance;
+
+import org.citygml4j.core.model.appearance.AbstractSurfaceDataProperty;
+import org.citygml4j.core.model.appearance.AbstractTexture;
+import org.citygml4j.core.model.appearance.Appearance;
+import org.citygml4j.core.model.appearance.X3DMaterial;
+import org.citygml4j.core.model.core.AbstractFeature;
+import org.citygml4j.core.visitor.ObjectWalker;
+import org.xmlobjects.gml.model.GMLObject;
+import org.xmlobjects.model.Child;
+
+import java.util.*;
+
+public class AppearanceFilter {
+    public static final String NULL_THEME = "none";
+    private final AppearanceProcessor appearanceProcessor = new AppearanceProcessor();
+    private final Map<String, Integer> counter = new TreeMap<>();
+
+    private Set<String> themes;
+    private boolean onlyTextures;
+    private boolean onlyMaterials;
+    private boolean keep;
+
+    private AppearanceFilter() {
+    }
+
+    public static AppearanceFilter newInstance() {
+        return new AppearanceFilter();
+    }
+
+    public AppearanceFilter withThemes(Set<String> themes) {
+        this.themes = themes;
+        return this;
+    }
+
+    public AppearanceFilter onlyTextures(boolean onlyTextures) {
+        this.onlyTextures = onlyTextures;
+        return this;
+    }
+
+    public AppearanceFilter onlyMaterials(boolean onlyMaterials) {
+        this.onlyMaterials = onlyMaterials;
+        return this;
+    }
+
+    public boolean filter(AbstractFeature feature) {
+        keep = true;
+        feature.accept(appearanceProcessor);
+        return !(feature instanceof Appearance) || keep;
+    }
+
+    public Map<String, Integer> getCounter() {
+        return counter;
+    }
+
+    public void reset() {
+        counter.clear();
+    }
+
+    private class AppearanceProcessor extends ObjectWalker {
+
+        @Override
+        public void visit(Appearance appearance) {
+            if (shouldRemove(appearance)) {
+                Child property = appearance.getParent();
+                if (property == null) {
+                    keep = false;
+                } else {
+                    Child parent = property.getParent();
+                    if (parent instanceof GMLObject) {
+                        ((GMLObject) parent).unsetProperty(property, true);
+                    }
+                }
+            }
+        }
+
+        private boolean shouldRemove(Appearance appearance) {
+            if (themes == null
+                    || (appearance.getTheme() == null && themes.contains(NULL_THEME))
+                    || themes.contains(appearance.getTheme())) {
+                if (!onlyTextures && !onlyMaterials) {
+                    count(appearance, counter);
+                    return true;
+                }
+
+                Class<?> target = onlyMaterials ? X3DMaterial.class : AbstractTexture.class;
+                List<AbstractSurfaceDataProperty> deleteList = new ArrayList<>();
+                appearance.getSurfaceData().stream()
+                        .filter(property -> target.isInstance(property.getObject()))
+                        .forEach(property -> {
+                            count(property.getObject(), counter);
+                            deleteList.add(property);
+                        });
+
+                appearance.getSurfaceData().removeAll(deleteList);
+                if (!appearance.isSetSurfaceData()) {
+                    count(appearance, counter);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void count(Object object, Map<String, Integer> counter) {
+            counter.merge(object.getClass().getSimpleName(), 1, Integer::sum);
+        }
+    }
+}
