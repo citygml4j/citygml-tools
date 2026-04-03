@@ -12,13 +12,14 @@ import org.citygml4j.tools.log.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 public class InputFiles {
+    private static final Pattern PATH_ELEMENT_PATTERN = Pattern.compile("[^*?{}!\\[\\]]+");
     private final List<String> files;
     private String defaultGlob = "**.{gml,xml}";
     private Predicate<Path> filter;
@@ -72,18 +73,8 @@ public class InputFiles {
                     glob += File.separator + defaultGlob;
                 }
 
-                // find files matching the glob pattern
-                PathMatcher matcher = FileSystems.getDefault().getPathMatcher(glob.replace("\\", "\\\\"));
-                try (Stream<Path> stream = Files.walk(path, FileVisitOption.FOLLOW_LINKS)) {
-                    stream.filter(Files::isRegularFile).forEach(p -> {
-                        if (matcher.matches(p.toAbsolutePath().normalize())) {
-                            if (filter != null && !filter.test(p)) {
-                                Logger.getInstance().debug("Skipping file " + p.toAbsolutePath() + ".");
-                            } else {
-                                inputFiles.add(InputFile.of(p, path));
-                            }
-                        }
-                    });
+                try {
+                    find(path, glob, inputFiles);
                 } catch (IOException e) {
                     throw new ExecutionException("Failed to create list of input files.", e);
                 }
@@ -93,8 +84,27 @@ public class InputFiles {
         return inputFiles;
     }
 
+    private void find(Path path, String glob, List<InputFile> inputFiles) throws IOException {
+        PathMatcher matcher = FileSystems.getDefault().getPathMatcher(glob.replace("\\", "\\\\"));
+        Files.walkFileTree(path, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
+                new SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                        if (attrs.isRegularFile() && matcher.matches(file.toAbsolutePath().normalize())) {
+                            if (filter != null && !filter.test(file)) {
+                                Logger.getInstance().debug("Skipping file " + file.toAbsolutePath() + ".");
+                            } else {
+                                inputFiles.add(InputFile.of(file, path));
+                            }
+                        }
+
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+    }
+
     private LinkedList<String> parse(String file) {
-        Matcher matcher = Pattern.compile("[^*?{}!\\[\\]]+").matcher("");
+        Matcher matcher = PATH_ELEMENT_PATTERN.matcher("");
         LinkedList<String> elements = new LinkedList<>();
         Path path = null;
 
