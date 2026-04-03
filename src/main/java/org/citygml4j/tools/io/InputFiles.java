@@ -74,6 +74,7 @@ public class InputFiles {
                 }
 
                 try {
+                    // find files matching the pattern
                     find(path, glob, inputFiles);
                 } catch (IOException e) {
                     throw new ExecutionException("Failed to create list of input files.", e);
