@@ -40,7 +40,7 @@ public class ExternalResourceCopier implements AutoCloseable {
         inputDir = inputFile.getFile().getParent();
         basePath = inputFile.getBasePath();
         outputDir = outputFile.getFile().getParent();
-        shouldProcess = !inputDir.equals(outputDir);
+        shouldProcess = !outputFile.isTemporary() && !inputDir.equals(outputDir);
     }
 
     public static ExternalResourceCopier of(InputFile inputFile, OutputFile outputFile) {
