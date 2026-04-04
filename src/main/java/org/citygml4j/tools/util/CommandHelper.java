@@ -44,6 +44,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CommandHelper {
     private final Logger log = Logger.getInstance();
@@ -239,8 +241,12 @@ public class CommandHelper {
     }
 
     public List<InputFile> getInputFiles(InputOptions options, String suffix) throws ExecutionException {
+        Pattern suffixPattern = Pattern.compile("(" + suffix + ")$");
         return getInputFiles(InputFiles.of(options.getFile())
-                .withFilter(path -> !FileHelper.stripFileExtension(path).endsWith(suffix)));
+                .withFilter(path -> {
+                    String fileName = FileHelper.stripFileExtension(path);
+                    return !suffixPattern.matcher(fileName).find();
+                }));
     }
 
     public List<InputFile> getInputFiles(InputFiles builder) throws ExecutionException {
