@@ -95,7 +95,7 @@ public class SubsetFilter {
     }
 
     public boolean isCountWithinLimit() {
-        return countOptions != null && count < countOptions.getLimit();
+        return countOptions == null || count < countOptions.getLimit();
     }
 
     public Map<String, Integer> getCounter() {
