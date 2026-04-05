@@ -19,7 +19,7 @@ import org.citygml4j.tools.option.InputOptions;
 import org.citygml4j.tools.option.OverwriteInputOptions;
 import org.citygml4j.tools.util.CommandHelper;
 import org.citygml4j.tools.util.ExternalResourceCopier;
-import org.citygml4j.tools.util.GlobalObjectHelper;
+import org.citygml4j.tools.util.GlobalObjects;
 import org.citygml4j.tools.util.GlobalObjectReader;
 import org.citygml4j.xml.reader.*;
 import org.citygml4j.xml.writer.CityGMLChunkWriter;
@@ -85,11 +85,11 @@ public class SubsetCommand implements Command {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             log.debug("Reading global appearances, groups and implicit geometries from input file.");
-            GlobalObjectHelper globalObjectHelper = GlobalObjectReader.defaults()
+            GlobalObjects globalObjects = GlobalObjectReader.defaults()
                     .read(inputFile, helper.getCityGMLContext());
 
             SubsetFilter filter = SubsetFilter.newInstance()
-                    .withGlobalObjectHelper(globalObjectHelper)
+                    .withGlobalObjectHelper(globalObjects)
                     .withTypeNamesFilter(typeNameOptions, helper.getCityGMLContext())
                     .withIdFilter(idOptions)
                     .withBoundingBoxFilter(boundingBoxOptions != null ? boundingBoxOptions.toBoundingBoxFilter() : null)
@@ -128,12 +128,12 @@ public class SubsetCommand implements Command {
 
                     filter.postprocess();
 
-                    for (CityObjectGroup group : globalObjectHelper.getCityObjectGroups()) {
+                    for (CityObjectGroup group : globalObjects.getCityObjectGroups()) {
                         resourceCopier.process(group);
                         writer.writeMember(group);
                     }
 
-                    for (Appearance appearance : globalObjectHelper.getAppearances()) {
+                    for (Appearance appearance : globalObjects.getAppearances()) {
                         resourceCopier.process(appearance);
                         writer.writeMember(appearance);
                     }

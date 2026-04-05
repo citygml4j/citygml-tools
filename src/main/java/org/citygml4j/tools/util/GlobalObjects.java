@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GlobalObjectHelper {
+public class GlobalObjects {
     public static final String NAME = "name";
     public static final String TEMPLATE_LOD = "lod";
 
@@ -25,7 +25,7 @@ public class GlobalObjectHelper {
     private final List<CityObjectGroup> cityObjectGroups = new ArrayList<>();
     private final Map<String, AbstractGeometry> templateGeometries = new HashMap<>();
 
-    GlobalObjectHelper() {
+    GlobalObjects() {
     }
 
     public List<Appearance> getAppearances() {

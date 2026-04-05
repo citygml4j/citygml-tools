@@ -75,11 +75,11 @@ public class ToLocalAppsCommand implements Command {
                 }
 
                 log.debug("Reading global appearances and implicit geometries from input file.");
-                GlobalObjectHelper globalObjectHelper = GlobalObjectReader.of(
+                GlobalObjects globalObjects = GlobalObjectReader.of(
                                 GlobalObjectType.APPEARANCE,
                                 GlobalObjectType.IMPLICIT_GEOMETRY)
                         .read(inputFile, helper.getCityGMLContext());
-                List<Appearance> appearances = globalObjectHelper.getAppearances();
+                List<Appearance> appearances = globalObjects.getAppearances();
                 if (appearances.isEmpty()) {
                     log.info("The file does not contain global appearances. No action required.");
                     continue;
@@ -95,7 +95,7 @@ public class ToLocalAppsCommand implements Command {
 
                 GlobalAppearanceConverter converter = GlobalAppearanceConverter.of(appearances, out.getVersion())
                         .withMode(mode)
-                        .withTemplateGeometries(globalObjectHelper.getTemplateGeometries());
+                        .withTemplateGeometries(globalObjects.getTemplateGeometries());
 
                 try (CityGMLChunkWriter writer = helper.createCityGMLChunkWriter(out, outputFile, outputOptions)
                         .withCityModelInfo(helper.getFeatureInfo(reader))) {

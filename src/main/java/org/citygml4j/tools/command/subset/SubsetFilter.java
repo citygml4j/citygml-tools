@@ -12,7 +12,7 @@ import org.citygml4j.core.visitor.ObjectWalker;
 import org.citygml4j.tools.util.AppearanceRemover;
 import org.citygml4j.tools.util.CityObjectGroupRemover;
 import org.citygml4j.tools.util.FeatureHelper;
-import org.citygml4j.tools.util.GlobalObjectHelper;
+import org.citygml4j.tools.util.GlobalObjects;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.module.citygml.CityObjectGroupModule;
@@ -50,11 +50,11 @@ public class SubsetFilter {
         return new SubsetFilter();
     }
 
-    public SubsetFilter withGlobalObjectHelper(GlobalObjectHelper globalObjectHelper) {
-        if (globalObjectHelper != null) {
-            appearanceRemover = AppearanceRemover.of(globalObjectHelper.getAppearances());
-            groupRemover = CityObjectGroupRemover.of(globalObjectHelper.getCityObjectGroups());
-            templates = globalObjectHelper.getTemplateGeometries();
+    public SubsetFilter withGlobalObjectHelper(GlobalObjects globalObjects) {
+        if (globalObjects != null) {
+            appearanceRemover = AppearanceRemover.of(globalObjects.getAppearances());
+            groupRemover = CityObjectGroupRemover.of(globalObjects.getCityObjectGroups());
+            templates = globalObjects.getTemplateGeometries();
         }
 
         return this;

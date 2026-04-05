@@ -13,7 +13,7 @@ import org.citygml4j.core.visitor.ObjectWalker;
 import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.logging.Logger;
 import org.citygml4j.tools.util.FeatureHelper;
-import org.citygml4j.tools.util.GlobalObjectHelper;
+import org.citygml4j.tools.util.GlobalObjects;
 import org.citygml4j.tools.util.GlobalObjectReader;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.module.Module;
@@ -260,7 +260,7 @@ public class StatisticsCollector {
         for (Appearance globalAppearance : globalAppearances) {
             Appearance appearance = resolver.resolve(globalAppearance);
             if (appearance != null) {
-                QName name = globalAppearance.getLocalProperties().get(GlobalObjectHelper.NAME, QName.class);
+                QName name = globalAppearance.getLocalProperties().get(GlobalObjects.NAME, QName.class);
                 collect(name, appearance, true);
             }
         }

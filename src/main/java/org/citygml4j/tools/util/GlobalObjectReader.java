@@ -61,19 +61,19 @@ public class GlobalObjectReader {
         return this;
     }
 
-    public GlobalObjectHelper read(InputFile file, CityGMLContext context) throws ExecutionException {
+    public GlobalObjects read(InputFile file, CityGMLContext context) throws ExecutionException {
         try {
-            GlobalObjectHelper globalObjectHelper = new GlobalObjectHelper();
+            GlobalObjects globalObjects = new GlobalObjects();
             try (CityGMLReader reader = createReader(file, context)) {
                 while (reader.hasNext()) {
                     AbstractFeature feature = reader.next();
                     if (feature instanceof Appearance) {
                         if (types.contains(GlobalObjectType.APPEARANCE)) {
-                            globalObjectHelper.add((Appearance) feature, reader.getName());
+                            globalObjects.add((Appearance) feature, reader.getName());
                         }
                     } else if (feature instanceof CityObjectGroup) {
                         if (types.contains(GlobalObjectType.CITY_OBJECT_GROUP)) {
-                            globalObjectHelper.add((CityObjectGroup) feature, reader.getName());
+                            globalObjects.add((CityObjectGroup) feature, reader.getName());
                         }
                     } else if (types.contains(GlobalObjectType.IMPLICIT_GEOMETRY)) {
                         GeometryInfo geometryInfo = feature.getGeometryInfo();
@@ -82,19 +82,19 @@ public class GlobalObjectReader {
                                     .filter(ImplicitGeometryProperty::isSetInlineObject)
                                     .map(ImplicitGeometryProperty::getObject)
                                     .forEach(implicitGeometry ->
-                                            globalObjectHelper.add(implicitGeometry, lod, withTemplateAppearances));
+                                            globalObjects.add(implicitGeometry, lod, withTemplateAppearances));
                         }
 
                         geometryInfo.getNonLodImplicitGeometries().stream()
                                 .filter(ImplicitGeometryProperty::isSetInlineObject)
                                 .map(ImplicitGeometryProperty::getObject)
                                 .forEach(implicitGeometry ->
-                                        globalObjectHelper.add(implicitGeometry, withTemplateAppearances));
+                                        globalObjects.add(implicitGeometry, withTemplateAppearances));
                     }
                 }
             }
 
-            return globalObjectHelper;
+            return globalObjects;
         } catch (CityGMLReadException e) {
             throw new ExecutionException("Failed to read global objects.", e);
         }

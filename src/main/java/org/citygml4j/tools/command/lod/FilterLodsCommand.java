@@ -82,14 +82,14 @@ public class FilterLodsCommand implements Command {
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
             log.debug("Reading global appearances, groups and implicit geometries from input file.");
-            GlobalObjectHelper globalObjectHelper = GlobalObjectReader.defaults()
+            GlobalObjects globalObjects = GlobalObjectReader.defaults()
                     .read(inputFile, helper.getCityGMLContext());
 
             LodFilter lodFilter = LodFilter.of(lods)
                     .withMode(mode)
-                    .withGlobalAppearances(globalObjectHelper.getAppearances())
-                    .withCityObjectGroups(globalObjectHelper.getCityObjectGroups())
-                    .withTemplateGeometries(globalObjectHelper.getTemplateGeometries())
+                    .withGlobalAppearances(globalObjects.getAppearances())
+                    .withCityObjectGroups(globalObjects.getCityObjectGroups())
+                    .withTemplateGeometries(globalObjects.getTemplateGeometries())
                     .updateExtents(updateExtents)
                     .withFeatureMode(keepEmptyObjects ?
                             LodFilter.FeatureMode.KEEP_EMPTY_FEATURES :
@@ -121,12 +121,12 @@ public class FilterLodsCommand implements Command {
 
                     lodFilter.postprocess();
 
-                    for (CityObjectGroup group : globalObjectHelper.getCityObjectGroups()) {
+                    for (CityObjectGroup group : globalObjects.getCityObjectGroups()) {
                         resourceCopier.process(group);
                         writer.writeMember(group);
                     }
 
-                    for (Appearance appearance : globalObjectHelper.getAppearances()) {
+                    for (Appearance appearance : globalObjects.getAppearances()) {
                         resourceCopier.process(appearance);
                         writer.writeMember(appearance);
                     }
