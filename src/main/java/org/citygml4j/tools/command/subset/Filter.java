@@ -5,6 +5,7 @@
 
 package org.citygml4j.tools.command.subset;
 
+import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.AbstractFeature;
 import org.citygml4j.core.model.core.ImplicitGeometry;
@@ -16,15 +17,14 @@ import org.citygml4j.tools.util.GlobalObjects;
 import org.citygml4j.xml.CityGMLContext;
 import org.citygml4j.xml.module.citygml.CityGMLModules;
 import org.citygml4j.xml.module.citygml.CityObjectGroupModule;
+import org.citygml4j.xml.reader.FeatureInfo;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 import org.xmlobjects.gml.model.geometry.GeometryProperty;
 
 import javax.xml.namespace.QName;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
-public class SubsetFilter {
+public class Filter {
     private final SkippedFeatureProcessor skippedFeatureProcessor = new SkippedFeatureProcessor();
     private final TemplatesProcessor templatesProcessor = new TemplatesProcessor();
     private final Map<String, Integer> counter = new TreeMap<>();
@@ -38,19 +38,30 @@ public class SubsetFilter {
     private BoundingBoxFilter boundingBoxFilter;
     private boolean invert;
     private CountOptions countOptions;
+    private DuplicateMode duplicateMode = DuplicateMode.ALLOW;
     private boolean removeGroupMembers;
 
     private long count;
     private long index;
 
-    private SubsetFilter() {
+    public enum DuplicateMode {
+        ALLOW,
+        FIRST;
+
+        @Override
+        public String toString() {
+            return name().toLowerCase(Locale.ROOT);
+        }
     }
 
-    public static SubsetFilter newInstance() {
-        return new SubsetFilter();
+    private Filter() {
     }
 
-    public SubsetFilter withGlobalObjectHelper(GlobalObjects globalObjects) {
+    public static Filter newInstance() {
+        return new Filter();
+    }
+
+    public Filter withGlobalObjectHelper(GlobalObjects globalObjects) {
         if (globalObjects != null) {
             appearanceRemover = AppearanceRemover.of(globalObjects.getAppearances());
             groupRemover = CityObjectGroupRemover.of(globalObjects.getCityObjectGroups());
@@ -60,12 +71,12 @@ public class SubsetFilter {
         return this;
     }
 
-    public SubsetFilter withTypeNamesFilter(TypeNameOptions typeNameOptions, CityGMLContext context) {
+    public Filter withTypeNamesFilter(TypeNameOptions typeNameOptions, CityGMLContext context) {
         this.typeNames = typeNameOptions != null ? typeNameOptions.getTypeNames(context) : null;
         return this;
     }
 
-    public SubsetFilter withIdFilter(IdOptions idOptions) {
+    public Filter withIdFilter(IdOptions idOptions) {
         this.ids = idOptions != null ? idOptions.getIds() : null;
         return this;
     }
@@ -74,22 +85,29 @@ public class SubsetFilter {
         return boundingBoxFilter;
     }
 
-    public SubsetFilter withBoundingBoxFilter(BoundingBoxFilter boundingBoxFilter) {
-        this.boundingBoxFilter = boundingBoxFilter;
+    public Filter withBoundingBoxFilter(BoundingBoxOptions boundingBoxOptions, FeatureInfo cityModelInfo) {
+        this.boundingBoxFilter = boundingBoxOptions != null ?
+                boundingBoxOptions.toBoundingBoxFilter(cityModelInfo) :
+                null;
         return this;
     }
 
-    public SubsetFilter invertFilterCriteria(boolean invert) {
+    public Filter invertFilterCriteria(boolean invert) {
         this.invert = invert;
         return this;
     }
 
-    public SubsetFilter withCounterOption(CountOptions countOptions) {
+    public Filter withCounterOption(CountOptions countOptions) {
         this.countOptions = countOptions;
         return this;
     }
 
-    public SubsetFilter removeGroupMembers(boolean removeGroupMembers) {
+    public Filter withDuplicateMode(DuplicateMode duplicateMode) {
+        this.duplicateMode = duplicateMode != null ? duplicateMode : DuplicateMode.ALLOW;
+        return this;
+    }
+
+    public Filter removeGroupMembers(boolean removeGroupMembers) {
         this.removeGroupMembers = removeGroupMembers;
         return this;
     }
@@ -102,7 +120,7 @@ public class SubsetFilter {
         return counter;
     }
 
-    public boolean filter(AbstractFeature feature, QName name, String prefix) {
+    public boolean filter(AbstractFeature feature, QName name, String prefix, boolean isFirst) {
         boolean keep = true;
         if (typeNames != null) {
             keep = typeNames.contains(name);
@@ -135,6 +153,10 @@ public class SubsetFilter {
             keep = keep && count <= countOptions.getLimit();
         }
 
+        if (keep && duplicateMode == DuplicateMode.FIRST && !isFirst) {
+            keep = false;
+        }
+
         if (keep) {
             templatesProcessor.postprocess(feature);
             counter.merge(prefix + ":" + name.getLocalPart(), 1, Integer::sum);
@@ -153,12 +175,20 @@ public class SubsetFilter {
         }
     }
 
+    public List<CityObjectGroup> getCityObjectGroups() {
+        return groupRemover != null ? groupRemover.getCityObjectGroups() : List.of();
+    }
+
+    public List<Appearance> getAppearances() {
+        return appearanceRemover != null ? appearanceRemover.getAppearances() : List.of();
+    }
+
     private void postprocessGroups() {
         if (groupRemover != null && groupRemover.hasCityObjectGroups()) {
             QName name = getGroupName();
             for (CityObjectGroup group : groupRemover.getCityObjectGroups()) {
                 if (group.isSetGroupMembers()) {
-                    if (!filter(group, name, "grp")) {
+                    if (!filter(group, name, "grp", true)) {
                         group.setGroupMembers(null);
                     }
                 }
@@ -192,7 +222,6 @@ public class SubsetFilter {
     }
 
     private class SkippedFeatureProcessor extends ObjectWalker {
-
         @Override
         public void visit(AbstractFeature feature) {
             if (removeGroupMembers && groupRemover != null) {

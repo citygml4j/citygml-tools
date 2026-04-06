@@ -9,12 +9,14 @@ import org.citygml4j.tools.ExecutionException;
 import org.citygml4j.tools.command.Command;
 import picocli.CommandLine;
 
+import java.util.Objects;
+
 @CommandLine.Command(name = "group",
         description = "Define an independent subset with its own filter criteria. " +
                 "Each group is written to its own output file.")
 public class GroupCommand implements Command {
-    @CommandLine.Option(names = "--name",
-            description = "Name of the group to use as filename suffix.")
+    @CommandLine.Option(names = {"-n", "--name"},
+            description = "Name of the group used as filename suffix.")
     private String name;
 
     @CommandLine.Mixin
@@ -25,7 +27,7 @@ public class GroupCommand implements Command {
 
     GroupCommand(String name, FilterOptions filterOptions) {
         this.name = name;
-        this.filterOptions = filterOptions;
+        this.filterOptions = Objects.requireNonNullElseGet(filterOptions, FilterOptions::new);
     }
 
     public String getName() {

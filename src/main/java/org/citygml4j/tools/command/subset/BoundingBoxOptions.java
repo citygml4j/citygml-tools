@@ -6,6 +6,7 @@
 package org.citygml4j.tools.command.subset;
 
 import org.citygml4j.tools.option.Option;
+import org.citygml4j.xml.reader.FeatureInfo;
 import org.xmlobjects.gml.model.geometry.DirectPosition;
 import org.xmlobjects.gml.model.geometry.Envelope;
 import picocli.CommandLine;
@@ -31,9 +32,17 @@ public class BoundingBoxOptions implements Option {
     }
 
     public BoundingBoxFilter toBoundingBoxFilter() {
-        return boundingBox != null ?
-                BoundingBoxFilter.of(boundingBox).withMode(mode) :
-                null;
+        return toBoundingBoxFilter(null);
+    }
+
+    public BoundingBoxFilter toBoundingBoxFilter(FeatureInfo cityModelInfo) {
+        if (boundingBox != null) {
+            return BoundingBoxFilter.of(boundingBox)
+                    .withMode(mode)
+                    .withRootReferenceSystem(cityModelInfo);
+        }
+
+        return null;
     }
 
     @Override
