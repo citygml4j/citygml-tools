@@ -12,17 +12,17 @@ import picocli.CommandLine;
 import java.util.Objects;
 
 @CommandLine.Command(name = "group",
-        description = "Define an independent subset with its own filter criteria. " +
-                "Each group is written to its own output file.")
+        description = "Define an additional subset written to a separate output file.")
 public class GroupCommand implements Command {
     @CommandLine.Option(names = {"-n", "--name"},
-            description = "Name of the group used as filename suffix.")
+            description = "Output filename suffix (default: group index, starting at 1).")
     private String name;
 
-    @CommandLine.Mixin
+    @CommandLine.ArgGroup(exclusive = false,
+            heading = "Filter options (applied to this group only):%n")
     private FilterOptions filterOptions;
 
-    public GroupCommand() {
+    GroupCommand() {
     }
 
     GroupCommand(String name, FilterOptions filterOptions) {
@@ -35,7 +35,7 @@ public class GroupCommand implements Command {
     }
 
     public FilterOptions getFilterOptions() {
-        return filterOptions;
+        return filterOptions != null ? filterOptions : new FilterOptions();
     }
 
     @Override

@@ -33,16 +33,23 @@ import java.util.List;
 import java.util.Set;
 
 @CommandLine.Command(name = "subset",
-        description = "Create a subset of city objects based on filter criteria.",
-        synopsisSubcommandLabel = "[group [GROUP_OPTIONS] ...]",
-        footerHeading = "Modes:%n",
+        description = "Create subsets of top-level city objects.",
+        customSynopsis = {
+                "citygml-tools subset [OPTIONS] [FILTER_OPTIONS] <file>",
+                "       citygml-tools subset [OPTIONS] <file> group [FILTER_OPTIONS] ..."
+        },
         footer = {
-                "  Single-subset mode:",
-                "    Provide filter options directly on 'subset' to create one output file.",
-                "  Multi-group mode:",
-                "    Define one or more 'group' subcommands, each creating an independent output",
-                "    file with its own filter criteria. Filter options on 'subset' are not",
-                "    allowed when any 'group' subcommand is present."
+                "%nModes:",
+                "  Single subset (one output file)",
+                "    Define filters directly on 'subset'.",
+                "  Multiple subsets (one output file per group)",
+                "    Add one or more 'group' subcommands.",
+                "    In this mode, filter options on 'subset' are not allowed.",
+                "%nExamples:",
+                "  citygml-tools subset city.gml --bbox=10,10,20,20%n",
+                "  citygml-tools subset city.gml \\",
+                "    group --name=buildings --type-name=Building \\",
+                "    group --name=roads --type-name=Road"
         },
         subcommandsRepeatable = true,
         subcommands = {
@@ -60,9 +67,6 @@ public class SubsetCommand implements Command {
     private Filter.DuplicateMode duplicateMode;
 
     @CommandLine.Mixin
-    private FilterOptions filterOptions;
-
-    @CommandLine.Mixin
     private CityGMLOutputOptions outputOptions;
 
     @CommandLine.Mixin
@@ -70,6 +74,10 @@ public class SubsetCommand implements Command {
 
     @CommandLine.Mixin
     private CityGMLOutputVersion version;
+
+    @CommandLine.ArgGroup(exclusive = false,
+            heading = "Filter options (single-subset mode only):%n")
+    private FilterOptions filterOptions;
 
     private final Logger log = Logger.getInstance();
     private final CommandHelper helper = CommandHelper.newInstance();
@@ -213,15 +221,17 @@ public class SubsetCommand implements Command {
                 .map(GroupCommand.class::cast)
                 .toList();
 
-        if (!filterOptions.isEmpty() && !groups.isEmpty()) {
+        if (filterOptions != null
+                && !filterOptions.isEmpty()
+                && !groups.isEmpty()) {
             throw new CommandLine.ParameterException(commandLine,
                     "Error: Filter options on 'subset' cannot be used when 'group' subcommands are present. " +
-                            "Move the filter options into a 'group' subcommand.");
+                            "Move all filter options into a 'group' subcommand.");
         }
 
         Set<String> names = new HashSet<>(groups.size());
         for (GroupCommand group : groups) {
-            if (!names.add(group.getName())) {
+            if (group.getName() != null && !names.add(group.getName())) {
                 throw new CommandLine.ParameterException(commandLine,
                         "Error: Group names must be unique but '" + group.getName() + "' is used more than once.");
             }
