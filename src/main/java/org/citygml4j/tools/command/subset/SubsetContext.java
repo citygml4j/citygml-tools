@@ -17,22 +17,28 @@ import org.citygml4j.xml.writer.CityGMLWriteException;
 
 import java.util.Map;
 import java.util.Objects;
-/*
+
 public class SubsetContext {
     private final Filter filter;
     private final OutputFile outputFile;
     private final CityGMLChunkWriter writer;
     private final String logPrefix;
 
-    private SubsetContext(String name, Filter filter, OutputFile outputFile, CityGMLChunkWriter writer) {
+    private SubsetContext(GroupCommand group, int index, Filter filter, OutputFile outputFile, CityGMLChunkWriter writer) {
         this.filter = Objects.requireNonNull(filter, "The filter must not be null.");
         this.outputFile = Objects.requireNonNull(outputFile, "The output file must not be null.");
         this.writer = Objects.requireNonNull(writer, "The CityGML writer must not be null.");
-        logPrefix = !name.equals(SubsetCommand.DEFAULT_GROUP_NAME) ? "[group " + name + "] " : null;
+
+        if (SubsetCommand.DEFAULT_GROUP_NAME.equals(group.getName())) {
+            logPrefix = null;
+        } else {
+            String name = group.getName() == null ? String.valueOf(index) : "'" + group.getName() + "'";
+            logPrefix = "[group " + name + "] ";
+        }
     }
 
-    public static SubsetContext of(String name, Filter filter, OutputFile outputFile, CityGMLChunkWriter writer) {
-        return new SubsetContext(name, filter, outputFile, writer);
+    public static SubsetContext of(GroupCommand group, int index, Filter filter, OutputFile outputFile, CityGMLChunkWriter writer) {
+        return new SubsetContext(group, index, filter, outputFile, writer);
     }
 
     public OutputFile getOutputFile() {
@@ -51,18 +57,17 @@ public class SubsetContext {
         return logPrefix != null ? logPrefix + message : message;
     }
 
-    public boolean process(AbstractFeature feature, CityGMLReader reader, ExternalResourceCopier resourceCopier) throws ExecutionException {
-        if (filter.filter(feature, reader.getName(), reader.getPrefix())) {
-            try {
-                resourceCopier.process(feature);
-                writer.writeMember(feature);
-                return true;
-            } catch (CityGMLWriteException e) {
-                throw new ExecutionException("Failed to write file " + outputFile + ".", e);
-            }
-        }
+    public boolean filter(AbstractFeature feature, CityGMLReader reader, boolean isFirst) {
+        return filter.filter(feature, reader.getName(), reader.getPrefix(), isFirst);
+    }
 
-        return false;
+    public void write(AbstractFeature feature, ExternalResourceCopier resourceCopier) throws ExecutionException {
+        try {
+            resourceCopier.process(feature);
+            writer.writeMember(feature);
+        } catch (CityGMLWriteException e) {
+            throw new ExecutionException("Failed to write file " + outputFile + ".", e);
+        }
     }
 
     public void postprocess(ExternalResourceCopier resourceCopier) throws ExecutionException {
@@ -91,5 +96,3 @@ public class SubsetContext {
         }
     }
 }
-
- */
