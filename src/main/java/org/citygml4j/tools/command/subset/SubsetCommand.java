@@ -27,6 +27,7 @@ import org.xmlobjects.copy.Copier;
 import org.xmlobjects.copy.CopierBuilder;
 import picocli.CommandLine;
 
+import javax.xml.namespace.QName;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -164,7 +165,9 @@ public class SubsetCommand implements Command {
             InputFile inputFile, GlobalObjects globalObjects, FeatureInfo cityModelInfo,
             CityGMLOutputFactory out) throws ExecutionException {
         List<SubsetContext> contexts = new ArrayList<>(filterGroups.size());
-        Copier copier = CopierBuilder.newCopier();
+        Copier copier = CopierBuilder.newInstance()
+                .withSelfCopy(QName.class)
+                .build();
 
         for (int i = 0; i < filterGroups.size(); i++) {
             GroupCommand group = filterGroups.get(i);
