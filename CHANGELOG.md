@@ -7,13 +7,19 @@
   [#64](https://github.com/citygml4j/citygml-tools/pull/64)
   - Each `group` subcommand defines an independent subset with its own filter criteria and produces a separate
     output file. This allows multiple subsets to be generated in a single run of the `subset` command, avoiding
-    repeated executions and improving overall runtime efficiency.
+    repeated runs and improving overall runtime efficiency.
   - The previous single-subset mode remains supported for backward compatibility.
-- The CityJSON output of the `to-cityjson` command now uses a fixed set of properties for address information.
-  Property names are now consistently lowercase for both CityJSON 2.0 and 1.1.
+- The CityJSON output of the `to-cityjson` command now uses a fixed set of properties for address information, with
+  property names consistently lowercase in both CityJSON 2.0 and 1.1.
+- Improved resolution of cross-feature and cross-LoD references in the `upgrade` command. References to nested
+  geometries are now supported, and handling of XLink references between geometries of spaces and space boundaries
+  has been substantially improved.
+- `topOfConstruction` is now used as the default high reference for measured height values in the `upgrade` command.
 
 ### Fixed
 - Fixed mapping of address objects to xAL elements in the `from-cityjson` command.
+- Fixed `to-local-apps` command to preserve global appearances for implicit geometries in CityGML 2.0/1.0.
+- Fixed incorrect vertex deduplication in the `to-cityjson` command.
 
 ## [2.4.1] - 2026-02-01
 
