@@ -2,13 +2,15 @@
 
 ## [Unreleased]
 
-### Changed
+### Added
 - Added `group` subcommand and multi-subset mode for the `subset` command. [#65](https://github.com/citygml4j/citygml-tools/pull/65),
   [#64](https://github.com/citygml4j/citygml-tools/pull/64)
   - Each `group` subcommand defines an independent subset with its own filter criteria and produces a separate
     output file. This allows multiple subsets to be generated in a single run of the `subset` command, avoiding
     repeated runs and improving overall runtime efficiency.
   - The previous single-subset mode remains supported for backward compatibility.
+
+### Changed
 - The CityJSON output of the `to-cityjson` command now uses a fixed set of properties for address information, with
   property names consistently lowercase in both CityJSON 2.0 and 1.1.
 - Improved resolution of cross-feature and cross-LoD references in the `upgrade` command. References to composed
