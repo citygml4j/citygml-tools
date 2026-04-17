@@ -9,6 +9,8 @@ import org.citygml4j.core.model.appearance.Appearance;
 import org.citygml4j.core.model.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.core.model.core.AbstractAppearanceProperty;
 import org.citygml4j.core.model.core.ImplicitGeometry;
+import org.xmlobjects.copy.CopyContext;
+import org.xmlobjects.copy.Copyable;
 import org.xmlobjects.gml.model.geometry.AbstractGeometry;
 
 import javax.xml.namespace.QName;
@@ -17,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GlobalObjects {
+public class GlobalObjects implements Copyable<GlobalObjects> {
     public static final String NAME = "name";
     public static final String TEMPLATE_LOD = "lod";
 
@@ -71,5 +73,19 @@ public class GlobalObjects {
                         .forEach(appearances::add);
             }
         }
+    }
+
+    @Override
+    public void shallowCopyTo(GlobalObjects dest, CopyContext context) {
+        dest.appearances.addAll(appearances);
+        dest.cityObjectGroups.addAll(cityObjectGroups);
+        dest.templateGeometries.putAll(templateGeometries);
+    }
+
+    @Override
+    public void deepCopyTo(GlobalObjects dest, CopyContext context) {
+        appearances.forEach(appearance -> dest.appearances.add(context.deepCopy(appearance)));
+        cityObjectGroups.forEach(cityObjectGroup -> dest.cityObjectGroups.add(context.deepCopy(cityObjectGroup)));
+        templateGeometries.forEach((key, value) -> dest.templateGeometries.put(key, context.deepCopy(value)));
     }
 }

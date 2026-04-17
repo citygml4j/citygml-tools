@@ -3,11 +3,17 @@
 ## [Unreleased]
 
 ### Changed
-- The CityJSON output of the `to-cityjson` command now uses a fixed set of properties for address information. Property
-  names start with a lowercase letter for CityJSON 2.0 and 1.1.
+- Added `group` subcommand and multi-subset mode for the `subset` command. [#65](https://github.com/citygml4j/citygml-tools/pull/65),
+  [#64](https://github.com/citygml4j/citygml-tools/pull/64)
+  - Each `group` subcommand defines an independent subset with its own filter criteria and produces a separate
+    output file. This allows multiple subsets to be generated in a single run of the `subset` command, avoiding
+    repeated executions and improving overall runtime efficiency.
+  - The previous single-subset mode remains supported for backward compatibility.
+- The CityJSON output of the `to-cityjson` command now uses a fixed set of properties for address information.
+  Property names are now consistently lowercase for both CityJSON 2.0 and 1.1.
 
 ### Fixed
-- Fixed the mapping of address objects to xAL elements in the `from-cityjson` command.
+- Fixed mapping of address objects to xAL elements in the `from-cityjson` command.
 
 ## [2.4.1] - 2026-02-01
 
