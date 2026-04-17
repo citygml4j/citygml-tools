@@ -3,7 +3,8 @@
 ## [Unreleased]
 
 ### Changed
-- Added `group` subcommand and multi-subset mode for the `subset` command. [#65](https://github.com/citygml4j/citygml-tools/pull/65)
+- Added `group` subcommand and multi-subset mode for the `subset` command. [#65](https://github.com/citygml4j/citygml-tools/pull/65),
+  [#64](https://github.com/citygml4j/citygml-tools/pull/64)
   - Each `group` subcommand defines an independent subset with its own filter criteria and produces a separate
     output file. This allows multiple subsets to be generated in a single run of the `subset` command, avoiding
     repeated executions and improving overall runtime efficiency.
