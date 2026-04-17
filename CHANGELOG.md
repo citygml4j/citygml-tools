@@ -11,7 +11,7 @@
   - The previous single-subset mode remains supported for backward compatibility.
 - The CityJSON output of the `to-cityjson` command now uses a fixed set of properties for address information, with
   property names consistently lowercase in both CityJSON 2.0 and 1.1.
-- Improved resolution of cross-feature and cross-LoD references in the `upgrade` command. References to nested
+- Improved resolution of cross-feature and cross-LoD references in the `upgrade` command. References to composed
   geometries are now supported, and handling of XLink references between geometries of spaces and space boundaries
   has been substantially improved.
 - `topOfConstruction` is now used as the default high reference for measured height values in the `upgrade` command.
