@@ -60,7 +60,7 @@ Commands:
   to-local-apps  Convert global appearances into local ones.
   clip-textures  Clip texture images to the extent of the target surface.
   merge          Merge multiple CityGML files into a single file.
-  subset         Create a subset of city objects based on filter criteria.
+  subset         Create subsets of top-level city objects.
   filter-lods    Filter LoD representations of city objects.
   reproject      Reproject city objects to a new coordinate reference system.
   from-cityjson  Convert CityJSON files into CityGML format.
