@@ -39,9 +39,7 @@ To show the help message and all available commands of citygml-tools, type the f
 This will print the following usage information:
 
 ```
-Usage: citygml-tools [-hV] [--extensions=<dir>] [-L=<level>]
-                     [--log-file=<file>] [--pid-file=<file>] [@<filename>...]
-                     [COMMAND]
+Usage: citygml-tools [OPTIONS] COMMAND
 Collection of tools for processing CityGML files.
       [@<filename>...]      One or more argument files containing options.
   -L, --log-level=<level>   Log level: error, warn, info, debug (default: info).
