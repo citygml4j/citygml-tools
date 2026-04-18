@@ -11,8 +11,20 @@
   - The previous single-subset mode remains supported for backward compatibility.
 
 ### Changed
-- The CityJSON output of the `to-cityjson` command now uses a fixed set of properties for address information, with
-  property names consistently lowercase in both CityJSON 2.0 and 1.1.
+- The `to-cityjson` command now uses a fixed set of properties for address information, with property names
+  consistently lowercase in both CityJSON 2.0 and 1.1 (CityJSON 2.0 and 1.1 names on the left, CityJSON 1.0 names
+  on the right):
+  - `locality` / `LocalityName`
+  - `country` / `CountryName`
+  - `thoroughfareName` / `ThoroughfareName`
+  - `thoroughfareNumber` / `ThoroughfareNumber`
+  - `premiseName` / `PremiseName`
+  - `premiseNumber` / `PremiseNumber`
+  - `postalCode` / `PostalCode`
+  - `postalDeliveryPoint` / `PostalDeliveryPoint` (more specific variants like `poBox` / `POBox` are also supported)
+  - `postOffice` / `PostOffice`
+  - `ruralDeliveryPoint` / `RuralDeliveryPoint`
+  - `administrativeArea` / `AdministrativeArea`
 - Improved resolution of cross-feature and cross-LoD references in the `upgrade` command. References to composed
   geometries are now supported, and handling of XLink references between geometries of spaces and space boundaries
   has been substantially improved.
