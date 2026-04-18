@@ -44,7 +44,7 @@ import java.util.Set;
                 "  Single subset (one output file)",
                 "    Define filters directly on 'subset'.",
                 "  Multiple subsets (one output file per group)",
-                "    Add one or more 'group' subcommands.",
+                "    Add one or more 'group' subcommands with their own filters.",
                 "    In this mode, filter options on 'subset' are not allowed.",
                 "%nExamples:",
                 "  citygml-tools subset city.gml --bbox=10,10,20,20%n",
