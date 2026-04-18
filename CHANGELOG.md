@@ -21,7 +21,7 @@
   - `premiseName` / `PremiseName`
   - `premiseNumber` / `PremiseNumber`
   - `postalCode` / `PostalCode`
-  - `postalDeliveryPoint` / `PostalDeliveryPoint` (more specific variants like `poBox` / `POBox` are also supported)
+  - `poBox` / `POBox`
   - `postOffice` / `PostOffice`
   - `ruralDeliveryPoint` / `RuralDeliveryPoint`
   - `administrativeArea` / `AdministrativeArea`
