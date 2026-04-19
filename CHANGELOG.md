@@ -34,6 +34,7 @@
 - Fixed mapping of address objects to xAL elements in the `from-cityjson` command.
 - Fixed `to-local-apps` command to preserve global appearances for implicit geometries in CityGML 2.0/1.0.
 - Fixed incorrect vertex deduplication in the `to-cityjson` command.
+- Prevented input files from being overwritten when the `--output` directory matches the input directory.
 
 ## [2.4.1] - 2026-02-01
 
