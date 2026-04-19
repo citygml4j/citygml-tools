@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-04-19
+
 ### Added
 - Added `group` subcommand and multi-subset mode for the `subset` command. [#65](https://github.com/citygml4j/citygml-tools/pull/65),
   [#64](https://github.com/citygml4j/citygml-tools/pull/64)
@@ -177,7 +179,8 @@
 The changelog of previous citygml-tools releases before version 2.0 is available
 [here](https://github.com/citygml4j/citygml-tools/blob/citygml-tools-v1/CHANGES.md).
 
-[Unreleased]: https://github.com/citygml4j/citygml-tools/compare/v2.4.1..HEAD
+[Unreleased]: https://github.com/citygml4j/citygml-tools/compare/v2.5.0..HEAD
+[2.5.0]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.5.0
 [2.4.1]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.4.1
 [2.4.0]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.4.0
 [2.3.2]: https://github.com/citygml4j/citygml-tools/releases/tag/v2.3.2
