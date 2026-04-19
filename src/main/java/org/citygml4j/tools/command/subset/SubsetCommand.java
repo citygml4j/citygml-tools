@@ -97,7 +97,7 @@ public class SubsetCommand implements Command {
 
         for (int i = 0; i < inputFiles.size(); i++) {
             InputFile inputFile = inputFiles.get(i);
-            OutputFile dummy = helper.getOutputFile(inputFile, suffix, outputOptions, overwriteOptions);
+            OutputFile outputFile = helper.getOutputFile(inputFile, suffix, outputOptions, overwriteOptions);
 
             log.info("[" + (i + 1) + "|" + inputFiles.size() + "] Processing file " + inputFile + ".");
 
@@ -106,7 +106,7 @@ public class SubsetCommand implements Command {
                     .read(inputFile, helper.getCityGMLContext());
 
             List<SubsetContext> contexts;
-            try (ExternalResourceCopier resourceCopier = ExternalResourceCopier.of(inputFile, dummy);
+            try (ExternalResourceCopier resourceCopier = ExternalResourceCopier.of(inputFile, outputFile);
                  CityGMLReader reader = helper.createSkippingCityGMLReader(in, inputFile, inputOptions,
                          "CityObjectGroup", "Appearance")) {
                 FeatureInfo cityModelInfo = helper.getFeatureInfo(reader);
@@ -114,7 +114,7 @@ public class SubsetCommand implements Command {
                     helper.setCityGMLVersion(reader, out);
                 }
 
-                contexts = buildContexts(inputFile, globalObjects, cityModelInfo, out);
+                contexts = buildContexts(outputFile, globalObjects, cityModelInfo, out);
                 contexts.forEach(context -> {
                     if (context.getOutputFile().isTemporary()) {
                         log.debug(context.format("Writing temporary output file " + context.getOutputFile() + "."));
@@ -149,7 +149,7 @@ public class SubsetCommand implements Command {
 
             for (SubsetContext context : contexts) {
                 if (!context.getCounter().isEmpty()) {
-                    log.debug(context.format("Top-level city objects satisfying the filter criteria."));
+                    log.debug(context.format("Top-level city objects satisfying the filter criteria:"));
                     context.getCounter().forEach((key, value) ->
                             log.debug(context.format(key + ": " + value)));
                 } else {
@@ -162,7 +162,7 @@ public class SubsetCommand implements Command {
     }
 
     private List<SubsetContext> buildContexts(
-            InputFile inputFile, GlobalObjects globalObjects, FeatureInfo cityModelInfo,
+            OutputFile outputFile, GlobalObjects globalObjects, FeatureInfo cityModelInfo,
             CityGMLOutputFactory out) throws ExecutionException {
         List<SubsetContext> contexts = new ArrayList<>(filterGroups.size());
         Copier copier = CopierBuilder.newInstance()
@@ -171,9 +171,6 @@ public class SubsetCommand implements Command {
 
         for (int i = 0; i < filterGroups.size(); i++) {
             GroupCommand group = filterGroups.get(i);
-            OutputFile outputFile = helper.getOutputFile(getInputFile(inputFile, group, i), getSuffix(group, i),
-                    outputOptions, overwriteOptions);
-
             FilterOptions filterOptions = group.getFilterOptions();
             Filter filter = Filter.newInstance()
                     .withGlobalObjectHelper(i == 0 ? globalObjects : copier.deepCopy(globalObjects))
@@ -185,35 +182,26 @@ public class SubsetCommand implements Command {
                     .withDuplicateMode(duplicateMode)
                     .removeGroupMembers(filterOptions.isRemoveGroupMembers());
 
-            CityGMLChunkWriter writer = helper.createCityGMLChunkWriter(out, outputFile, outputOptions)
+            OutputFile targetFile = getOutputFile(outputFile, group, i);
+            CityGMLChunkWriter writer = helper.createCityGMLChunkWriter(out, targetFile, outputOptions)
                     .withCityModelInfo(cityModelInfo);
 
-            contexts.add(SubsetContext.of(group, i + 1, filter, outputFile, writer));
+            contexts.add(SubsetContext.of(group, i + 1, filter, targetFile, writer));
         }
 
         return contexts;
     }
 
-    private InputFile getInputFile(InputFile inputFile, GroupCommand group, int index) {
-        if (outputOptions.getOutputDirectory() == null || DEFAULT_GROUP_NAME.equals(group.getName())) {
-            return inputFile;
-        } else {
-            String suffix = group.getName() != null ?
-                    group.getName() :
-                    String.valueOf(index + 1);
-            String filename = FileHelper.appendFileNameSuffix(inputFile.getFile(), "_" + suffix);
-            return InputFile.of(inputFile.getFile().resolveSibling(filename), inputFile.getBasePath());
-        }
-    }
-
-    private String getSuffix(GroupCommand group, int index) {
+    private OutputFile getOutputFile(OutputFile outputFile, GroupCommand group, int index) {
         if (DEFAULT_GROUP_NAME.equals(group.getName())) {
-            return suffix;
-        } else if (group.getName() != null) {
-            return suffix + "_" + group.getName();
-        } else {
-            return suffix + "_" + (index + 1);
+            return outputFile;
         }
+
+        String suffix = group.getName() != null ?
+                group.getName() :
+                String.valueOf(index + 1);
+        String filename = FileHelper.appendFileNameSuffix(outputFile.getFile(), "_" + suffix);
+        return OutputFile.of(outputFile.getFile().resolveSibling(filename));
     }
 
     @Override
