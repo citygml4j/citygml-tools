@@ -291,7 +291,8 @@ public class CommandHelper {
     }
 
     public OutputFile getOutputFile(InputFile file, String suffix, CityGMLOutputOptions outputOptions, OverwriteInputOptions overwriteInputOptions) throws ExecutionException {
-        if (outputOptions.getOutputDirectory() != null) {
+        if (outputOptions.getOutputDirectory() != null
+                && !outputOptions.getOutputDirectory().equals(file.getBasePath())) {
             return OutputFile.of(getOutputDirectory(file, outputOptions.getOutputDirectory())
                     .resolve(file.getFile().getFileName()));
         } else if (overwriteInputOptions.isOverwrite()) {
