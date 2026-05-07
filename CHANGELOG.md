@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed a concurrency of the `upgrade` command issue that could lead to a `NullPointerException` when resolving
+  global and cross-LoD geometry references.
+
 ## [2.5.0] - 2026-04-19
 
 ### Added
