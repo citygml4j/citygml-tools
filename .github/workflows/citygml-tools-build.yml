@@ -3,13 +3,12 @@ name: citygml-tools-build
 on: [ push, pull_request ]
 
 jobs:
-  build:
+  gradle:
     strategy:
       matrix:
-        os: [ macos-latest, ubuntu-latest, windows-latest ]
+        os: [ ubuntu-latest, windows-latest ]
+        java: [ 25 ]
         distribution: [ temurin ]
-        version: [ 25 ]
-      fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
