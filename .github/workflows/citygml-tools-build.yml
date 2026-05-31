@@ -20,7 +20,7 @@ jobs:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.version }}
       - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+        run: chmod +x ./gradlew
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
